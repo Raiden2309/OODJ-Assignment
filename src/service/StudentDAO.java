@@ -1,7 +1,13 @@
 package service;
 
 import domain.Student;
+import domain.SystemRole;
+
+import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileReader;
+import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
 
 public class StudentDAO {
@@ -43,7 +49,7 @@ public class StudentDAO {
             }
             System.err.println("Successfully loaded " + students.size() + " students.");
         } catch (IOException e) {
-            System.err.println("ERROR: Failed to load student data. Check file path: " + e.getMessage())
+            System.err.println("ERROR: Failed to load student data. Check file path: " + e.getMessage());
         }
         return students;
     }

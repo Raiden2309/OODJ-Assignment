@@ -8,7 +8,7 @@ public class Enrolment {
     private String studentID;
     private CourseRecoveryPlan recoveryPlan;
 
-    public Enrolment(String studentID, CourserRecoveryPlan recoveryPlan) {
+    public Enrolment(String studentID, CourseRecoveryPlan recoveryPlan) {
         this.enrolmentID = "ENR-" + System.currentTimeMillis();
         this.enrolmentDate = new Date();
         this.studentID = studentID;

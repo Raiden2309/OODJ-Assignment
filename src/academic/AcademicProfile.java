@@ -20,7 +20,7 @@ public class AcademicProfile{
         int totalCredits = 0;
         for (CourseResult result: courseResults) {
             totalGP += result.calculateGradePoint() * result.getCourse().getCreditHours();
-            totalCredits += result.getCourse().getCredithours();
+            totalCredits += result.getCourse().getCreditHours();
         }
         this.CGPA = totalCredits > 0 ? totalGP / totalCredits : 0.0;
         return CGPA;

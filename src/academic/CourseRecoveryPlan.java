@@ -16,7 +16,7 @@ public class CourseRecoveryPlan {
         this.status = "Draft";
     }
 
-    public boolean addMilestone(RecoverMilestone milestone){
+    public boolean addMilestone(RecoveryMilestone milestone){
         return milestones.add(milestone);
     }
 

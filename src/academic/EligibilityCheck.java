@@ -10,7 +10,7 @@ public class EligibilityCheck {
     }
 
     public boolean checkFailedCourseLimit(AcademicProfile profile){
-        return profile.getTotalFailedCourses() <= maxFailCourses;
+        return profile.getTotalFailedCourse() <= maxFailCourses;
     }
 
     public Enrolment confirmRegistration(String studentID, CourseRecoveryPlan plan){

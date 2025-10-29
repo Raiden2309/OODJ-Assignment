@@ -1,6 +1,9 @@
 package domain;
 
+import academic.CourseRecoveryPlan;
 import academic.Enrolment;
+import academic.RecoveryMilestone;
+
 import java.util.List;
 
 public class CourseAdministrator extends User {

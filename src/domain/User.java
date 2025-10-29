@@ -1,6 +1,7 @@
 package domain;
 
-import service.PasswordUtil;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.util.Date;
 import java.util.List;
 
@@ -38,10 +39,11 @@ public abstract class User {
 
     public abstract List<String> getPermissions();
 
-    public boolean login(){
+    // FIX 1: Accepts inputPassword as an argument
+    public boolean login(String inputPassword){
         if (!isActive) return false;
 
-        String inputHash = passwordHash(inputPassword);
+        String inputHash = passwordHash(inputPassword); // inputPassword is now defined
 
         if (inputHash != null && inputHash.equals(this.passwordHash)){
             this.loginTimestamp = new Date();
@@ -64,8 +66,8 @@ public abstract class User {
         return true;
     }
 
-    public void LogActivity(String action){
-        System.err.println("[" + new Date() + "] " + userID + "performed: " + action);
+    public void logActivity(String action){
+        System.err.println("[" + new Date() + "] " + userID + " performed: " + action);
     }
 
     //Getter and Setters
@@ -81,7 +83,8 @@ public abstract class User {
         return isActive;
     }
 
-    public void SetActive(boolean active){
+    // FIX 3: Correct capitalization to setActive
+    public void setActive(boolean active){
         this.isActive = active;
     }
 

@@ -1,6 +1,5 @@
 package domain;
 
-import academic.Enrolment;
 import java.util.List;
 
 public class AcademicOfficer extends User{
@@ -8,7 +7,7 @@ public class AcademicOfficer extends User{
     private String lastName;
     private String contactOffice;
 
-    public AcademicOfficer(String userID, String password, SystemRole role, String contactOffice){
+    public AcademicOfficer(String userID, String password, SystemRole role, String alice, String johnson, String contactOffice){
         super(userID, password, role);
         this.firstName = firstName;
         this.lastName = lastName;
