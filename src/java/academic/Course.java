@@ -1,6 +1,6 @@
-package academic;
+package java.academic;
 
-import service.CourseCatalog;
+import java.service.CourseCatalog;
 
 public class Course {
     private String courseID;

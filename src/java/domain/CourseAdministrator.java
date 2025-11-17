@@ -1,8 +1,8 @@
-package domain;
+package java.domain;
 
-import academic.CourseRecoveryPlan;
-import academic.Enrolment;
-import academic.RecoveryMilestone;
+import java.academic.CourseRecoveryPlan;
+import java.academic.Enrolment;
+import java.academic.RecoveryMilestone;
 
 import java.util.List;
 

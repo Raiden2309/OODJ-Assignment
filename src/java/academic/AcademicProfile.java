@@ -1,8 +1,8 @@
-package academic;
+package java.academic;
 
 import java.util.ArrayList;
 import java.util.List;
-import report.Report;
+import java.report.Report;
 
 public class AcademicProfile{
     private String studentID;

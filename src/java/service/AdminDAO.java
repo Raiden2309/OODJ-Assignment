@@ -1,6 +1,6 @@
-package service;
+package java.service;
 
-import domain.*;
+import java.domain.*;
 import java.util.List;
 
 public class AdminDAO {

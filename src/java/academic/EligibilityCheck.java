@@ -1,4 +1,4 @@
-package academic;
+package java.academic;
 
 public class EligibilityCheck {
     private boolean isEligible = false;

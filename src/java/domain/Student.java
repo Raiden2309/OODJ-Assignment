@@ -1,7 +1,7 @@
-package domain;
+package java.domain;
 
-import academic.*;
-import service.NotificationService;
+import java.academic.*;
+import java.service.NotificationService;
 import java.util.List;
 
 public class Student extends User {

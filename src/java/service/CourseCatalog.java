@@ -1,6 +1,6 @@
-package service;
+package java.service;
 
-import academic.Course;
+import java.academic.Course;
 
 import java.io.BufferedReader;
 import java.io.FileReader;

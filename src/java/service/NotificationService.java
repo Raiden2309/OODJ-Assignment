@@ -1,4 +1,4 @@
-package service;
+package java.service;
 
 public class NotificationService {
     private Object javaMailAPI = new Object();

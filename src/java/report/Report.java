@@ -1,6 +1,6 @@
-package report;
+package java.report;
 
-import academic.AcademicProfile;
+import java.academic.AcademicProfile;
 import java.util.Date;
 
 public class Report{

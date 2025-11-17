@@ -1,4 +1,4 @@
-package academic;
+package java.academic;
 
 import java.util.Date;
 

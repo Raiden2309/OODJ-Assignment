@@ -1,10 +1,9 @@
-package service;
+package java.service;
 
-import domain.Student;
-import domain.SystemRole;
+import java.domain.Student;
+import java.domain.SystemRole;
 
 import java.io.BufferedReader;
-import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
 import java.util.ArrayList;
