@@ -19,7 +19,15 @@ public class Enrolment {
         return enrolmentID;
     }
 
-    public CourseRecoveryPlan getRecoveryPlan() {
+    public String getStudentID() {
+        return studentID;
+    }
+
+    public CourseRecoveryPlan getPlan() {
         return recoveryPlan;
+    }
+
+    public Date getEnrolmentDate() {
+        return enrolmentDate;
     }
 }

@@ -13,6 +13,8 @@ public class CourseAttempt{
     public CourseAttempt(int attemptNumber){
         this.attemptNumber = attemptNumber;
         this.dateRecorded = new Date();
+        this.examScore = -1;
+        this.assignmentScore = -1;
     }
 
     public List<String> getRequiredComponents(){
@@ -29,5 +31,25 @@ public class CourseAttempt{
 
     public String  getResultGrade() {
         return resultGrade;
+    }
+
+    public void setExamScore(double examScore) {
+        this.examScore = examScore;
+    }
+
+    public double getExamScore() {
+        return examScore;
+    }
+
+    public void setAssignmentScore(double assignmentScore) {
+        this.assignmentScore = assignmentScore;
+    }
+
+    public double getAssignmentScore() {
+        return assignmentScore;
+    }
+
+    public Date getDateRecorded() {
+        return dateRecorded;
     }
 }

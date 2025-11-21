@@ -5,7 +5,7 @@ public class EligibilityCheck {
     private final double CGPATarget = 2.0;
     private final int maxFailCourses = 3;
 
-    public boolean checkCPGA(AcademicProfile profile){
+    public boolean checkCGPA(AcademicProfile profile){
         return profile.calculateCGPA() >= CGPATarget;
     }
 
@@ -13,18 +13,14 @@ public class EligibilityCheck {
         return profile.getTotalFailedCourse() <= maxFailCourses;
     }
 
-    public Enrolment confirmRegistration(String studentID, CourseRecoveryPlan plan){
-        if (isEligible){
-            return new Enrolment(studentID, plan);
-        }
-        return null;
-    }
 
     public boolean isEligible(){
+
         return isEligible;
     }
 
     public void setEligible(boolean eligible){
+
         isEligible = eligible;
     }
 }

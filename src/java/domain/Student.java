@@ -35,13 +35,11 @@ public class Student extends User {
 
     public EligibilityCheck checkEligibility() {
         EligibilityCheck check = new EligibilityCheck();
-        check.setEligible(check.checkCPGA(academicProfile) && check.checkFailedCourseLimit(academicProfile));
+        check.setEligible(check.checkCGPA(academicProfile) && check.checkFailedCourseLimit(academicProfile));
         return check;
     }
 
-    // FIX 4: Use 'Enrollment' (double L) for class/variable names.
     public Enrolment enrol(CourseRecoveryPlan plan){
-        // FIX 3: Check is done by calling the getter method 'isEligible()'
         if (checkEligibility().isEligible()){
             Enrolment enrolment = new Enrolment(this.getUserID(), plan);
             notify("Enrollment Confirmation", "You have been successfully enrolled.");
