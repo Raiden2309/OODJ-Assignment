@@ -1,4 +1,4 @@
-package model;
+package domain;
 
 public class Course
 {
@@ -50,3 +50,4 @@ public class Course
         return courseId + "," + name + "," + credits + "," + instructor + "," + examWeight + "," + assignmentWeight;
     }
 }
+
