@@ -51,11 +51,6 @@ public class Enrollment
     {
         return assignmentScore;
     }
-
-    @Override
-    public String toString()
-    {
-        return enrollmentId + "," + studentId + "," + courseId + "," + year + "," + semester + "," + examScore + "," + assignmentScore;
-    }
 }
+
 
