@@ -1,4 +1,4 @@
-package model;
+package domain;
 
 public class Enrollment
 {
@@ -58,3 +58,4 @@ public class Enrollment
         return enrollmentId + "," + studentId + "," + courseId + "," + year + "," + semester + "," + examScore + "," + assignmentScore;
     }
 }
+
