@@ -44,4 +44,3 @@ public class Course
         return assignmentWeight;
     }
 }
-
