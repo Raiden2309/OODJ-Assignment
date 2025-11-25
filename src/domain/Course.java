@@ -43,11 +43,5 @@ public class Course
     {
         return assignmentWeight;
     }
-
-    @Override
-    public String toString()
-    {
-        return courseId + "," + name + "," + credits + "," + instructor + "," + examWeight + "," + assignmentWeight;
-    }
 }
 
