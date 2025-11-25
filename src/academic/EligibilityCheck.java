@@ -1,30 +1,23 @@
-package academic;
+package service;
+import model.StudentPerformance;
 
-public class EligibilityCheck {
-    private boolean isEligible = false;
-    private final double CGPATarget = 2.0;
-    private final int maxFailCourses = 3;
+public class EligibilityCheck
+{
+    public boolean[] isEligible(StudentPerformance performance)
+    {
+        final int maxFailedCourses = 3;
+        final double minCGPA = 2.0;
+        final boolean conditionOneMet = performance.getFailedCourses() > maxFailedCourses;
+        final boolean conditionTwoMet = performance.getCgpa() < minCGPA;
+        final boolean anyConditionMet = conditionOneMet || conditionTwoMet;
 
-    public boolean checkCPGA(AcademicProfile profile){
-        return profile.calculateCGPA() >= CGPATarget;
-    }
-
-    public boolean checkFailedCourseLimit(AcademicProfile profile){
-        return profile.getTotalFailedCourse() <= maxFailCourses;
-    }
-
-    public Enrolment confirmRegistration(String studentID, CourseRecoveryPlan plan){
-        if (isEligible){
-            return new Enrolment(studentID, plan);
+        if (anyConditionMet)
+        {
+            return new boolean[]{true, conditionOneMet, conditionTwoMet};
         }
-        return null;
-    }
-
-    public boolean isEligible(){
-        return isEligible;
-    }
-
-    public void setEligible(boolean eligible){
-        isEligible = eligible;
+        else
+        {
+            return new boolean[]{false, conditionOneMet, conditionTwoMet};
+        }
     }
 }
