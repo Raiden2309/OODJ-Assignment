@@ -4,76 +4,64 @@ import academic.*;
 import service.NotificationService;
 import java.util.List;
 
-public class Student extends User {
+public class Student extends User
+{
+    private String studentId;
     private String firstName;
     private String lastName;
-    private String major;
-    private String academicYear;
+    private String programId;
     private String email;
+    private String recoveryEligibility;
     private AcademicProfile academicProfile;
 
-    public Student (String studentID, String password, SystemRole role, String firstName, String lastName, String major, String academicYear, String email){
-        // Pass arguments received by this constructor to the super constructor (User)
-        super(studentID, password, role);
+    public Student(String studentId, String password, SystemRole role, String firstName, String lastName, String programId, String email, String recoveryEligibility)
+    {
+        super(studentId, password, role);
+        this.studentId = studentId;
         this.firstName = firstName;
         this.lastName = lastName;
-        this.major = major;
-        this.academicYear = academicYear;
+        this.programId = programId;
         this.email = email;
+        this.recoveryEligibility = recoveryEligibility;
 
-        this.academicProfile = new AcademicProfile(studentID);
+        this.academicProfile = new AcademicProfile(studentId);
     }
 
     @Override
-    public List<String> getPermissions(){
+    public List<String> getPermissions() {
         return getRole().getPermissions();
     }
 
-    public AcademicProfile viewAcademicProfile(){
+    public AcademicProfile viewAcademicProfile() {
         return academicProfile;
     }
 
-    public EligibilityCheck checkEligibility() {
-        EligibilityCheck check = new EligibilityCheck();
-        check.setEligible(check.checkCPGA(academicProfile) && check.checkFailedCourseLimit(academicProfile));
-        return check;
+    public String getStudentId() {
+        return studentId;
     }
 
-    // FIX 4: Use 'Enrollment' (double L) for class/variable names.
-    public Enrolment enrol(CourseRecoveryPlan plan){
-        // FIX 3: Check is done by calling the getter method 'isEligible()'
-        if (checkEligibility().isEligible()){
-            Enrolment enrolment = new Enrolment(this.getUserID(), plan);
-            notify("Enrollment Confirmation", "You have been successfully enrolled.");
-            logActivity("Enrolled in plan " + plan.getPlanID());
-            return enrolment;
-        }
-        logActivity("Failed to enroll due to ineligibility.");
-        return null;
+    public String getFirstName() {
+        return firstName;
     }
 
-    public void notify(String subject, String message){
-        NotificationService service = new NotificationService();
-        service.sendEmail(email, subject, message);
+    public String getLastName() {
+        return lastName;
     }
 
-    //Getters
-    public String getStudentID(){
-        return getUserID();
+    public String getProgramId() {
+        return programId;
     }
 
-    public String getEmail(){
-
+    public String getEmail() {
         return email;
     }
 
-    public AcademicProfile getAcademicProfile() {
-
-        return academicProfile;
+    public String getRecoveryEligibility() {
+        return recoveryEligibility;
     }
 
-    public String getFullName(){
-
+    public String getFullName() {
         return firstName + " " + lastName;
     }
+}
 }
