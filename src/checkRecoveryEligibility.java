@@ -249,6 +249,7 @@ public class checkRecoveryEligibility extends JFrame {
 
         try (BufferedWriter bw = new BufferedWriter(new FileWriter(STUDENT_INFO)))
         {
+            bw.write("StudentID, FirstName, LastName, ProgramID, Email, RecoveryEligibility\n");
             for (String[] student : students)
             {
                 String line = String.join(",", student);
@@ -267,3 +268,4 @@ public class checkRecoveryEligibility extends JFrame {
         new checkRecoveryEligibility();
     }
 }
+
