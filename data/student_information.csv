@@ -1,5 +1,6 @@
+StudentID, FirstName, LastName, ProgramID, Email, RecoveryEligibility
 S001,Fiona,Smith,P001,fiona.smith@university.edu,0
 S002,George,Wilson,P001,george.wilson@university.edu,0
-S003,Ivan,Wilson,P002,ivan.wilson@university.edu,1
+S003,Ivan,Wilson,P002,ivan.wilson@university.edu,0
 S004,Ivan,Chen,P003,ivan.chen@university.edu,0
 S005,Bob,Smith,P002,bob.smith@university.edu,0
