@@ -1,4 +1,4 @@
-package model;
+package domain;
 import data_access.DataAccess;
 
 import java.util.ArrayList;
@@ -91,3 +91,4 @@ public class StudentPerformance
         return failedCourses;
     }
 }
+
