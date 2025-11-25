@@ -1,4 +1,4 @@
-package model;
+package domain;
 
 public class Program
 {
@@ -25,3 +25,4 @@ public class Program
         return level;
     }
 }
+
