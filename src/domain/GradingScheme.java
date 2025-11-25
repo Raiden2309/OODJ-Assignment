@@ -1,4 +1,4 @@
-package model;
+package domain;
 
 public enum GradingScheme
 {
@@ -40,3 +40,4 @@ public enum GradingScheme
         return minScore;
     }
 }
+
