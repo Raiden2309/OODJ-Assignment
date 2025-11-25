@@ -27,6 +27,7 @@ public class StudentDAO {
                 String[] values = line.split(",");
 
                 if (values.length >= 6) {
+
                     String studentID = values[0].trim();
                     String firstName = values[1].trim();
                     String lastName = values[2].trim();
@@ -56,5 +57,10 @@ public class StudentDAO {
     public boolean saveStudent(Student student) {
         System.err.println("Saving student " + student.getUserID() + " to file.");
         return true;
+    }
+
+    //Extra func from edwin's one
+    public academic.AcademicProfile getAcademicProfile(String studentID) {
+        return new academic.AcademicProfile(studentID);
     }
 }

@@ -38,7 +38,7 @@ public class CourseAdministrator extends User {
     }
 
     public boolean  evaluatePlan(CourseRecoveryPlan plan){
-        return plan.getStatus().equals("Completed") && plan.getMilestones().stream().allMatch(RecoveryMilestones::getStatus);
+        return plan.getStatus().equals("Completed") && plan.getMilestones().stream().allMatch(RecoveryMilestone::getStatus);
     }
 
     public void setFinalRecoveryGrade(Enrolment enrolment, String finalGrade){
