@@ -13,7 +13,7 @@ public class CourseCatalog {
     private Map<String, Course> courses;
     private final String COURSE_FILE_PATH = "data/course_assessment_information.csv";
 
-    public CourseCatalog(){     //change public to private (from edwin's one)
+    private CourseCatalog(){
         this.courses = new HashMap<>();
         loadCourses();
     }

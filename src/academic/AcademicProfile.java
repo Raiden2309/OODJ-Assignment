@@ -51,15 +51,4 @@ public class AcademicProfile{
     public void addCourseResult(CourseResult result){
         this.courseResults.add(result);
     }
-
-    //Extra func from edwin's one
-    public boolean isEligibleForRecovery(String courseID) {
-        int failedCourses = getTotalFailedCourse();
-
-        if (failedCourses >= 3) {
-            return false;
-        }
-
-        return true;
-    }
 }
