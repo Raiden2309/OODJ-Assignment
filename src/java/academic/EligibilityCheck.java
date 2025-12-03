@@ -5,7 +5,7 @@ public class EligibilityCheck {
     private final double CGPATarget = 2.0;
     private final int maxFailCourses = 3;
 
-    public boolean checkCPGA(AcademicProfile profile){
+    public boolean checkCGPA(AcademicProfile profile){
         return profile.calculateCGPA() >= CGPATarget;
     }
 

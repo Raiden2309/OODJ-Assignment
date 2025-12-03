@@ -35,7 +35,7 @@ public class Student extends User {
 
     public EligibilityCheck checkEligibility() {
         EligibilityCheck check = new EligibilityCheck();
-        check.setEligible(check.checkCPGA(academicProfile) && check.checkFailedCourseLimit(academicProfile));
+        check.setEligible(check.checkCGPA(academicProfile) && check.checkFailedCourseLimit(academicProfile));
         return check;
     }
 
