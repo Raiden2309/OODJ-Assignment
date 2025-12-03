@@ -1,4 +1,4 @@
-package GUI;
+package resources;
 
 import academic.RecoveryResult;
 import academic.Course;

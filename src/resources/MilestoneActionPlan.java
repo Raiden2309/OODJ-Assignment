@@ -1,7 +1,6 @@
-package GUI;
+package resources;
 
 import academic.RecoveryMilestone;
-import domain.CourseAdministrator;
 import domain.User;
 import service.StudentDAO;
 import service.MilestoneDAO;

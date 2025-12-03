@@ -3,6 +3,7 @@
   <component name="ProjectModuleManager">
     <modules>
       <module fileurl="file://$PROJECT_DIR$/.idea/OODJ-Assignment.iml" filepath="$PROJECT_DIR$/.idea/OODJ-Assignment.iml" />
+      <module fileurl="file://$PROJECT_DIR$/java/src.iml" filepath="$PROJECT_DIR$/java/src.iml" />
     </modules>
   </component>
 </project>

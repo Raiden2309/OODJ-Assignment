@@ -1,4 +1,4 @@
-package GUI;
+package resources;
 
 import javax.swing.*;
 import academic.FailedComponent;
