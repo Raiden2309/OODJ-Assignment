@@ -106,6 +106,15 @@ public class MilestoneActionPlan extends JFrame {
         buttonPanel.add(btnBack);
         add(buttonPanel, BorderLayout.SOUTH);
 
+        getContentPane().setBackground(new Color(229, 215, 139));
+        inputPanel.setBackground(new Color(229, 215, 139));
+        buttonPanel.setBackground(new Color(120,172,229));
+        btnAdd.setFont(new Font("Arial", Font.BOLD, 14));
+        btnUpdate.setFont(new Font("Arial", Font.BOLD, 14));
+        btnRemove.setFont(new Font("Arial", Font.BOLD, 14));
+        btnList.setFont(new Font("Arial", Font.BOLD, 14));
+        btnBack.setFont(new Font("Arial", Font.BOLD, 14));
+
         tableModel = new DefaultTableModel(new String[]{"MilestoneID", "StudentID", "CourseID", "StudyWeek", "TaskDescription", "Deadline", "Status"}, 0) {
             @Override
             public boolean isCellEditable(int row, int column) {

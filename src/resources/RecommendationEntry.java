@@ -149,6 +149,15 @@ public class RecommendationEntry extends JFrame{
             dispose();
         });
 
+        getContentPane().setBackground(new Color(229, 215, 139));
+        inputPanel.setBackground(new Color(229, 215, 139));
+        buttonPanel.setBackground(new Color(169,229,152));
+        btnAdd.setFont(new Font("Arial", Font.BOLD, 14));
+        btnUpdate.setFont(new Font("Arial", Font.BOLD, 14));
+        btnRemove.setFont(new Font("Arial", Font.BOLD, 14));
+        btnList.setFont(new Font("Arial", Font.BOLD, 14));
+        btnBack.setFont(new Font("Arial", Font.BOLD, 14));
+
         listRecommendations();
     }
 

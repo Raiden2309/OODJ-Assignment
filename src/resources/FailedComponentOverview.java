@@ -25,12 +25,19 @@ public class FailedComponentOverview extends JFrame {
             setSize(900, 600);
             setLocationRelativeTo(null);
             setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+
             tblFailed = new JTable();
             pnlFailed = new JScrollPane(tblFailed);
             btnBack = new JButton("Back");
             frmFailed.add(pnlFailed, BorderLayout.CENTER);
             frmFailed.add(btnBack, BorderLayout.SOUTH);
+
+            frmFailed.setBackground(new Color(229,215,139));
+            pnlFailed.getViewport().setBackground(new Color(229,215,139));
+            btnBack.setFont(new Font("Arial", Font.BOLD, 14));
+
             loadFailedComponents();
+
             btnBack.addActionListener(e -> {
                 new CRPHomePage().setVisible(true);
                 dispose();

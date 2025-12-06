@@ -96,6 +96,12 @@ public class RecoveryProgress extends JFrame {
             dispose();
         });
 
+        getContentPane().setBackground(new Color(229, 215, 139));
+        inputPanel.setBackground(new Color(229, 215, 139));
+        buttonPanel.setBackground(new Color(229,176,134));
+        btnSave.setFont(new Font("Arial", Font.BOLD, 14));
+        btnBack.setFont(new Font("Arial", Font.BOLD, 14));
+
         loadRecoveryProgress();
 
     }
