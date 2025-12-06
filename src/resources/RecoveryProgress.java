@@ -22,6 +22,9 @@ public class RecoveryProgress extends JFrame {
     private JButton btnSave;
     private JLabel lblRecovery;
     private JButton btnBack;
+    private JButton btnMilestone;
+    private JButton btnRec;
+    private JButton btnFailed;
     private DefaultTableModel tableModel;
     private RecoveryDAO recoveryDAO;
     private User loggedInUser; //for login derrr
@@ -32,7 +35,7 @@ public class RecoveryProgress extends JFrame {
         this.recoveryDAO = new RecoveryDAO();
 
         setTitle("Recovery Progress");
-        setSize(900, 600);
+        setSize(1000, 700);
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setLayout(new BorderLayout());
 
@@ -99,8 +102,80 @@ public class RecoveryProgress extends JFrame {
         getContentPane().setBackground(new Color(229, 215, 139));
         inputPanel.setBackground(new Color(229, 215, 139));
         buttonPanel.setBackground(new Color(229,176,134));
+        btnFailed = new JButton("Failed Component");
+        btnRec = new JButton("Recommendation Entry");
+        btnMilestone = new JButton("Milestone");
         btnSave.setFont(new Font("Arial", Font.BOLD, 14));
         btnBack.setFont(new Font("Arial", Font.BOLD, 14));
+        btnBack.setBackground(new Color(229, 93, 138));
+
+        JPanel leftButtonPanel = new JPanel();
+        leftButtonPanel.setLayout(new BoxLayout(leftButtonPanel, BoxLayout.Y_AXIS));
+        leftButtonPanel.setBackground(new Color(229, 205, 103));
+
+        Dimension size = new Dimension(200, 40);
+        btnFailed.setMaximumSize(size);
+        btnRec.setMaximumSize(size);
+        btnMilestone.setMaximumSize(size);
+
+        leftButtonPanel.add(btnFailed);
+        leftButtonPanel.add(Box.createVerticalStrut(100));
+        leftButtonPanel.add(btnRec);
+        leftButtonPanel.add(Box.createVerticalStrut(100));
+        leftButtonPanel.add(btnMilestone);
+        leftButtonPanel.add(Box.createVerticalGlue());
+
+        lblRecovery = new JLabel("Recovery Progress", SwingConstants.CENTER);
+        lblRecovery.setFont(new Font("Arial", Font.BOLD, 22));
+        lblRecovery.setBorder(BorderFactory.createEmptyBorder(10,10,10,10));
+
+        ImageIcon originalIcon = new ImageIcon(getClass().getResource("/resources/apulogo.png"));
+        Image scaledImage = originalIcon.getImage().getScaledInstance(80, 80, Image.SCALE_SMOOTH);
+        ImageIcon logoIcon = new ImageIcon(scaledImage);
+        JLabel lblLogo = new JLabel(logoIcon);
+
+        JPanel logoTitlePanel = new JPanel(new BorderLayout());
+        logoTitlePanel.setBackground(new Color(229, 215, 139));
+        logoTitlePanel.setBorder(BorderFactory.createEmptyBorder(10,10,10,10));
+        logoTitlePanel.add(lblLogo, BorderLayout.WEST);
+        logoTitlePanel.add(lblRecovery, BorderLayout.CENTER);
+
+        JPanel topPanel = new JPanel(new BorderLayout());
+        topPanel.setBackground(new Color(229, 215, 139));
+        topPanel.add(logoTitlePanel, BorderLayout.NORTH);
+        topPanel.add(inputPanel, BorderLayout.CENTER);
+
+        add(topPanel, BorderLayout.NORTH);
+
+        JPanel rightPanel = new JPanel(new BorderLayout());
+        rightPanel.setBackground(new Color(229,215,139));
+
+        JScrollPane tableScroll = new JScrollPane(tblAttempt);
+        add(tableScroll, BorderLayout.CENTER);
+
+        add(topPanel, BorderLayout.NORTH);
+        add(rightPanel, BorderLayout.CENTER);
+        add(leftButtonPanel, BorderLayout.WEST);
+        add(new JScrollPane(tblAttempt), BorderLayout.CENTER);
+        add(buttonPanel, BorderLayout.SOUTH);
+
+        btnFailed.addActionListener(e -> {
+            new FailedComponentOverview().setVisible(true);
+            dispose();
+
+        });
+
+        btnRec.addActionListener(e -> {
+            new RecommendationEntry(null).setVisible(true);
+            dispose();
+
+        });
+
+        btnMilestone.addActionListener(e -> {
+            new MilestoneActionPlan(null).setVisible(true);
+            dispose();
+
+        });
 
         loadRecoveryProgress();
 

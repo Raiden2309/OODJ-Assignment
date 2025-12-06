@@ -34,11 +34,14 @@ public class RecommendationEntry extends JFrame{
     private JLabel lblDeadline;
     private JLabel lblDescription;
     private JLabel lblStatus;
-    private JLabel frmRecommendation;
+    private JLabel lblRecommendation;
     private JComboBox<String> cmbDescription;
     private JComboBox<String> cmbStatus;
     private JTextField txtRecID;
     private JLabel lblRecID;
+    private JButton btnMilestone;
+    private JButton btnFailed;
+    private JButton btnRecovery;
     private DefaultTableModel tableModel;
     private RecommendationDAO recommendationDAO;
     private User loggedInUser;
@@ -50,7 +53,7 @@ public class RecommendationEntry extends JFrame{
         this.recommendationDAO = new RecommendationDAO();
 
         setTitle("Course Recovery Recommendation Entry");
-        setSize(900, 600);
+        setSize(1000, 700);
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setLayout(new BorderLayout());
 
@@ -152,11 +155,88 @@ public class RecommendationEntry extends JFrame{
         getContentPane().setBackground(new Color(229, 215, 139));
         inputPanel.setBackground(new Color(229, 215, 139));
         buttonPanel.setBackground(new Color(169,229,152));
+        btnFailed = new JButton("Failed Component");
+        btnMilestone = new JButton("Milestone");
+        btnRecovery = new JButton("Recovery Progress");
         btnAdd.setFont(new Font("Arial", Font.BOLD, 14));
         btnUpdate.setFont(new Font("Arial", Font.BOLD, 14));
         btnRemove.setFont(new Font("Arial", Font.BOLD, 14));
         btnList.setFont(new Font("Arial", Font.BOLD, 14));
         btnBack.setFont(new Font("Arial", Font.BOLD, 14));
+        btnBack.setBackground(new Color(229, 93, 138));
+
+        JPanel leftButtonPanel = new JPanel();
+        leftButtonPanel.setLayout(new BoxLayout(leftButtonPanel, BoxLayout.Y_AXIS));
+        leftButtonPanel.setBackground(new Color(229, 205, 103));
+
+        Dimension size = new Dimension(200, 40);
+        btnFailed.setMaximumSize(size);
+        btnMilestone.setMaximumSize(size);
+        btnRecovery.setMaximumSize(size);
+
+        leftButtonPanel.add(btnFailed);
+        leftButtonPanel.add(Box.createVerticalStrut(100));
+        leftButtonPanel.add(btnMilestone);
+        leftButtonPanel.add(Box.createVerticalStrut(100));
+        leftButtonPanel.add(btnRecovery);
+        leftButtonPanel.add(Box.createVerticalGlue());
+
+        lblRecommendation = new JLabel("Recommendation Entry", SwingConstants.CENTER);
+        lblRecommendation.setFont(new Font("Arial", Font.BOLD, 22));
+        lblRecommendation.setBorder(BorderFactory.createEmptyBorder(10,10,10,10));
+
+        ImageIcon originalIcon = new ImageIcon(getClass().getResource("/resources/apulogo.png"));
+        Image scaledImage = originalIcon.getImage().getScaledInstance(80, 80, Image.SCALE_SMOOTH);
+        ImageIcon logoIcon = new ImageIcon(scaledImage);
+        JLabel lblLogo = new JLabel(logoIcon);
+
+        JPanel logoTitlePanel = new JPanel(new BorderLayout());
+        logoTitlePanel.setBackground(new Color(229, 215, 139));
+        logoTitlePanel.setBorder(BorderFactory.createEmptyBorder(10,10,10,10));
+        logoTitlePanel.add(lblLogo, BorderLayout.WEST);
+        logoTitlePanel.add(lblRecommendation, BorderLayout.CENTER);
+
+        JPanel topPanel = new JPanel(new BorderLayout());
+        topPanel.setBackground(new Color(229, 215, 139));
+        topPanel.add(logoTitlePanel, BorderLayout.NORTH);
+        topPanel.add(inputPanel, BorderLayout.CENTER);
+
+        add(topPanel, BorderLayout.NORTH);
+
+        JPanel rightPanel = new JPanel(new BorderLayout());
+        rightPanel.setBackground(new Color(229,215,139));
+
+        JScrollPane tableScroll = new JScrollPane(tblRecommendation);
+        add(tableScroll, BorderLayout.CENTER);
+
+        add(topPanel, BorderLayout.NORTH);
+        add(rightPanel, BorderLayout.CENTER);
+        add(leftButtonPanel, BorderLayout.WEST);
+        add(new JScrollPane(tblRecommendation), BorderLayout.CENTER);
+        add(buttonPanel, BorderLayout.SOUTH);
+
+        btnBack.addActionListener(e -> {
+            new CRPHomePage().setVisible(true);
+            dispose();
+        });
+
+        btnFailed.addActionListener(e -> {
+            new FailedComponentOverview().setVisible(true);
+            dispose();
+
+        });
+
+        btnMilestone.addActionListener(e -> {
+            new MilestoneActionPlan(null).setVisible(true);
+            dispose();
+
+        });
+
+        btnRecovery.addActionListener(e -> {
+            new RecoveryProgress(null).setVisible(true);
+            dispose();
+
+        });
 
         listRecommendations();
     }

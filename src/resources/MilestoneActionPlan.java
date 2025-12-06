@@ -37,6 +37,9 @@ public class MilestoneActionPlan extends JFrame {
     private JLabel lblTaskDes;
     private JLabel lblDeadline;
     private JLabel lblStatus;
+    private JButton btnFailed;
+    private JButton btnRec;
+    private JButton btnRecovery;
     private DefaultTableModel tableModel;
     private MilestoneDAO milestoneDAO;
     private User loggedInUser;
@@ -48,7 +51,7 @@ public class MilestoneActionPlan extends JFrame {
         this.milestoneDAO = new MilestoneDAO();
 
         setTitle("Milestone Action Plan");
-        setSize(900, 600);
+        setSize(1000, 700);
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setLayout(new BorderLayout());
 
@@ -81,13 +84,12 @@ public class MilestoneActionPlan extends JFrame {
         cmbStatus = new JComboBox<>(new String[]{"Not Started", "In Progress", "Completed"});
         inputPanel.add(cmbStatus);
 
-        add(inputPanel, BorderLayout.NORTH);
-
         JPanel buttonPanel = new JPanel(new FlowLayout());
         btnAdd = new JButton("Add");
         btnUpdate = new JButton("Update");
         btnRemove = new JButton("Remove");
         btnList = new JButton("List All");
+        btnBack = new JButton("Back");
 
         // if (!(loggedInUser instanceof CourseAdministrator)) {
         //     btnAdd.setEnabled(false);
@@ -109,11 +111,15 @@ public class MilestoneActionPlan extends JFrame {
         getContentPane().setBackground(new Color(229, 215, 139));
         inputPanel.setBackground(new Color(229, 215, 139));
         buttonPanel.setBackground(new Color(120,172,229));
+        btnFailed = new JButton("Failed Component");
+        btnRec = new JButton("Recommendation Entry");
+        btnRecovery = new JButton("Recovery Progress");
         btnAdd.setFont(new Font("Arial", Font.BOLD, 14));
         btnUpdate.setFont(new Font("Arial", Font.BOLD, 14));
         btnRemove.setFont(new Font("Arial", Font.BOLD, 14));
         btnList.setFont(new Font("Arial", Font.BOLD, 14));
         btnBack.setFont(new Font("Arial", Font.BOLD, 14));
+        btnBack.setBackground(new Color(229, 93, 138));
 
         tableModel = new DefaultTableModel(new String[]{"MilestoneID", "StudentID", "CourseID", "StudyWeek", "TaskDescription", "Deadline", "Status"}, 0) {
             @Override
@@ -123,7 +129,6 @@ public class MilestoneActionPlan extends JFrame {
         };
 
         tblMilestone = new JTable(tableModel);
-        add(new JScrollPane(tblMilestone), BorderLayout.CENTER);
 
         tblMilestone.getSelectionModel().addListSelectionListener(new ListSelectionListener() {
             @Override
@@ -143,13 +148,82 @@ public class MilestoneActionPlan extends JFrame {
             }
         });
 
+        JPanel leftButtonPanel = new JPanel();
+        leftButtonPanel.setLayout(new BoxLayout(leftButtonPanel, BoxLayout.Y_AXIS));
+        leftButtonPanel.setBackground(new Color(229, 205, 103));
+
+        Dimension size = new Dimension(200, 40);
+        btnFailed.setMaximumSize(size);
+        btnRec.setMaximumSize(size);
+        btnRecovery.setMaximumSize(size);
+
+        leftButtonPanel.add(btnFailed);
+        leftButtonPanel.add(Box.createVerticalStrut(100));
+        leftButtonPanel.add(btnRec);
+        leftButtonPanel.add(Box.createVerticalStrut(100));
+        leftButtonPanel.add(btnRecovery);
+        leftButtonPanel.add(Box.createVerticalGlue());
+
+        lblMilestones = new JLabel("Milestone Action Plan", SwingConstants.CENTER);
+        lblMilestones.setFont(new Font("Arial", Font.BOLD, 22));
+        lblMilestones.setBorder(BorderFactory.createEmptyBorder(10,10,10,10));
+
+        ImageIcon originalIcon = new ImageIcon(getClass().getResource("/resources/apulogo.png"));
+        Image scaledImage = originalIcon.getImage().getScaledInstance(80, 80, Image.SCALE_SMOOTH);
+        ImageIcon logoIcon = new ImageIcon(scaledImage);
+        JLabel lblLogo = new JLabel(logoIcon);
+
+        JPanel logoTitlePanel = new JPanel(new BorderLayout());
+        logoTitlePanel.setBackground(new Color(229, 215, 139));
+        logoTitlePanel.setBorder(BorderFactory.createEmptyBorder(10,10,10,10));
+        logoTitlePanel.add(lblLogo, BorderLayout.WEST);
+        logoTitlePanel.add(lblMilestones, BorderLayout.CENTER);
+
+        JPanel topPanel = new JPanel(new BorderLayout());
+        topPanel.setBackground(new Color(229, 215, 139));
+        topPanel.add(logoTitlePanel, BorderLayout.NORTH);
+        topPanel.add(inputPanel, BorderLayout.CENTER);
+
+        add(topPanel, BorderLayout.NORTH);
+
+        JPanel rightPanel = new JPanel(new BorderLayout());
+        rightPanel.setBackground(new Color(229,215,139));
+
+        JScrollPane tableScroll = new JScrollPane(tblMilestone);
+        add(tableScroll, BorderLayout.CENTER);
+
+        add(topPanel, BorderLayout.NORTH);
+        add(rightPanel, BorderLayout.CENTER);
+        add(leftButtonPanel, BorderLayout.WEST);
+        add(new JScrollPane(tblMilestone), BorderLayout.CENTER);
+        add(buttonPanel, BorderLayout.SOUTH);
+
         btnAdd.addActionListener(e -> addMilestone());
         btnUpdate.addActionListener(e -> updateMilestone());
         btnRemove.addActionListener(e -> removeMilestone());
         btnList.addActionListener(e -> listMilestones());
+
         btnBack.addActionListener(e -> {
             new CRPHomePage().setVisible(true);
             dispose();
+        });
+
+        btnFailed.addActionListener(e -> {
+            new FailedComponentOverview().setVisible(true);
+            dispose();
+
+        });
+
+        btnRec.addActionListener(e -> {
+            new RecommendationEntry(null).setVisible(true);
+            dispose();
+
+        });
+
+        btnRecovery.addActionListener(e -> {
+            new RecoveryProgress(null).setVisible(true);
+            dispose();
+
         });
 
         listMilestones();
