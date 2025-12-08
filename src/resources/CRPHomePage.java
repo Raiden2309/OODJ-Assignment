@@ -1,5 +1,6 @@
 package resources;
 
+import domain.User;
 import javax.swing.*;
 import java.awt.event.*;
 import java.awt.*;
@@ -12,6 +13,7 @@ public class CRPHomePage extends JFrame{
     private JButton btnFailed;
     private JButton btnBack;
     private JPanel frmCRP;
+    private User loggedInUser;
 
     public CRPHomePage() {
         setTitle("CRP Home Page");

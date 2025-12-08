@@ -8,7 +8,6 @@ import javax.swing.table.DefaultTableModel;
 import java.awt.*;
 import java.util.List;
 
-
 public class FailedComponentOverview extends JFrame {
 
     private JTable tblFailed;
