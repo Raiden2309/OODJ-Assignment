@@ -2,6 +2,7 @@ package resources;
 
 import javax.swing.*;
 import academic.FailedComponent;
+import domain.User;
 import service.FailedComponentDAO;
 import javax.swing.table.DefaultTableModel;
 import java.awt.*;
@@ -18,6 +19,8 @@ public class FailedComponentOverview extends JFrame {
     private JButton btnRec;
     private JLabel lblFailed;
     private JPanel panelMain;
+    private FailedComponentDAO failedComponentDAO;
+    private User loggedInUser;
 
     public FailedComponentOverview() {
 
