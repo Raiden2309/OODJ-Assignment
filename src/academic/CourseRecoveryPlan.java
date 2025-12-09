@@ -5,12 +5,14 @@ import java.util.List;
 
 public class CourseRecoveryPlan {
     private String planID;
+    private String courseID;
     private String recommendation;
     private List<RecoveryMilestone> milestones;
     private String status;
 
-    public CourseRecoveryPlan(String planID, String recommendation){
+    public CourseRecoveryPlan(String planID, String courseID, String recommendation){
         this.planID = planID;
+        this.courseID = courseID;
         this.recommendation = recommendation;
         this.milestones = new ArrayList<>();
         this.status = "Draft";
@@ -38,6 +40,11 @@ public class CourseRecoveryPlan {
 
     public String getPlanID() {
         return planID;
+    }
+
+    // NEW GETTER - This fixes your error
+    public String getCourseID() {
+        return courseID;
     }
 
     public List<RecoveryMilestone> getMilestones() {
