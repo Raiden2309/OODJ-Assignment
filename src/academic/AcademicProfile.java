@@ -26,8 +26,7 @@ public class AcademicProfile{
         return CGPA;
     }
 
-    // FIX: This method implements the logic required by EligibilityCheck
-    public int getTotalFailedCourses(){
+    public int getTotalFailedCourse(){
         return (int) courseResults.stream()
                 .filter(r -> r.getGrade().equals("F"))
                 .count();
@@ -36,8 +35,6 @@ public class AcademicProfile{
     public Report generateReport() {
         return new Report(this);
     }
-
-    // Getters and Setters
 
     public String getStudentID() {
         return studentID;
@@ -53,5 +50,16 @@ public class AcademicProfile{
 
     public void addCourseResult(CourseResult result){
         this.courseResults.add(result);
+    }
+
+    //Extra func from edwin's one
+    public boolean isEligibleForRecovery(String courseID) {
+        int failedCourses = getTotalFailedCourse();
+
+        if (failedCourses >= 3) {
+            return false;
+        }
+
+        return true;
     }
 }
