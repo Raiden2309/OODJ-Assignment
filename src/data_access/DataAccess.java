@@ -4,10 +4,11 @@ import java.io.BufferedReader;
 import java.io.FileReader;
 import java.util.ArrayList;
 import java.util.List;
-import model.Student;
-import model.Course;
-import model.Enrollment;
-import model.Program;
+import domain.Student;
+import domain.Course;
+import domain.Enrollment;
+import domain.Program;
+import domain.SystemRole;
 
 public class DataAccess
 {
@@ -15,6 +16,9 @@ public class DataAccess
     final String COURSE_INFO = "data/course_assessment_information.csv";
     final String STUDENT_ENROLLED_COURSES = "data/student_enrollment_information.csv";
     final String PROGRAM_INFO = "data/program_information.csv";
+
+    private final String DEFAULT_PASSWORD = "pass";
+    private final SystemRole STUDENT_ROLE = new SystemRole("Student", List.of("View Profile", "Enroll"));
 
     public List<Student> studentList()
     {
@@ -28,7 +32,17 @@ public class DataAccess
             while ((line = br.readLine()) != null)
             {
                 String[] data = line.split(",");
-                Student student = new Student(data[0], data[1], data[2], data[3], data[4], data[5]);
+                Student student = new Student(
+                        data[0],            // studentID
+                        DEFAULT_PASSWORD,   // password (Added)
+                        STUDENT_ROLE,       // role (Added)
+                        data[1],            // firstName
+                        data[2],            // lastName
+                        data[3],            // major
+                        data[4],            // academicYear
+                        data[5]             // email
+                );
+
 
                 students.add(student);
             }
@@ -118,7 +132,7 @@ public class DataAccess
 
         for (Student s : studentList())
         {
-            String[] student = {s.getStudentId(), s.getFirstName(), s.getLastName(), s.getProgramId(), s.getEmail(), s.getRecoveryEligibility()};
+            String[] student = {s.getStudentId(), s.getFirstName(), s.getLastName(), s.getMajor(), s.getEmail(), s.getRecoveryEligibility()};
             allStudents.add(student);
         }
         return allStudents;

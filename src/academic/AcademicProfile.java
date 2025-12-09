@@ -24,9 +24,10 @@ public class AcademicProfile{
         }
         this.CGPA = totalCredits > 0 ? totalGP / totalCredits : 0.0;
         return CGPA;
-        }
+    }
 
-    public int getTotalFailedCourse(){
+    // FIX: This method implements the logic required by EligibilityCheck
+    public int getTotalFailedCourses(){
         return (int) courseResults.stream()
                 .filter(r -> r.getGrade().equals("F"))
                 .count();
@@ -35,6 +36,8 @@ public class AcademicProfile{
     public Report generateReport() {
         return new Report(this);
     }
+
+    // Getters and Setters
 
     public String getStudentID() {
         return studentID;

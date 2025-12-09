@@ -1,28 +1,33 @@
 package domain;
 
-import academic.*;
+import academic.AcademicProfile;
+import academic.CourseRecoveryPlan;
+import academic.EligibilityCheck;
+import academic.Enrolment;
+import service.EnrollmentDAO;
 import service.NotificationService;
+
 import java.util.List;
 
-public class Student extends User
-{
-    private String studentId;
+public class Student extends User {
     private String firstName;
     private String lastName;
-    private String programId;
+    private String major;         // Replaced 'programId' with 'major' to match your DataAccess/CSV logic
+    private String academicYear;  // Added back to match standard student data
     private String email;
-    private String recoveryEligibility;
+    private String recoveryEligibility; // Kept this as you added it
     private AcademicProfile academicProfile;
 
-    public Student(String studentId, String password, SystemRole role, String firstName, String lastName, String programId, String email, String recoveryEligibility)
-    {
+    // Updated Constructor to match the 8 arguments passed by DataAccess.java
+    // Order: ID, Password, Role, First, Last, Major, Year, Email
+    public Student(String studentId, String password, SystemRole role, String firstName, String lastName, String major, String academicYear, String email) {
         super(studentId, password, role);
-        this.studentId = studentId;
         this.firstName = firstName;
         this.lastName = lastName;
-        this.programId = programId;
+        this.major = major;
+        this.academicYear = academicYear;
         this.email = email;
-        this.recoveryEligibility = recoveryEligibility;
+        this.recoveryEligibility = "Unknown"; // Default until checked
 
         this.academicProfile = new AcademicProfile(studentId);
     }
@@ -36,8 +41,52 @@ public class Student extends User
         return academicProfile;
     }
 
+    // Explicit getter for AcademicProfile to fix "Cannot resolve method" errors
+    public AcademicProfile getAcademicProfile() {
+        return academicProfile;
+    }
+
+    public EligibilityCheck checkEligibility() {
+        EligibilityCheck check = new EligibilityCheck();
+        // Ensure checkCGPA and checkFailedCourseLimit are public in EligibilityCheck
+        boolean eligible = check.checkCGPA(academicProfile) && check.checkFailedCourseLimit(academicProfile);
+        check.setEligible(eligible);
+
+        // Update local status string for display
+        this.recoveryEligibility = eligible ? "Eligible" : "Not Eligible";
+
+        return check;
+    }
+
+    // Using 'Enrolment' (Single L) as requested
+    // Ensure Enrolment class is in 'domain' package or imported
+    public Enrollment enrol(CourseRecoveryPlan plan) {
+        if (checkEligibility().isEligible()) {
+            Enrollment enrollment = new Enrollment(this.getUserID(), plan);
+
+            EnrollmentDAO dao = new EnrollmentDAO();
+            if (dao.saveEnrolment(enrollment)) {
+                notify("Enrolment Confirmation", "You have been successfully enrolled.");
+                logActivity("Enrolled in plan " + plan.getPlanID());
+                return enrollment;
+            } else {
+                logActivity("ERROR: Enrollment failed due to data saving error.");
+                return null;
+            }
+        }
+        logActivity("Failed to enroll due to ineligibility.");
+        return null;
+    }
+
+    public void notify(String subject, String message) {
+        NotificationService service = new NotificationService();
+        service.sendEmail(email, subject, message);
+    }
+
+    // --- Getters ---
+
     public String getStudentId() {
-        return studentId;
+        return getUserID(); // Use parent method
     }
 
     public String getFirstName() {
@@ -48,8 +97,13 @@ public class Student extends User
         return lastName;
     }
 
-    public String getProgramId() {
-        return programId;
+    public String getMajor() {
+        return major;
+    }
+
+    // Added to match constructor
+    public String getAcademicYear() {
+        return academicYear;
     }
 
     public String getEmail() {
@@ -63,5 +117,4 @@ public class Student extends User
     public String getFullName() {
         return firstName + " " + lastName;
     }
-}
 }

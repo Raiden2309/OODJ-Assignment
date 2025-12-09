@@ -1,9 +1,9 @@
-package service;
+package report;
 
 import com.itextpdf.text.*;
 import com.itextpdf.text.pdf.*;
 import data_access.DataAccess;
-import model.StudentPerformance;
+import domain.StudentPerformance;
 
 import java.io.*;
 import java.time.LocalDate;
