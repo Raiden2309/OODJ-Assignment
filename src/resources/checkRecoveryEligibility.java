@@ -1,4 +1,4 @@
-package ui;
+package resources;
 
 import data_access.DataAccess;
 import service.StudentDAO;

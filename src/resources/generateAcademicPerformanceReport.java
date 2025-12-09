@@ -1,4 +1,4 @@
-package ui;
+package resources;
 
 import javax.swing.*;
 import data_access.DataAccess;
