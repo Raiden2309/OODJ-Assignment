@@ -25,7 +25,7 @@ public class EligibilityCheck {
      * @return true if Total Failed Courses <= MAX_FAILED_COURSES, false otherwise.
      */
     public boolean checkFailedCourseLimit(AcademicProfile profile) {
-        int failedCourses = profile.getTotalFailedCourses();
+        int failedCourses = profile.getTotalFailedCourse();
         return failedCourses <= MAX_FAILED_COURSES;
     }
 

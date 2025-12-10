@@ -49,7 +49,7 @@ public class Student extends User {
     public EligibilityCheck checkEligibility() {
         EligibilityCheck check = new EligibilityCheck();
         // Ensure checkCGPA and checkFailedCourseLimit are public in EligibilityCheck
-        boolean eligible = check.checkCGPA(academicProfile) && check.checkFailedCourseLimit(academicProfile);
+        boolean eligible = !check.checkCGPA(academicProfile) || !check.checkFailedCourseLimit(academicProfile);
         check.setEligible(eligible);
 
         // Update local status string for display

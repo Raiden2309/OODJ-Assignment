@@ -9,7 +9,7 @@ import java.awt.*;
 import java.awt.event.*;
 import java.util.List;
 
-public class generateAcademicPerformanceReport extends JFrame {
+public class GenerateAPReport extends JFrame {
     private JPanel panel1;
     private JComboBox idCombobox;
     private JButton selectButton;
@@ -20,7 +20,7 @@ public class generateAcademicPerformanceReport extends JFrame {
     private JLabel label3; // "Program:"
     private JLabel programLabel; // Shows Program
 
-    public generateAcademicPerformanceReport()
+    public GenerateAPReport()
     {
         // 1. INITIALIZE ALL COMPONENTS (Fixes NullPointerExceptions)
         // We use a GridLayout (5 rows, 2 columns) to organize them nicely.
@@ -41,7 +41,7 @@ public class generateAcademicPerformanceReport extends JFrame {
 
         // 2. LOAD DATA
         DataAccess data = new DataAccess();
-        List<String[]> students = data.getStudents();
+        java.util.List<String[]> students = data.getStudents();
         idCombobox.addItem("-- Select student --");
 
         for (String[] student : students)
@@ -165,7 +165,7 @@ public class generateAcademicPerformanceReport extends JFrame {
         SwingUtilities.invokeLater(new Runnable() {
             @Override
             public void run() {
-                new generateAcademicPerformanceReport();
+                new GenerateAPReport();
             }
         });
     }
