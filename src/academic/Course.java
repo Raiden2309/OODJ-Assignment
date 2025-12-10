@@ -1,39 +1,56 @@
 package academic;
 
-import service.CourseCatalog;
+public class Course
+{
+    private String courseId;
+    private String name;
+    private String credits;
+    private String semester;
+    private String instructor;
+    private String examWeight;
+    private String assignmentWeight;
 
-public class Course {
-    private String courseID;
-    private String courseTitle;
-    private int creditHours;
-    private int examWeight;
-    private int assignmentWeight;
-
-    public Course(String courseID, String courseTitle, int creditHours, int examWeight, int assignmentWeight) {
-        this.courseID = courseID;
-        this.courseTitle = courseTitle;
-        this.creditHours = creditHours;
+    public Course(String courseId, String name, String credits, String semester, String instructor, String examWeight, String assignmentWeight)
+    {
+        this.courseId = courseId;
+        this.name = name;
+        this.credits = credits;
+        this.semester = semester;
+        this.instructor = instructor;
         this.examWeight = examWeight;
         this.assignmentWeight = assignmentWeight;
     }
 
-    public int getAssessmentWeight(String component){
-        return component.equalsIgnoreCase("exam") ? examWeight : assignmentWeight;
+    public String getCourseId() {
+        return courseId;
     }
 
-    public void loadFromCatalog(){
-        CourseCatalog.getInstance().getCourse(courseID);
+    public String getName() {
+        return name;
     }
 
-    public String getCourseID() {
-        return courseID;
+    public String getCredits() {
+        return credits;
     }
 
-    public String getCourseTitle() {
-        return courseTitle;
+    public String getSemester() { return semester; }
+
+    public String getInstructor() {
+        return instructor;
     }
 
-    public int getCreditHours() {
-        return creditHours;
+    public String getExamWeight() {
+        return examWeight;
+    }
+
+    public String getAssignmentWeight()
+    {
+        return assignmentWeight;
+    }
+
+    @Override
+    public String toString()
+    {
+        return courseId + "," + name + "," + credits + "," + semester + "," + instructor + "," + examWeight + "," + assignmentWeight;
     }
 }

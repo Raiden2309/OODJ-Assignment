@@ -34,12 +34,21 @@ public class CourseCatalog {
                 if (values.length >= 7){
                     String courseID = values[0].trim();
                     String courseName = values[1].trim();
+                    String semester = values[3].trim();
+                    String instructor = values[4].trim();
 
                     int credits = Integer.parseInt(values[2].trim());
                     int examWeight =  Integer.parseInt(values[5].trim());
                     int assignmentWeight = Integer.parseInt(values[6].trim());
 
-                    Course course = new Course (courseID, courseName, credits, examWeight, assignmentWeight);
+                    Course course = new Course (courseID,
+                            courseName,
+                            String.valueOf(credits),
+                            semester,
+                            instructor,
+                            String.valueOf(examWeight),
+                            String.valueOf(assignmentWeight)
+                    );
 
                     courses.put(courseID, course);
                 }

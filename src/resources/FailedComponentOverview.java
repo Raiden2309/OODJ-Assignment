@@ -1,9 +1,10 @@
 package resources;
 
 import javax.swing.*;
-import academic.FailedComponent;
+import academic.EnrolledCourse;
 import domain.User;
-import service.FailedComponentDAO;
+import service.EnrolledCourseDAO;
+
 import javax.swing.table.DefaultTableModel;
 import java.awt.*;
 import java.util.List;
@@ -19,7 +20,7 @@ public class FailedComponentOverview extends JFrame {
     private JButton btnRec;
     private JLabel lblFailed;
     private JPanel panelMain;
-    private FailedComponentDAO failedComponentDAO;
+    private EnrolledCourseDAO enrolledCoursesDAO;
     private User loggedInUser;
 
     public FailedComponentOverview() {
@@ -115,22 +116,24 @@ public class FailedComponentOverview extends JFrame {
 
     private void loadFailedComponents() {
         try {
-            FailedComponentDAO dao = new FailedComponentDAO();
-            List<FailedComponent> failedComponents = dao.loadAllFailedComponents();
-            System.out.println("Loaded " + failedComponents.size() + " failed components.");
+            EnrolledCourseDAO dao = new EnrolledCourseDAO();
+            List<EnrolledCourse> enrolledCourses = dao.loadAllEnrolledCourses();
+            System.out.println("Loaded " + enrolledCourses.size() + " failed components.");
             String[] columns = {"StudentID", "CourseID", "ExamScore", "AssignmentScore", "ExamWeight", "AssignmentWeight", "FailedComponent"};
             DefaultTableModel model = new DefaultTableModel(columns, 0);
-            for (FailedComponent fc : failedComponents) {
-                Object[] row = {
-                        fc.getStudentID(),
-                        fc.getCourseID(),
-                        fc.getExamScore(),
-                        fc.getAssignmentScore(),
-                        fc.getExamWeight(),
-                        fc.getAssignmentWeight(),
-                        fc.getFailedComponent()
-                };
-                model.addRow(row);
+            for (EnrolledCourse ec : enrolledCourses) {
+                if (!ec.getFailedComponent().equals("None")) {
+                    Object[] row = {
+                            ec.getStudentID(),
+                            ec.getCourseID(),
+                            ec.getExamScore(),
+                            ec.getAssignmentScore(),
+                            ec.getExamWeight(),
+                            ec.getAssignmentWeight(),
+                            ec.getFailedComponent()
+                    };
+                    model.addRow(row);
+                }
             }
             tblFailed.setModel(model);
             System.out.println("Table model set successfully.");
@@ -148,5 +151,3 @@ public class FailedComponentOverview extends JFrame {
         });
     }
 }
-
-

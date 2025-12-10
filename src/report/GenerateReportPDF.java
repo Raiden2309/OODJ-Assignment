@@ -6,7 +6,6 @@ import data_access.DataAccess;
 import domain.StudentPerformance;
 
 import java.io.*;
-import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
@@ -49,7 +48,7 @@ public class GenerateReportPDF
 
     public void generateDocContents(Document doc, String studentId)
     {
-        final String[] student_info = {"Student Name", "Student ID", "Enrolled Program"};
+        final String[] student_info = {"Student Name", "Student ID", "Major", "Year"};
         try
         {
             Paragraph header = new Paragraph(pdfTitle.toUpperCase(), heading);
@@ -61,9 +60,9 @@ public class GenerateReportPDF
                 if (student[0].equals(studentId))
                 {
                     String name = student[1] + " " + student[2];
-                    String[] enrolled_program = data.getPrograms(student).getFirst();
-                    String programName = enrolled_program[2] + " in " + enrolled_program[1];
-                    String[] info = {name, studentId, programName};
+                    String major = student[3];
+                    String year = student[4];
+                    String[] info = {name, studentId, major, year};
 
                     for (int i = 0; i < student_info.length; i++)
                     {
@@ -92,20 +91,20 @@ public class GenerateReportPDF
 
     public  void separateByYear(String studentId, Document doc)
     {
-        List<String[]> enrollments = data.getEnrollments(new String[]{studentId});
+        List<String[]> enrolledCourses = data.getEnrolledCourses(new String[]{studentId});
         int displayedYear = 0;
         int displayedSemester = 0;
 
-        for (String[] enrollment : enrollments)
+        for (String[] enrolledCourse : enrolledCourses)
         {
-            int year = Integer.parseInt(enrollment[3]);
-            int semester = Integer.parseInt(enrollment[4]);
+            int year = Integer.parseInt(enrolledCourse[2]);
+            int semester = Integer.parseInt(enrolledCourse[3]);
 
             try
             {
                 if (year != displayedYear)
                 {
-                    Paragraph yearHeader = new Paragraph("YEAR " + enrollment[3], heading);
+                    Paragraph yearHeader = new Paragraph("YEAR " + enrolledCourse[2], heading);
                     doc.add(yearHeader);
                     displayedYear = year;
                     displayedSemester = 0;
@@ -113,7 +112,7 @@ public class GenerateReportPDF
 
                 if (semester != displayedSemester)
                 {
-                    Paragraph semHeader = new Paragraph("SEMESTER " + enrollment[4], body);
+                    Paragraph semHeader = new Paragraph("SEMESTER " + enrolledCourse[3], body);
                     semHeader.setSpacingAfter(10);
                     doc.add(semHeader);
                     displayedSemester = semester;
@@ -166,18 +165,19 @@ public class GenerateReportPDF
     {
         DataAccess data = new DataAccess();
         StudentPerformance perf = new StudentPerformance(studentId);
-        List<String[]> enrollments = data.getEnrollments(new String[]{studentId});
+        List<String[]> enrolledCourses = data.getEnrolledCourses(new String[]{studentId});
         int totalCreditHours = 0;
         double gpa = 0;
 
-        for (String[] enrollment : enrollments)
+        for (String[] enrolledCourse : enrolledCourses)
         {
-            if (Integer.parseInt(enrollment[3]) == displayedYear && Integer.parseInt(enrollment[4]) == displayedSemester)
+            if (Integer.parseInt(enrolledCourse[2]) == displayedYear && Integer.parseInt(enrolledCourse[3]) == displayedSemester)
             {
                 for (String[] row : perf.getPerformance(data))
                 {
-                    if (row[0].equals(enrollment[2]))
+                    if (row[0].equals(enrolledCourse[1]))
                     {
+
                         for (String s : row)
                         {
                             if (s.equals(row[2]))
