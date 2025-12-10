@@ -14,12 +14,10 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 
-public class checkRecoveryEligibility extends JFrame {
-
+public class CheckRecoveryEligibility extends JFrame {
     private JPanel panel1;
     private JComboBox<String> idCombobox;
     private JButton checkEligibilityButton;
-    private JButton generateReportButton;
 
     // Static Labels
     private JLabel label1; // Select Student
@@ -46,8 +44,7 @@ public class checkRecoveryEligibility extends JFrame {
     // List to hold the full data for filtering
     private List<String> allItems = new ArrayList<>();
 
-    public checkRecoveryEligibility()
-    {
+    public CheckRecoveryEligibility() {
         // 1. INITIALIZE COMPONENTS
         panel1 = new JPanel(new GridLayout(9, 2, 10, 10));
         panel1.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
@@ -57,7 +54,6 @@ public class checkRecoveryEligibility extends JFrame {
         idCombobox.setEditable(true);
 
         checkEligibilityButton = new JButton("Check Eligibility");
-        generateReportButton = new JButton("Generate Report");
 
         // Static Labels
         label1 = new JLabel("Search Student (ID - Name):");
@@ -112,7 +108,6 @@ public class checkRecoveryEligibility extends JFrame {
         panel1.add(new JLabel(""));
 
         panel1.add(checkEligibilityButton);
-        panel1.add(generateReportButton);
 
         setContentPane(panel1);
         setDefaultCloseOperation(EXIT_ON_CLOSE);
@@ -158,7 +153,7 @@ public class checkRecoveryEligibility extends JFrame {
         });
     }
 
-    private void loadAllItems() {
+    private void loadAllItems () {
         // SORTING: Sort by ID
         Collections.sort(students, new Comparator<String[]>() {
             @Override
@@ -174,13 +169,13 @@ public class checkRecoveryEligibility extends JFrame {
         }
     }
 
-    private void addComboboxItems(List<String> itemsToShow) {
+    private void addComboboxItems (List < String > itemsToShow) {
         idCombobox.setModel(new DefaultComboBoxModel<>(itemsToShow.toArray(new String[0])));
         idCombobox.setSelectedItem(null); // Clear selection initially
     }
 
     // The Filtering Logic
-    private void filterList(String text) {
+    private void filterList (String text){
         if (text.isEmpty()) {
             // If empty, allow showing full list on dropdown click (optional)
             // Or just keep current view.
@@ -219,7 +214,7 @@ public class checkRecoveryEligibility extends JFrame {
         editor.setText(text);
     }
 
-    private void updateStudentDetails(String selectedItem) {
+    private void updateStudentDetails (String selectedItem){
         if (selectedItem == null || selectedItem.isEmpty()) {
             firstNameLabel.setText("-");
             lastNameLabel.setText("-");
@@ -262,7 +257,7 @@ public class checkRecoveryEligibility extends JFrame {
     }
 
     // --- BACKEND LOGIC ---
-    private void performEligibilityCheck() {
+    private void performEligibilityCheck () {
         Object selectedObj = idCombobox.getSelectedItem();
         if (selectedObj == null) return;
 
@@ -306,7 +301,7 @@ public class checkRecoveryEligibility extends JFrame {
             String msg = String.format("Student: %s\nCGPA: %.2f\nFailed Courses: %d\n\nStatus: ELIGIBLE",
                     targetStudent.getFullName(),
                     targetStudent.getAcademicProfile().getCGPA(),
-                    targetStudent.getAcademicProfile().getTotalFailedCourses());
+                    targetStudent.getAcademicProfile().getTotalFailedCourse());
 
             JOptionPane.showMessageDialog(null, msg, "Check Result", JOptionPane.INFORMATION_MESSAGE);
         } else {
@@ -316,13 +311,13 @@ public class checkRecoveryEligibility extends JFrame {
             String msg = String.format("Student: %s\nCGPA: %.2f\nFailed Courses: %d\n\nStatus: NOT ELIGIBLE",
                     targetStudent.getFullName(),
                     targetStudent.getAcademicProfile().getCGPA(),
-                    targetStudent.getAcademicProfile().getTotalFailedCourses());
+                    targetStudent.getAcademicProfile().getTotalFailedCourse());
 
             JOptionPane.showMessageDialog(null, msg, "Check Result", JOptionPane.WARNING_MESSAGE);
         }
     }
 
-    public static void main(String[] args) {
-        SwingUtilities.invokeLater(() -> new checkRecoveryEligibility());
+    public static void main (String[]args){
+        SwingUtilities.invokeLater(() -> new CheckRecoveryEligibility());
     }
 }
