@@ -15,16 +15,17 @@ import java.util.Collections;
 import java.util.Comparator;
 
 public class CheckRecoveryEligibility extends JFrame {
-    private JPanel panel1;
     private JComboBox<String> idCombobox;
     private JButton checkEligibilityButton;
 
     // Static Labels
+    private JLabel labelTitle;
     private JLabel label1; // Select Student
     private JLabel label2; // First Name
     private JLabel label3; // Last Name
     private JLabel label4; // Major
     private JLabel label5; // Year
+    private JLabel label6; // Eligibility
 
     // Dynamic Labels (Data Display)
     private JLabel firstNameLabel;
@@ -34,6 +35,8 @@ public class CheckRecoveryEligibility extends JFrame {
 
     private JLabel eligibilityLabel;
 
+    final Font txtFont = new Font("Arial", Font.PLAIN, 14);
+    final Font categoryFont = new Font("Arial", Font.BOLD, 14);
     final Color eligibleColour = new Color(0, 188, 0);
     final Color ineligibleColour = Color.RED;
 
@@ -46,8 +49,8 @@ public class CheckRecoveryEligibility extends JFrame {
 
     public CheckRecoveryEligibility() {
         // 1. INITIALIZE COMPONENTS
-        panel1 = new JPanel(new GridLayout(9, 2, 10, 10));
-        panel1.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
+        JPanel inputPanel = new JPanel(new GridLayout(7, 2, 10, 10));
+        inputPanel.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
 
         // Setup Dropdown
         idCombobox = new JComboBox<>();
@@ -61,14 +64,27 @@ public class CheckRecoveryEligibility extends JFrame {
         label3 = new JLabel("Last Name:");
         label4 = new JLabel("Major:");
         label5 = new JLabel("Year:");
+        label6 = new JLabel("Eligibility Result:");
+
+        label1.setFont(categoryFont);
+        label2.setFont(categoryFont);
+        label3.setFont(categoryFont);
+        label4.setFont(categoryFont);
+        label5.setFont(categoryFont);
+        label6.setFont(categoryFont);
 
         // Dynamic Labels
         firstNameLabel = new JLabel("-");
         lastNameLabel = new JLabel("-");
         majorLabel = new JLabel("-");
         yearLabel = new JLabel("-");
-        eligibilityLabel = new JLabel("Status: Unknown");
-        eligibilityLabel.setFont(new Font("Arial", Font.BOLD, 14));
+        eligibilityLabel = new JLabel("Unknown");
+
+        firstNameLabel.setFont(txtFont);
+        lastNameLabel.setFont(txtFont);
+        majorLabel.setFont(txtFont);
+        yearLabel.setFont(txtFont);
+        eligibilityLabel.setFont(txtFont);
 
         // 2. POPULATE & ENABLE SEARCH
         loadAllItems(); // Load data into memory
@@ -85,34 +101,58 @@ public class CheckRecoveryEligibility extends JFrame {
         });
 
         // 3. BUILD LAYOUT
-        panel1.add(label1);
-        panel1.add(idCombobox);
+        ImageIcon originalIcon = new ImageIcon(getClass().getResource("/resources/apulogo.png"));
+        Image scaledImage = originalIcon.getImage().getScaledInstance(80, 80, Image.SCALE_SMOOTH);
+        ImageIcon logoIcon = new ImageIcon(scaledImage);
+        JLabel lblLogo = new JLabel(logoIcon);
 
-        panel1.add(label2);
-        panel1.add(firstNameLabel);
+        labelTitle = new JLabel("Check Student CRP Eligibility", SwingConstants.CENTER);
+        labelTitle.setFont(new Font("Arial", Font.BOLD, 22));
 
-        panel1.add(label3);
-        panel1.add(lastNameLabel);
+        JPanel logoTitlePanel = new JPanel(new BorderLayout());
+        logoTitlePanel.setBackground(new Color(229, 215, 139));
+        logoTitlePanel.setBorder(BorderFactory.createEmptyBorder(10,10,10,10));
+        logoTitlePanel.add(lblLogo, BorderLayout.WEST);
+        logoTitlePanel.add(labelTitle, BorderLayout.CENTER);
 
-        panel1.add(label4);
-        panel1.add(majorLabel);
+        JPanel topPanel = new JPanel(new BorderLayout());
+        topPanel.setBackground(new Color(229, 215, 139));
+        topPanel.add(logoTitlePanel, BorderLayout.NORTH);
+        topPanel.add(inputPanel, BorderLayout.CENTER);
 
-        panel1.add(label5);
-        panel1.add(yearLabel);
+        add(topPanel, BorderLayout.NORTH);
 
-        panel1.add(new JLabel("Eligibility Result:"));
-        panel1.add(eligibilityLabel);
+        inputPanel.add(label1);
+        inputPanel.add(idCombobox);
+
+        inputPanel.add(label2);
+        inputPanel.add(firstNameLabel);
+
+        inputPanel.add(label3);
+        inputPanel.add(lastNameLabel);
+
+        inputPanel.add(label4);
+        inputPanel.add(majorLabel);
+
+        inputPanel.add(label5);
+        inputPanel.add(yearLabel);
+
+        inputPanel.add(label6);
+        inputPanel.add(eligibilityLabel);
 
         // Empty placeholder for spacing
-        panel1.add(new JLabel(""));
-        panel1.add(new JLabel(""));
+        inputPanel.add(new JLabel(""));
 
-        panel1.add(checkEligibilityButton);
+        add(inputPanel, BorderLayout.CENTER);
 
-        setContentPane(panel1);
+        checkEligibilityButton.setBorder(BorderFactory.createEmptyBorder(20,10,10,10));
+        add(checkEligibilityButton,BorderLayout.SOUTH);
+
+        getContentPane().setBackground(new Color(229, 215, 139));
+        inputPanel.setBackground(new Color(229, 215, 139));
         setDefaultCloseOperation(EXIT_ON_CLOSE);
         setTitle("CRS - Student Eligibility Check");
-        setSize(650, 500);
+        setSize(1000, 700);
         setLocationRelativeTo(null); // Center on screen
         setResizable(false);
         setVisible(true);
@@ -220,7 +260,7 @@ public class CheckRecoveryEligibility extends JFrame {
             lastNameLabel.setText("-");
             majorLabel.setText("-");
             yearLabel.setText("-");
-            eligibilityLabel.setText("Status: Unknown");
+            eligibilityLabel.setText("Unknown");
             eligibilityLabel.setForeground(Color.BLACK);
             return;
         }
@@ -237,13 +277,14 @@ public class CheckRecoveryEligibility extends JFrame {
                         majorLabel.setText(student[3]);
                         yearLabel.setText(student[4]);
 
-                        eligibilityLabel.setText("Status: Unknown");
+                        eligibilityLabel.setText("Unknown");
                         eligibilityLabel.setForeground(Color.BLACK);
                         return;
                     }
                 }
             } catch (Exception e) {
-                // Ignore parsing errors
+                System.out.println("Error:" + e);
+                e.printStackTrace();
             }
         }
 
@@ -252,7 +293,7 @@ public class CheckRecoveryEligibility extends JFrame {
         lastNameLabel.setText("-");
         majorLabel.setText("-");
         yearLabel.setText("-");
-        eligibilityLabel.setText("Status: Unknown");
+        eligibilityLabel.setText("Unknown");
         eligibilityLabel.setForeground(Color.BLACK);
     }
 

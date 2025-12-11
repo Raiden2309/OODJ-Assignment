@@ -13,35 +13,51 @@ public class GenerateAPReport extends JFrame {
     private JPanel panel1;
     private JComboBox idCombobox;
     private JButton selectButton;
+    private JLabel labelTitle;
     private JLabel label1; // "Select Student:"
-    private JLabel idLabel; // Shows ID
-    private JLabel label2; // "Student Name:"
+    private JLabel label2; // "Student ID:"
+    private JLabel idLabel; // Shows Student ID
+    private JLabel label3; // "Student Name:"
     private JLabel nameLabel; // Shows Name
-    private JLabel label3; // "Major:"
+    private JLabel label4; // "Major:"
     private JLabel majorLabel; // Shows Major
-    private JLabel label4; // "Year:"
+    private JLabel label5; // "Year:"
     private JLabel yearLabel; // Shows Academic Year
+
+    final Font txtFont = new Font("Arial", Font.PLAIN, 14);
+    final Font categoryFont = new Font("Arial", Font.BOLD, 14);
 
     public GenerateAPReport()
     {
         // 1. INITIALIZE ALL COMPONENTS (Fixes NullPointerExceptions)
-        // We use a GridLayout (5 rows, 2 columns) to organize them nicely.
-        panel1 = new JPanel(new GridLayout(6, 2, 10, 10));
-        panel1.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20)); // Add padding
+        JPanel inputPanel = new JPanel(new GridLayout(6, 2, 10, 10));
+        inputPanel.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
 
         idCombobox = new JComboBox();
         selectButton = new JButton("Generate PDF Report"); // Initialize the button!
 
         // Initialize Labels
         label1 = new JLabel("Select Student:");
-        label2 = new JLabel("Student Name:");
-        label3 = new JLabel("Major:");
-        label4 = new JLabel("Year");
+        label2 = new JLabel("Student ID:");
+        label3 = new JLabel("Student Name:");
+        label4 = new JLabel("Major:");
+        label5 = new JLabel("Year");
+
+        label1.setFont(categoryFont);
+        label2.setFont(categoryFont);
+        label3.setFont(categoryFont);
+        label4.setFont(categoryFont);
+        label5.setFont(categoryFont);
 
         idLabel = new JLabel("-"); // Placeholder text
         nameLabel = new JLabel("-");
         majorLabel = new JLabel("-");
         yearLabel = new JLabel("-");
+
+        idLabel.setFont(txtFont);
+        nameLabel.setFont(txtFont);
+        majorLabel.setFont(txtFont);
+        yearLabel.setFont(txtFont);
 
         // 2. LOAD DATA
         DataAccess data = new DataAccess();
@@ -58,31 +74,55 @@ public class GenerateAPReport extends JFrame {
         AutoCompleteDecorator.decorate(idCombobox);
 
         // 3. ADD COMPONENTS TO PANEL (Fixes Blank Window)
-        // The order matters in GridLayout!
-        panel1.add(label1);
-        panel1.add(idCombobox);
 
-        panel1.add(label2);
-        panel1.add(nameLabel); // Shows dynamic name
+        ImageIcon originalIcon = new ImageIcon(getClass().getResource("/resources/apulogo.png"));
+        Image scaledImage = originalIcon.getImage().getScaledInstance(80, 80, Image.SCALE_SMOOTH);
+        ImageIcon logoIcon = new ImageIcon(scaledImage);
+        JLabel lblLogo = new JLabel(logoIcon);
 
-        panel1.add(new JLabel("Student ID:")); // Extra label for clarity
-        panel1.add(idLabel);   // Shows dynamic ID
+        labelTitle = new JLabel("Generate Academic Progress Report PDFs", SwingConstants.CENTER);
+        labelTitle.setFont(new Font("Arial", Font.BOLD, 22));
 
-        panel1.add(label3);
-        panel1.add(majorLabel); // Shows dynamic major
+        JPanel logoTitlePanel = new JPanel(new BorderLayout());
+        logoTitlePanel.setBackground(new Color(229, 215, 139));
+        logoTitlePanel.setBorder(BorderFactory.createEmptyBorder(10,10,10,10));
+        logoTitlePanel.add(lblLogo, BorderLayout.WEST);
+        logoTitlePanel.add(labelTitle, BorderLayout.CENTER);
 
-        panel1.add(label4);
-        panel1.add(yearLabel); // Shows dynamic academic year
+        JPanel topPanel = new JPanel(new BorderLayout());
+        topPanel.setBackground(new Color(229, 215, 139));
+        topPanel.add(logoTitlePanel, BorderLayout.NORTH);
+        add(inputPanel, BorderLayout.CENTER);
 
-        panel1.add(new JLabel("")); // Empty placeholder
-        panel1.add(selectButton);
+        add(topPanel, BorderLayout.NORTH);
+
+        inputPanel.add(label1);
+        inputPanel.add(idCombobox);
+
+        inputPanel.add(label2);
+        inputPanel.add(idLabel);   // Shows dynamic ID
+
+        inputPanel.add(label3);
+        inputPanel.add(nameLabel); // Shows dynamic name
+
+        inputPanel.add(label4);
+        inputPanel.add(majorLabel); // Shows dynamic major
+
+        inputPanel.add(label5);
+        inputPanel.add(yearLabel); // Shows dynamic academic year
+
+        inputPanel.add(new JLabel("")); // Empty placeholder
+
+        add(selectButton, BorderLayout.SOUTH);
 
         // 4. FRAME SETTINGS
-        setContentPane(panel1);
+        getContentPane().setBackground(new Color(229, 215, 139));
+        inputPanel.setBackground(new Color(229, 215, 139));
         setDefaultCloseOperation(EXIT_ON_CLOSE);
-        setTitle("Academic Performance Report");
-        setSize(600, 400); // Made slightly wider
+        setTitle("CRS - Generate Academic Performance Report");
+        setSize(1000, 700); // Made slightly wider
         setLocationRelativeTo(null); // Centers window on screen
+        setResizable(false);
         setVisible(true);
 
         // 5. EVENT LISTENERS
