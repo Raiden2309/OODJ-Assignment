@@ -7,33 +7,36 @@ import javax.swing.border.EmptyBorder;
 import javax.swing.border.CompoundBorder;
 import javax.swing.border.LineBorder;
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
+import java.awt.event.*;
 import java.net.URL;
+import java.util.Properties;
+import java.io.*;
 
 public class LoginView extends JFrame {
 
     private JTextField emailField;
     private JPasswordField passwordField;
     private JButton loginButton;
+    private JCheckBox rememberMeCheck;
+    private JLabel forgotPassLabel;
+    private JLabel registerLink;
     private UserDAO userDAO;
 
+    private final String CONFIG_FILE = "config.properties";
+
     public LoginView() {
-        // Initialize DAO
         userDAO = new UserDAO();
 
-        // Window Setup
         setTitle("CRS Login");
-        setSize(1000, 600); // Slightly larger default window
+        setSize(1000, 600);
         setDefaultCloseOperation(EXIT_ON_CLOSE);
         setLocationRelativeTo(null);
         setResizable(false);
 
-        // Main Container (Split Layout)
         JPanel mainPanel = new JPanel(new GridLayout(1, 2));
         add(mainPanel);
 
-        // --- LEFT PANEL (Image Side) ---
+        // --- LEFT PANEL ---
         JPanel leftPanel = new JPanel();
         leftPanel.setBackground(Color.WHITE);
         leftPanel.setLayout(new GridBagLayout());
@@ -54,83 +57,108 @@ public class LoginView extends JFrame {
         }
         leftPanel.add(logoLabel);
 
-        // --- RIGHT PANEL (Form Side) ---
+        // --- RIGHT PANEL ---
         JPanel rightPanel = new JPanel();
         rightPanel.setBackground(Color.WHITE);
         rightPanel.setLayout(new GridBagLayout());
 
-        // Form Container
         JPanel formPanel = new JPanel();
         formPanel.setLayout(new BoxLayout(formPanel, BoxLayout.Y_AXIS));
         formPanel.setBackground(Color.WHITE);
         formPanel.setBorder(new EmptyBorder(20, 50, 20, 50));
 
-        // Title
         JLabel titleLabel = new JLabel("LOGIN");
         titleLabel.setFont(new Font("Segoe UI", Font.BOLD, 36));
         titleLabel.setForeground(new Color(0, 102, 204));
         titleLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
 
-        // Email Label
+        JLabel subTitleLabel = new JLabel("Hello! Let's get started");
+        subTitleLabel.setFont(new Font("Segoe UI", Font.PLAIN, 16));
+        subTitleLabel.setForeground(Color.GRAY);
+        subTitleLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
+
+        // Inputs Setup
         JLabel emailLabel = new JLabel("Email");
         emailLabel.setFont(new Font("Segoe UI", Font.BOLD, 14));
-        emailLabel.setAlignmentX(Component.LEFT_ALIGNMENT); // Align to the left
+        emailLabel.setAlignmentX(Component.LEFT_ALIGNMENT);
 
-        // Email Input
         emailField = new JTextField();
         emailField.setPreferredSize(new Dimension(350, 50));
         emailField.setMaximumSize(new Dimension(350, 50));
         emailField.setFont(new Font("Segoe UI", Font.PLAIN, 16));
-        emailField.setBorder(new CompoundBorder(
-                new LineBorder(new Color(200, 200, 200), 1),
-                new EmptyBorder(10, 15, 10, 15)));
-        emailField.setAlignmentX(Component.LEFT_ALIGNMENT); // Align to the left
+        emailField.setBorder(new CompoundBorder(new LineBorder(new Color(200, 200, 200), 1), new EmptyBorder(10, 15, 10, 15)));
+        emailField.setAlignmentX(Component.LEFT_ALIGNMENT);
 
-        // Password Label
         JLabel passLabel = new JLabel("Password");
         passLabel.setFont(new Font("Segoe UI", Font.BOLD, 14));
-        passLabel.setAlignmentX(Component.LEFT_ALIGNMENT); // Align to the left
+        passLabel.setAlignmentX(Component.LEFT_ALIGNMENT);
 
-        // Password Input
         passwordField = new JPasswordField();
         passwordField.setPreferredSize(new Dimension(350, 50));
         passwordField.setMaximumSize(new Dimension(350, 50));
         passwordField.setFont(new Font("Segoe UI", Font.PLAIN, 16));
-        passwordField.setBorder(new CompoundBorder(
-                new LineBorder(new Color(200, 200, 200), 1),
-                new EmptyBorder(10, 15, 10, 15)));
-        passwordField.setAlignmentX(Component.LEFT_ALIGNMENT); // Align to the left
+        passwordField.setBorder(new CompoundBorder(new LineBorder(new Color(200, 200, 200), 1), new EmptyBorder(10, 15, 10, 15)));
+        passwordField.setAlignmentX(Component.LEFT_ALIGNMENT);
 
-        // Login Button
-        loginButton = new JButton("LOGIN");
-        loginButton.setPreferredSize(new Dimension(350, 50));
-        loginButton.setMaximumSize(new Dimension(350, 50));
-        loginButton.setFont(new Font("Segoe UI", Font.BOLD, 16));
-        loginButton.setBackground(new Color(0, 102, 204));
-        loginButton.setForeground(Color.WHITE);
-        loginButton.setFocusPainted(false);
-        loginButton.setCursor(new Cursor(Cursor.HAND_CURSOR));
-        loginButton.setAlignmentX(Component.CENTER_ALIGNMENT); // Keep button centered
+        // Extras
+        JPanel extrasPanel = new JPanel(new BorderLayout());
+        extrasPanel.setBackground(Color.WHITE);
+        extrasPanel.setMaximumSize(new Dimension(350, 30));
+        extrasPanel.setAlignmentX(Component.CENTER_ALIGNMENT);
 
-        // Spacing Helpers
+        rememberMeCheck = new JCheckBox("Remember me");
+        rememberMeCheck.setFont(new Font("Segoe UI", Font.PLAIN, 12));
+        rememberMeCheck.setBackground(Color.WHITE);
+        rememberMeCheck.setFocusPainted(false);
+
+        forgotPassLabel = new JLabel("Forgot password?");
+        forgotPassLabel.setFont(new Font("Segoe UI", Font.BOLD, 12));
+        forgotPassLabel.setForeground(new Color(0, 102, 204));
+        forgotPassLabel.setCursor(new Cursor(Cursor.HAND_CURSOR));
+        forgotPassLabel.addMouseListener(new MouseAdapter() {
+            public void mouseClicked(MouseEvent e) {
+                handleForgotPassword();
+            }
+        });
+
+        extrasPanel.add(rememberMeCheck, BorderLayout.WEST);
+        extrasPanel.add(forgotPassLabel, BorderLayout.EAST);
+
+        // --- CUSTOM ROUNDED BUTTONS ---
+
+        // Login Button (Blue)
+        loginButton = createRoundedButton("LOGIN", new Color(0, 102, 204), Color.WHITE);
+
+        // Register Link (Standard Link Style WITHOUT Hover Animation)
+        registerLink = new JLabel("Create new account");
+        registerLink.setFont(new Font("Segoe UI", Font.BOLD, 14));
+        registerLink.setForeground(new Color(0, 102, 204));
+        registerLink.setCursor(new Cursor(Cursor.HAND_CURSOR));
+        registerLink.setAlignmentX(Component.CENTER_ALIGNMENT);
+
+        registerLink.addMouseListener(new MouseAdapter() {
+            public void mouseClicked(MouseEvent e) {
+                handleRegister();
+            }
+        });
+
+        // Assembly
         formPanel.add(Box.createVerticalStrut(30));
         formPanel.add(titleLabel);
-        formPanel.add(Box.createVerticalStrut(40));
+        formPanel.add(subTitleLabel);
+        formPanel.add(Box.createVerticalStrut(30));
 
-        // Wrap input fields and labels in panels for left alignment within the centered form
         JPanel emailPanel = new JPanel();
         emailPanel.setLayout(new BoxLayout(emailPanel, BoxLayout.Y_AXIS));
         emailPanel.setBackground(Color.WHITE);
         emailPanel.add(emailLabel);
         emailPanel.add(Box.createVerticalStrut(8));
         emailPanel.add(emailField);
-        // Ensure emailPanel doesn't stretch excessively horizontally but fills width
         emailPanel.setMaximumSize(new Dimension(350, 80));
-        emailPanel.setAlignmentX(Component.CENTER_ALIGNMENT); // Center the panel itself
-
+        emailPanel.setAlignmentX(Component.CENTER_ALIGNMENT);
         formPanel.add(emailPanel);
 
-        formPanel.add(Box.createVerticalStrut(20));
+        formPanel.add(Box.createVerticalStrut(15));
 
         JPanel passPanel = new JPanel();
         passPanel.setLayout(new BoxLayout(passPanel, BoxLayout.Y_AXIS));
@@ -140,30 +168,81 @@ public class LoginView extends JFrame {
         passPanel.add(passwordField);
         passPanel.setMaximumSize(new Dimension(350, 80));
         passPanel.setAlignmentX(Component.CENTER_ALIGNMENT);
-
         formPanel.add(passPanel);
 
-        formPanel.add(Box.createVerticalStrut(40));
+        formPanel.add(Box.createVerticalStrut(10));
+        formPanel.add(extrasPanel);
+
+        formPanel.add(Box.createVerticalStrut(30));
         formPanel.add(loginButton);
+        formPanel.add(Box.createVerticalStrut(20));
+        formPanel.add(registerLink);
 
-        // Add Form to Right Panel
         rightPanel.add(formPanel);
-
-        // Add Panels to Main Frame
         mainPanel.add(leftPanel);
         mainPanel.add(rightPanel);
 
-        // --- Logic ---
-        loginButton.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                handleLogin();
-            }
-        });
+        loadPreferences();
 
+        loginButton.addActionListener(e -> handleLogin());
         getRootPane().setDefaultButton(loginButton);
 
         setVisible(true);
+    }
+
+    // --- Helper for Rounded Button with Shadow & Hover ---
+    private JButton createRoundedButton(String text, Color bgColor, Color fgColor) {
+        JButton btn = new JButton(text) {
+            @Override
+            protected void paintComponent(Graphics g) {
+                Graphics2D g2 = (Graphics2D) g.create();
+                g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+
+                int shadowGap = 5;
+                int arcSize = 50; // Increased roundness
+                int width = getWidth() - shadowGap;
+                int height = getHeight() - shadowGap;
+
+                // Draw Soft Shadow
+                g2.setColor(new Color(200, 200, 200));
+                g2.fillRoundRect(shadowGap, shadowGap, width, height, arcSize, arcSize);
+
+                // Hover Effect: Shift button slightly
+                if (getModel().isPressed()) {
+                    g2.translate(2, 2);
+                    g2.setColor(bgColor.darker());
+                } else if (getModel().isRollover()) {
+                    g2.translate(-1, -1); // Lift up effect
+                    g2.setColor(bgColor.brighter());
+                } else {
+                    g2.setColor(bgColor);
+                }
+
+                // Draw Button Body
+                g2.fillRoundRect(0, 0, width, height, arcSize, arcSize);
+
+                // Paint Text
+                g2.setColor(fgColor);
+                FontMetrics fm = g2.getFontMetrics();
+                int textX = (width - fm.stringWidth(getText())) / 2;
+                int textY = (height - fm.getHeight()) / 2 + fm.getAscent();
+                g2.drawString(getText(), textX, textY);
+
+                g2.dispose();
+            }
+        };
+
+        btn.setPreferredSize(new Dimension(350, 60)); // Taller for better roundness
+        btn.setMaximumSize(new Dimension(350, 60));
+        btn.setFont(new Font("Segoe UI", Font.BOLD, 16));
+        btn.setForeground(fgColor);
+        btn.setFocusPainted(false);
+        btn.setBorderPainted(false);
+        btn.setContentAreaFilled(false);
+        btn.setCursor(new Cursor(Cursor.HAND_CURSOR));
+        btn.setAlignmentX(Component.CENTER_ALIGNMENT);
+
+        return btn;
     }
 
     private void handleLogin() {
@@ -178,10 +257,54 @@ public class LoginView extends JFrame {
         User user = userDAO.login(email, password);
 
         if (user != null) {
+            if (rememberMeCheck.isSelected()) {
+                savePreferences(email);
+            } else {
+                savePreferences("");
+            }
             JOptionPane.showMessageDialog(this, "Login Successful!\nRole: " + user.getRole().getRoleName());
             dispose();
         } else {
             JOptionPane.showMessageDialog(this, "Invalid Email or Password", "Login Failed", JOptionPane.ERROR_MESSAGE);
+        }
+    }
+
+    private void handleForgotPassword() {
+        String email = JOptionPane.showInputDialog(this, "Enter your registered email address:");
+        if (email != null && !email.isEmpty()) {
+            JOptionPane.showMessageDialog(this, "If an account exists for " + email + ", a reset link has been sent.", "Reset Password", JOptionPane.INFORMATION_MESSAGE);
+        }
+    }
+
+    private void handleRegister() {
+        dispose();
+        new RegisterView().setVisible(true);
+    }
+
+    private void savePreferences(String email) {
+        Properties prefs = new Properties();
+        prefs.setProperty("last_email", email);
+        try (FileOutputStream out = new FileOutputStream(CONFIG_FILE)) {
+            prefs.store(out, "CRS User Preferences");
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    private void loadPreferences() {
+        Properties prefs = new Properties();
+        File file = new File(CONFIG_FILE);
+        if (file.exists()) {
+            try (FileInputStream in = new FileInputStream(file)) {
+                prefs.load(in);
+                String savedEmail = prefs.getProperty("last_email", "");
+                if (!savedEmail.isEmpty()) {
+                    emailField.setText(savedEmail);
+                    rememberMeCheck.setSelected(true);
+                }
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
         }
     }
 
