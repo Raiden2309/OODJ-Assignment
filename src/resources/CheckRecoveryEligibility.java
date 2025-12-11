@@ -1,8 +1,8 @@
 package resources;
 
 import data_access.DataAccess;
+import service.EnrolledCourseDAO;
 import service.StudentDAO;
-import service.AcademicRecordDAO;
 import academic.EligibilityCheck;
 import domain.Student;
 
@@ -268,13 +268,11 @@ public class CheckRecoveryEligibility extends JFrame {
 
         // 1. Initialize DAOs
         StudentDAO studentDAO = new StudentDAO();
-        AcademicRecordDAO recordDAO = new AcademicRecordDAO();
+        EnrolledCourseDAO enrolledCourseDAO = new EnrolledCourseDAO();
 
         // 2. Load Data
         List<Student> allStudents = studentDAO.loadAllStudents();
-        recordDAO.loadRecords(allStudents);
-
-        recordDAO.loadRecords(allStudents);
+        enrolledCourseDAO.loadRecords(allStudents);
 
         // 3. Find target
         Student targetStudent = null;

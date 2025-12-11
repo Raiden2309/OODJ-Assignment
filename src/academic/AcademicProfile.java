@@ -2,6 +2,8 @@ package academic;
 
 import java.util.ArrayList;
 import java.util.List;
+
+import domain.GradingScheme;
 import report.Report;
 
 public class AcademicProfile{
@@ -23,12 +25,20 @@ public class AcademicProfile{
             totalCredits += Double.parseDouble(result.getCourse().getCredits());
         }
         this.CGPA = totalCredits > 0 ? totalGP / totalCredits : 0.0;
+        System.out.println(CGPA);
         return CGPA;
     }
 
     public int getTotalFailedCourse(){
+        final List<String> failingGrades = List.of(
+                GradingScheme.D.getGrade(),
+                GradingScheme.F_PLUS.getGrade(),
+                GradingScheme.F.getGrade(),
+                GradingScheme.F_MINUS.getGrade()
+        );
+
         return (int) courseResults.stream()
-                .filter(r -> r.getGrade().equals("F"))
+                .filter(r -> failingGrades.contains(r.getGrade()))
                 .count();
     }
 

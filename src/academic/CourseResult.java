@@ -1,5 +1,7 @@
 package academic;
 
+import domain.GradingScheme;
+
 import java.util.ArrayList;
 import java.util.List;
 
@@ -16,8 +18,14 @@ public class CourseResult {
     }
 
     public double calculateGradePoint(){
-        this.gradePoint = grade.equals("A") ? 4.0 : (grade.equals("B") ? 3.0 : 0.0);
-        return gradePoint;
+        for (GradingScheme gs : GradingScheme.values())
+        {
+            if (gs.getGrade().equals(this.grade))
+            {
+                return gs.getGpa();
+            }
+        }
+        return 0.0;
     }
 
     public boolean addAttempt(CourseAttempt attempt){
