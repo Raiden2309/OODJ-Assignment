@@ -17,15 +17,15 @@ public class StudentPerformance
 
     public List<String[]> getPerformance(DataAccess data)
     {
-        List<String[]> enrollments = data.getEnrollments(new String[]{studentId});
+        List<String[]> enrolledCourses = data.getEnrolledCourses(new String[]{studentId});
         List<String[]> courses = data.getCourses(null);
         List<String[]> student_enrollments = new ArrayList<>();
 
-        for (String[] enrollment : enrollments)
+        for (String[] enrolledCourse : enrolledCourses)
         {
-            String courseId = enrollment[2];
-            double examScore = Double.parseDouble(enrollment[5]);
-            double assignmentScore = Double.parseDouble(enrollment[6]);
+            String courseId = enrolledCourse[1];
+            double examScore = Double.parseDouble(enrolledCourse[4]);
+            double assignmentScore = Double.parseDouble(enrolledCourse[5]);
 
             for (String[] course : courses)
             {
@@ -91,4 +91,3 @@ public class StudentPerformance
         return failedCourses;
     }
 }
-

@@ -1,17 +1,21 @@
 package academic;
 
-public class FailedComponent {
+public class EnrolledCourse {
     private String studentID;
     private String courseID;
+    private int year;
+    private int semester;
     private int examScore;
     private int assignmentScore;
     private int examWeight;
     private int assignmentWeight;
     private String failedComponent;
 
-    public FailedComponent(String studentID, String courseID, int examScore, int assignmentScore, int examWeight, int assignmentWeight, String failedComponent){
+    public EnrolledCourse(String studentID, String courseID, int year, int semester, int examScore, int assignmentScore, int examWeight, int assignmentWeight, String failedComponent){
         this.studentID = studentID;
         this.courseID = courseID;
+        this.year = year;
+        this.semester = semester;
         this.examScore = examScore;
         this.assignmentScore = assignmentScore;
         this.examWeight = examWeight;
@@ -26,6 +30,10 @@ public class FailedComponent {
     public String getCourseID() {
         return courseID;
     }
+
+    public int getYear() { return year; }
+
+    public int getSemester() { return semester; }
 
     public int getExamScore() {
         return examScore;

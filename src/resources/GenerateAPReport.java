@@ -17,14 +17,16 @@ public class GenerateAPReport extends JFrame {
     private JLabel idLabel; // Shows ID
     private JLabel label2; // "Student Name:"
     private JLabel nameLabel; // Shows Name
-    private JLabel label3; // "Program:"
-    private JLabel programLabel; // Shows Program
+    private JLabel label3; // "Major:"
+    private JLabel majorLabel; // Shows Major
+    private JLabel label4; // "Year:"
+    private JLabel yearLabel; // Shows Academic Year
 
     public GenerateAPReport()
     {
         // 1. INITIALIZE ALL COMPONENTS (Fixes NullPointerExceptions)
         // We use a GridLayout (5 rows, 2 columns) to organize them nicely.
-        panel1 = new JPanel(new GridLayout(5, 2, 10, 10));
+        panel1 = new JPanel(new GridLayout(6, 2, 10, 10));
         panel1.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20)); // Add padding
 
         idCombobox = new JComboBox();
@@ -33,11 +35,13 @@ public class GenerateAPReport extends JFrame {
         // Initialize Labels
         label1 = new JLabel("Select Student:");
         label2 = new JLabel("Student Name:");
-        label3 = new JLabel("Enrolled Program:");
+        label3 = new JLabel("Major:");
+        label4 = new JLabel("Year");
 
         idLabel = new JLabel("-"); // Placeholder text
         nameLabel = new JLabel("-");
-        programLabel = new JLabel("-");
+        majorLabel = new JLabel("-");
+        yearLabel = new JLabel("-");
 
         // 2. LOAD DATA
         DataAccess data = new DataAccess();
@@ -65,7 +69,10 @@ public class GenerateAPReport extends JFrame {
         panel1.add(idLabel);   // Shows dynamic ID
 
         panel1.add(label3);
-        panel1.add(programLabel); // Shows dynamic program
+        panel1.add(majorLabel); // Shows dynamic major
+
+        panel1.add(label4);
+        panel1.add(yearLabel); // Shows dynamic academic year
 
         panel1.add(new JLabel("")); // Empty placeholder
         panel1.add(selectButton);
@@ -95,8 +102,6 @@ public class GenerateAPReport extends JFrame {
                         String id = parts[0].trim();
                         // The rest is the name (we don't strictly need to parse name from string since we lookup by ID)
 
-                        String enrolled_program = "";
-
                         for (String[] student : students)
                         {
                             if (student[0].equals(id))
@@ -104,25 +109,17 @@ public class GenerateAPReport extends JFrame {
                                 // Update Labels from real data
                                 idLabel.setText(student[0]);
                                 nameLabel.setText(student[1] + " " + student[2]);
-
-                                // Get Program
-                                List<String[]> programs = data.getPrograms(student);
-                                if (!programs.isEmpty()) {
-                                    String[] program = programs.get(0);
-                                    enrolled_program = program[1] + " (" + program[2] + ")";
-                                } else {
-                                    enrolled_program = "No Program Found";
-                                }
-                                break;
+                                majorLabel.setText(student[3]);
+                                yearLabel.setText(student[4]);
                             }
                         }
-                        programLabel.setText(enrolled_program);
                     }
                     else
                     {
                         nameLabel.setText("-");
                         idLabel.setText("-");
-                        programLabel.setText("-");
+                        majorLabel.setText("-");
+                        yearLabel.setText("-");
                     }
                 }
             }

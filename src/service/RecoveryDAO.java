@@ -62,7 +62,7 @@ public class RecoveryDAO {
         for (int i = 0; i < results.size(); i++) {
             RecoveryResult r = results.get(i);
 
-            if (r.getStudentID().equals(studentID) && r.getCourse().getCourseID().equals(courseID) && r.getAttemptID().equals(attemptID)) {
+            if (r.getStudentID().equals(studentID) && r.getCourseID().equals(courseID) && r.getAttemptID().equals(attemptID)) {
                 results.set(i, updatedResult);
                 break;
             }

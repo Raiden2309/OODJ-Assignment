@@ -4,18 +4,17 @@ import java.io.BufferedReader;
 import java.io.FileReader;
 import java.util.ArrayList;
 import java.util.List;
+
+import academic.Course;
+import academic.EnrolledCourse;
 import domain.Student;
-import domain.Course;
-import domain.Enrollment;
-import domain.Program;
 import domain.SystemRole;
 
 public class DataAccess
 {
     final String STUDENT_INFO = "data/student_information.csv";
     final String COURSE_INFO = "data/course_assessment_information.csv";
-    final String STUDENT_ENROLLED_COURSES = "data/student_enrollment_information.csv";
-    final String PROGRAM_INFO = "data/program_information.csv";
+    final String STUDENT_ENROLLED_COURSES = "data/student_enrolled_courses.csv";
 
     private final String DEFAULT_PASSWORD = "pass";
     private final SystemRole STUDENT_ROLE = new SystemRole("Student", List.of("View Profile", "Enroll"));
@@ -66,7 +65,7 @@ public class DataAccess
             while ((line = br.readLine()) != null)
             {
                 String[] data = line.split(",");
-                Course course = new Course(data[0], data[1], data[2], data[3], data[4], data[5]);
+                Course course = new Course(data[0], data[1], data[2], data[3], data[4], data[5], data[6]);
 
                 courses.add(course);
             }
@@ -78,9 +77,9 @@ public class DataAccess
         return courses;
     }
 
-    public List<Enrollment> enrollmentList()
+    public List<EnrolledCourse> enrolledCoursesList()
     {
-        List<Enrollment> enrollments = new ArrayList<>();
+        List<EnrolledCourse> enrolledCourses = new ArrayList<>();
 
         try (BufferedReader br = new BufferedReader(new FileReader(STUDENT_ENROLLED_COURSES)))
         {
@@ -90,40 +89,25 @@ public class DataAccess
             while ((line = br.readLine()) != null)
             {
                 String[] data = line.split(",");
-                Enrollment enrollment = new Enrollment(data[0], data[1], data[2], data[3], data[4], data[5], data[6]);
+                EnrolledCourse enrolledCourse = new EnrolledCourse(
+                        data[0],
+                        data[1],
+                        Integer.parseInt(data[2]),
+                        Integer.parseInt(data[3]),
+                        Integer.parseInt(data[4]),
+                        Integer.parseInt(data[5]),
+                        Integer.parseInt(data[6]),
+                        Integer.parseInt(data[7]),
+                        data[8]);
 
-                enrollments.add(enrollment);
+                enrolledCourses.add(enrolledCourse);
             }
         }
         catch (Exception e)
         {
             System.out.println("Error: " + e);
         }
-        return enrollments;
-    }
-
-    public List<Program> programList()
-    {
-        List<Program> programs = new ArrayList<>();
-
-        try (BufferedReader br = new BufferedReader(new FileReader(PROGRAM_INFO)))
-        {
-            String line;
-            br.readLine();
-
-            while ((line = br.readLine()) != null)
-            {
-                String[] data = line.split(",");
-                Program program = new Program(data[0], data[1], data[2]);
-
-                programs.add(program);
-            }
-        }
-        catch (Exception e)
-        {
-            System.out.println("Error: " + e);
-        }
-        return programs;
+        return enrolledCourses;
     }
 
     public List<String[]> getStudents()
@@ -132,33 +116,42 @@ public class DataAccess
 
         for (Student s : studentList())
         {
-            String[] student = {s.getStudentId(), s.getFirstName(), s.getLastName(), s.getMajor(), s.getEmail(), s.getRecoveryEligibility()};
+            String[] student = {s.getStudentId(), s.getFirstName(), s.getLastName(), s.getMajor(), s.getAcademicYear(), s.getEmail(), s.getRecoveryEligibility()};
             allStudents.add(student);
         }
         return allStudents;
     }
 
-    public List<String[]> getEnrollments(String[] student)
+    public List<String[]> getEnrolledCourses(String[] student)
     {
-        List<String[]> allEnrollments = new ArrayList<>();
+        List<String[]> enrolledCourses = new ArrayList<>();
 
-        for (Enrollment en : enrollmentList())
+        for (EnrolledCourse ec : enrolledCoursesList())
         {
-            String[] enrollment = {en.getEnrollmentId(), en.getStudentId(), en.getCourseId(), en.getYear(), en.getSemester(), en.getExamScore(), en.getAssignmentScore()};
+            String[] enrolledCourse = {
+                    ec.getStudentID(),
+                    ec.getCourseID(),
+                    String.valueOf(ec.getYear()),
+                    String.valueOf(ec.getSemester()),
+                    String.valueOf(ec.getExamScore()),
+                    String.valueOf(ec.getAssignmentScore()),
+                    String.valueOf(ec.getExamWeight()),
+                    String.valueOf(ec.getAssignmentWeight())
+            };
 
             if (student == null)
             {
-                allEnrollments.add(enrollment);
+                enrolledCourses.add(enrolledCourse);
             }
             else
             {
-                if (enrollment[1].trim().equals(student[0]))
+                if (enrolledCourse[0].trim().equals(student[0]))
                 {
-                    allEnrollments.add(enrollment);
+                    enrolledCourses.add(enrolledCourse);
                 }
             }
         }
-        return allEnrollments;
+        return enrolledCourses;
     }
 
     public List<String[]> getCourses(String[] student)
@@ -181,28 +174,5 @@ public class DataAccess
             }
         }
         return allCourses;
-    }
-
-    public List<String[]> getPrograms(String[] student)
-    {
-        List<String[]> allPrograms = new ArrayList<>();
-
-        for (Program p : programList()) {
-            String[] program = {p.getProgramId(), p.getName(), p.getLevel()};
-
-            if (student == null)
-            {
-                allPrograms.add(program);
-            }
-            else
-            {
-                if (program[0].trim().equals(student[3]))
-                {
-                    allPrograms.add(program);
-                    break;
-                }
-            }
-        }
-        return allPrograms;
     }
 }
