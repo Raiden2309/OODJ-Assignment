@@ -20,9 +20,11 @@ public class GenerateReportPDF
     private final Font column = FontFactory.getFont(FontFactory.TIMES_BOLD, 12, BaseColor.BLACK);
     private final String pdfTitle = "Student Academic Performance Report";
 
-    private List<Double> totalGpaBySemester = new ArrayList<>();
     DataAccess data = new DataAccess();
     List<String[]> students = data.getStudents();
+
+    int totalCreditHours = 0;
+    double totalGpa = 0;
 
     public void createDocument(String studentId)
     {
@@ -166,8 +168,8 @@ public class GenerateReportPDF
         DataAccess data = new DataAccess();
         StudentPerformance perf = new StudentPerformance(studentId);
         List<String[]> enrolledCourses = data.getEnrolledCourses(new String[]{studentId});
-        int totalCreditHours = 0;
-        double gpa = 0;
+        int creditsBySemester = 0;
+        double gpaBySemester = 0;
 
         for (String[] enrolledCourse : enrolledCourses)
         {
@@ -177,18 +179,14 @@ public class GenerateReportPDF
                 {
                     if (row[0].equals(enrolledCourse[1]))
                     {
+                        int creditHours = Integer.parseInt(row[2]);
+                        double gradePoint = Double.parseDouble(row[4]);
+
+                        creditsBySemester += creditHours;
+                        gpaBySemester += gradePoint * creditHours;
 
                         for (String s : row)
                         {
-                            if (s.equals(row[2]))
-                            {
-                                totalCreditHours += Integer.parseInt(s);
-                            }
-                            if (s.equals(row[4]))
-                            {
-                                gpa += Double.parseDouble(s) * Double.parseDouble(row[2]);
-                            }
-
                             PdfPCell cell = new PdfPCell();
 
                             cell.setPhrase(new Phrase(s, body));
@@ -199,7 +197,7 @@ public class GenerateReportPDF
                 }
             }
         }
-        addSummary(studentId, tab, totalCreditHours, gpa);
+        addSummary(studentId, tab, creditsBySemester, gpaBySemester);
     }
 
     public void addSummary(String studentId, PdfPTable tab, int creditHours, double gpa)
@@ -211,16 +209,22 @@ public class GenerateReportPDF
         final List<String> summaryTitles = Arrays.asList("Total Credit Hours", "GPA", "CGPA");
         final int totalSummary = summaryTitles.size();
 
-        String cgpa_by_semester = String.format("%.2f", gpa / creditHours);
-        double cgpa = 0;
-        totalGpaBySemester.add(Double.valueOf(cgpa_by_semester));
+        totalCreditHours += creditHours;
+        totalGpa += gpa;
 
-        for (Double gradePoint : totalGpaBySemester)
-        {
-            cgpa += gradePoint;
+        double overallCgpa = 0;
+        if (totalCreditHours > 0) {
+            overallCgpa = totalGpa / totalCreditHours;
         }
 
-        String[] results = {String.valueOf(creditHours), cgpa_by_semester, String.format("%.2f", cgpa / totalGpaBySemester.size())};
+        String cgpaBySemester = String.format("%.2f", gpa / creditHours);
+        String totalCgpa = String.format("%.2f", overallCgpa);
+
+        String[] results = {
+                String.valueOf(creditHours),
+                cgpaBySemester,
+                totalCgpa
+        };
         int cellsAdded = 0;
 
         for (String summary : summaryTitles)

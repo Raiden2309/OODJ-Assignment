@@ -19,3 +19,17 @@ S095,C232,1,1,44,46,70,30,Exam
 S097,C235,1,1,51,24,73,27,Assignment
 S099,C238,1,1,39,56,41,59,Exam
 S100,C240,1,1,48,45,51,49,Exam
+S001,C201,1,1,100,100,50,50,Both Exam and Assignment
+S001,C202,1,1,0,0,50,50,Both Exam and Assignment
+S001,C203,1,2,0,0,50,50,Both Exam and Assignment
+S001,C204,2,1,0,0,50,50,Both Exam and Assignment
+S001,C205,3,1,0,0,50,50,Both Exam and Assignment
+S002,C201,1,1,0,0,50,50,Both Exam and Assignment
+S002,C204,1,2,0,0,50,50,Both Exam and Assignment
+S002,C206,1,3,0,0,50,50,Both Exam and Assignment
+S003,C205,1,1,43,20,50,50,Assignment
+S003,C206,2,1,23,100,50,50,Exam
+S003,C207,2,2,0,0,50,50,Both Exam and Assignment
+S003,C208,3,1,0,0,50,50,Both Exam and Assignment
+S004,C201,1,1,0,0,50,50,Both Exam and Assignment
+S004,C205,1,1,100,100,50,50,None

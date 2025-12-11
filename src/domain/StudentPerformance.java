@@ -31,7 +31,7 @@ public class StudentPerformance
             {
                 if (course[0].equals(courseId))
                 {
-                    student_enrollments.add(getStudentEnrolledCourses(course, examScore, assignmentScore));
+                    student_enrollments.add((String[]) getStudentEnrolledCourses(course, examScore, assignmentScore));
                     break;
                 }
             }
