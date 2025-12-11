@@ -40,7 +40,7 @@ public class AcademicProfile{
         return (int) courseResults.stream()
                 .filter(r -> failingGrades.contains(r.getGrade()))
                 .count();
-    } //TODO: SOMETHING WRONG HERE TOO
+    }
 
     public Report generateReport() {
         return new Report(this);

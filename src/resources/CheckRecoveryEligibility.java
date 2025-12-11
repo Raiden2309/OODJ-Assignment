@@ -318,5 +318,4 @@ public class CheckRecoveryEligibility extends JFrame {
     public static void main (String[]args){
         SwingUtilities.invokeLater(() -> new CheckRecoveryEligibility());
     }
-    // TODO: RIGHT NOW GENERATEAPREPORT.JAVA USES STUDENT
 }
