@@ -34,37 +34,22 @@ public class ReportGUI extends JFrame {
     public ReportGUI() {
         $$$setupUI$$$();
 
-        // STEP 1: WINDOW PROPERTIES
         setTitle("Academic Performance Report Generator");
         setSize(800, 600);
         setLocationRelativeTo(null);
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setContentPane(mainPanel);
 
-        // STEP 2: CREATE COMPONENTS
         reportGen = new ReportGenerator();
         studentDropdown. addItem("-- Select a student --");
 
-        // STEP 3: REPLACE STANDARD BUTTON WITH ROUNDED BUTTON
         replaceWithRoundedButton();
 
-        // STEP 4: LOAD STUDENTS
         loadStudents();
 
-        // STEP 5: SET UP BUTTON ACTION
         generateButton.addActionListener(new ActionListener() {
-            /**
-             * actionPerformed(): This method runs when button is clicked
-             *
-             * Steps:
-             * 1. Check if a student is selected
-             * 2. Get the selected student's ID
-             * 3. Call reportGen.generatePDF()
-             * 4. Show success or error message
-             */
             @Override
             public void actionPerformed(ActionEvent e) {
-                // Call our generateReport() method when button is clicked
                 generateReport();
             }
         });
@@ -276,7 +261,7 @@ public class ReportGUI extends JFrame {
 
             statusLabel. setText("Status: Report generated successfully!");
 
-            // The report is saved in data/report/ folder
+            // The report is saved in /data/report/ folder
             String successMessage = "PDF Report generated successfully!\n\n" +
                     "Student: " + selectedItem + "\n" +
                     "Saved to: data/report/" + studentID + "_Report.pdf";
@@ -312,20 +297,15 @@ public class ReportGUI extends JFrame {
 
     // MAIN METHOD
     public static void main(String[] args) {
-
-        // SwingUtilities.invokeLater(): Runs code on the Event Dispatch Thread
-        // This is the proper way to start a Swing GUI application
-        // It ensures thread safety for GUI operations
         SwingUtilities.invokeLater(new Runnable() {
             @Override
             public void run() {
                 // Create the GUI window
                 ReportGUI gui = new ReportGUI();
 
-                // Make the window visible
-                // Without this, the window won't appear on screen
                 gui. setVisible(true);
             }
         });
     }
+
 }
