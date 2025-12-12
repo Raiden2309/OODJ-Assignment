@@ -132,8 +132,9 @@ public class Dashboard extends JFrame {
             JButton btnManageUsers = createMenuButton("Manage Students", "user.png");
             btnManageUsers.addActionListener(e -> {
                 setActiveButton(btnManageUsers);
+                // Note: StudentManagementView should be DISPOSE_ON_CLOSE
                 new StudentManagementView(currentUser).setVisible(true);
-                dispose();
+                // dispose(); // REMOVED
             });
             menuPanel.add(btnManageUsers);
         }
@@ -189,50 +190,47 @@ public class Dashboard extends JFrame {
             switchView("HOME", "Dashboard Overview", pageTitle);
         });
 
-        // Launch windows
+        // Launch windows - DISPOSE REMOVED
         btnCheck.addActionListener(e -> {
             setActiveButton(btnCheck);
             new CheckRecoveryEligibility(currentUser).setVisible(true);
-            dispose();
+            // dispose(); // REMOVED
         });
 
         btnFailed.addActionListener(e -> {
             setActiveButton(btnFailed);
             new FailedComponentOverview(currentUser).setVisible(true);
-            dispose();
+            // dispose(); // REMOVED
         });
 
         btnRec.addActionListener(e -> {
             setActiveButton(btnRec);
             new RecommendationEntry(currentUser).setVisible(true);
-            dispose();
+            // dispose(); // REMOVED
         });
 
         btnSet.addActionListener(e -> {
             setActiveButton(btnSet);
             new MilestoneActionPlan(currentUser).setVisible(true);
-            dispose();
+            // dispose(); // REMOVED
         });
 
         btnMonitor.addActionListener(e -> {
             setActiveButton(btnMonitor);
             new RecoveryProgress(currentUser).setVisible(true);
-            dispose();
+            // dispose(); // REMOVED
         });
 
         btnAccount.addActionListener(e -> {
             setActiveButton(btnAccount);
             new ManageAccountView(currentUser).setVisible(true);
-            // Don't dispose dashboard for account view usually, but consistency:
-            // If ManageAccountView is modal/dialog, don't dispose. If full frame replacing dash, dispose.
-            // Based on previous code, ManageAccountView has a "Back" button to reopen Dashboard.
-            dispose();
+            // dispose(); // REMOVED
         });
 
         btnLogout.addActionListener(e -> {
             int choice = JOptionPane.showConfirmDialog(this, "Logout?", "Confirm", JOptionPane.YES_NO_OPTION);
             if (choice == JOptionPane.YES_OPTION) {
-                dispose();
+                dispose(); // ONLY dispose on Logout
                 new LoginView().setVisible(true);
             }
         });
@@ -347,7 +345,6 @@ public class Dashboard extends JFrame {
         btn.setMaximumSize(new Dimension(Integer.MAX_VALUE, 45));
 
         try {
-            // Using "icons/" prefix as files are in src/resources/icons
             URL iconUrl = getClass().getResource("icons/" + iconName);
             if (iconUrl != null) {
                 ImageIcon icon = new ImageIcon(iconUrl);
