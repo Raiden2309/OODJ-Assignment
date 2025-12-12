@@ -1,6 +1,6 @@
 RecID,StudentID,CourseID,Description,Timeline,Deadline,Status
-R001,S005,C201,Exam,2 weeks,2025-11-23,Pending
-R002,S017,C204,Exam,3 weeks,2025-11-23,Approved
+R001,S005,C201,Retake Exam,2 weeks,2025-11-23,Pending
+R002,S017,C204,Retake Exam,3 weeks,2025-11-23,Pending
 R003,S032,C205,Overall Fail,2 weeks,2025-11-23,Pending
 R004,S040,C208,Exam,2 weeks,2025-11-23,Completed
 R005,S048,C210,Exam,2 weeks,2025-11-23,Pending

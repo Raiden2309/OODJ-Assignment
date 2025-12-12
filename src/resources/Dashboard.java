@@ -184,7 +184,7 @@ public class Dashboard extends JFrame {
 
         btnCheck.addActionListener(e -> {
             setActiveButton(btnCheck);
-            new resources.CheckRecoveryEligibility().setVisible(true);
+            new CheckRecoveryEligibility(currentUser).setVisible(true);
         });
 
         btnFailed.addActionListener(e -> {

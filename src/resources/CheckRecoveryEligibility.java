@@ -5,8 +5,10 @@ import service.StudentDAO;
 import service.AcademicRecordDAO;
 import academic.EligibilityCheck;
 import domain.Student;
+import domain.User;
 
 import javax.swing.*;
+import javax.swing.border.EmptyBorder;
 import java.awt.*;
 import java.awt.event.*;
 import java.util.List;
@@ -15,309 +17,355 @@ import java.util.Collections;
 import java.util.Comparator;
 
 public class CheckRecoveryEligibility extends JFrame {
-    private JPanel panel1;
+
+    private JPanel mainPanel;
     private JComboBox<String> idCombobox;
     private JButton checkEligibilityButton;
+    private JButton btnBack;
 
-    // Static Labels
-    private JLabel label1; // Select Student
-    private JLabel label2; // First Name
-    private JLabel label3; // Last Name
-    private JLabel label4; // Major
-    private JLabel label5; // Year
-
-    // Dynamic Labels (Data Display)
+    // Dynamic Labels
     private JLabel firstNameLabel;
     private JLabel lastNameLabel;
     private JLabel majorLabel;
     private JLabel yearLabel;
 
+    // Result Labels (Updated to show details inline)
     private JLabel eligibilityLabel;
+    private JLabel cgpaLabel;
+    private JLabel failedCountLabel;
 
-    final Color eligibleColour = new Color(0, 188, 0);
-    final Color ineligibleColour = Color.RED;
+    // Styling Constants
+    private final Color ACCENT_COLOR = new Color(0, 102, 204);
+    private final Color ELIGIBLE_COLOR = new Color(40, 167, 69);
+    private final Color INELIGIBLE_COLOR = new Color(220, 53, 69);
+    private final Font HEADER_FONT = new Font("Segoe UI", Font.BOLD, 24);
+    private final Font LABEL_FONT = new Font("Segoe UI", Font.BOLD, 14);
+    private final Font VALUE_FONT = new Font("Segoe UI", Font.PLAIN, 14);
 
     // Backend Access
     DataAccess data = new DataAccess();
     List<String[]> students = data.getStudents();
-
-    // List to hold the full data for filtering
     private List<String> allItems = new ArrayList<>();
+    private User loggedInUser;
 
-    public CheckRecoveryEligibility() {
-        // 1. INITIALIZE COMPONENTS
-        panel1 = new JPanel(new GridLayout(9, 2, 10, 10));
-        panel1.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
+    public CheckRecoveryEligibility(User user) {
+        this.loggedInUser = user;
 
-        // Setup Dropdown
+        setTitle("Check Student Eligibility");
+        setSize(800, 700); // Increased height slightly
+        setLocationRelativeTo(null);
+        setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+
+        mainPanel = new JPanel(new BorderLayout());
+        mainPanel.setBackground(Color.WHITE);
+        mainPanel.setBorder(new EmptyBorder(30, 40, 30, 40));
+
+        // --- HEADER ---
+        JPanel headerPanel = new JPanel(new BorderLayout());
+        headerPanel.setBackground(Color.WHITE);
+        JLabel titleLabel = new JLabel("Eligibility Checker");
+        titleLabel.setFont(HEADER_FONT);
+        titleLabel.setForeground(new Color(50, 50, 50));
+        headerPanel.add(titleLabel, BorderLayout.WEST);
+        headerPanel.setBorder(new EmptyBorder(0, 0, 20, 0));
+        mainPanel.add(headerPanel, BorderLayout.NORTH);
+
+        // --- CENTER CONTENT ---
+        JPanel contentPanel = new JPanel();
+        contentPanel.setLayout(new BoxLayout(contentPanel, BoxLayout.Y_AXIS));
+        contentPanel.setBackground(Color.WHITE);
+
+        // Search Section
+        JPanel searchPanel = new JPanel(new GridLayout(2, 1, 5, 5));
+        searchPanel.setBackground(Color.WHITE);
+        searchPanel.setMaximumSize(new Dimension(Integer.MAX_VALUE, 70));
+
+        JLabel searchLbl = new JLabel("Search Student (ID - Name):");
+        searchLbl.setFont(LABEL_FONT);
+
         idCombobox = new JComboBox<>();
         idCombobox.setEditable(true);
+        idCombobox.setFont(VALUE_FONT);
+        idCombobox.setPreferredSize(new Dimension(300, 35));
 
-        checkEligibilityButton = new JButton("Check Eligibility");
+        searchPanel.add(searchLbl);
+        searchPanel.add(idCombobox);
 
-        // Static Labels
-        label1 = new JLabel("Search Student (ID - Name):");
-        label2 = new JLabel("First Name:");
-        label3 = new JLabel("Last Name:");
-        label4 = new JLabel("Major:");
-        label5 = new JLabel("Year:");
+        // Info Section
+        JPanel infoPanel = new JPanel(new GridLayout(4, 2, 10, 15));
+        infoPanel.setBackground(Color.WHITE);
+        infoPanel.setBorder(new EmptyBorder(20, 0, 20, 0));
 
-        // Dynamic Labels
-        firstNameLabel = new JLabel("-");
-        lastNameLabel = new JLabel("-");
-        majorLabel = new JLabel("-");
-        yearLabel = new JLabel("-");
-        eligibilityLabel = new JLabel("Status: Unknown");
-        eligibilityLabel.setFont(new Font("Arial", Font.BOLD, 14));
+        firstNameLabel = createInfoLabel(infoPanel, "First Name:");
+        lastNameLabel = createInfoLabel(infoPanel, "Last Name:");
+        majorLabel = createInfoLabel(infoPanel, "Major:");
+        yearLabel = createInfoLabel(infoPanel, "Year:");
 
-        // 2. POPULATE & ENABLE SEARCH
-        loadAllItems(); // Load data into memory
-        addComboboxItems(allItems); // Show all initially
+        // Result Section (Updated to show more details)
+        JPanel resultPanel = new JPanel(new GridLayout(3, 2, 10, 10)); // 3 rows
+        resultPanel.setBackground(new Color(245, 247, 250)); // Light background for results
+        resultPanel.setBorder(new EmptyBorder(15, 15, 15, 15));
 
-        // CUSTOM FILTER LOGIC
-        // This makes the dropdown actually SHRINK to show only matches
+        // Row 1: Status
+        JLabel resLbl = new JLabel("Eligibility Status:");
+        resLbl.setFont(LABEL_FONT);
+        eligibilityLabel = new JLabel("-");
+        eligibilityLabel.setFont(new Font("Segoe UI", Font.BOLD, 18));
+        eligibilityLabel.setForeground(Color.GRAY);
+        resultPanel.add(resLbl);
+        resultPanel.add(eligibilityLabel);
+
+        // Row 2: CGPA
+        JLabel cgpaTitle = new JLabel("Current CGPA:");
+        cgpaTitle.setFont(LABEL_FONT);
+        cgpaLabel = new JLabel("-");
+        cgpaLabel.setFont(VALUE_FONT);
+        resultPanel.add(cgpaTitle);
+        resultPanel.add(cgpaLabel);
+
+        // Row 3: Failed Count
+        JLabel failTitle = new JLabel("Failed Courses:");
+        failTitle.setFont(LABEL_FONT);
+        failedCountLabel = new JLabel("-");
+        failedCountLabel.setFont(VALUE_FONT);
+        resultPanel.add(failTitle);
+        resultPanel.add(failedCountLabel);
+
+        contentPanel.add(searchPanel);
+        contentPanel.add(Box.createVerticalStrut(10));
+        contentPanel.add(infoPanel);
+        contentPanel.add(Box.createVerticalStrut(15));
+        contentPanel.add(resultPanel);
+
+        mainPanel.add(contentPanel, BorderLayout.CENTER);
+
+        // --- BOTTOM BUTTONS ---
+        JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
+        buttonPanel.setBackground(Color.WHITE);
+
+        btnBack = createRoundedButton("Back to Dashboard", new Color(108, 117, 125), Color.WHITE);
+        checkEligibilityButton = createRoundedButton("Check Eligibility", ACCENT_COLOR, Color.WHITE);
+
+        buttonPanel.add(btnBack);
+        buttonPanel.add(checkEligibilityButton);
+        mainPanel.add(buttonPanel, BorderLayout.SOUTH);
+
+        setContentPane(mainPanel);
+
+        // --- LOGIC ---
+        loadAllItems();
+        addComboboxItems(allItems);
+
         JTextField editor = (JTextField) idCombobox.getEditor().getEditorComponent();
         editor.addKeyListener(new KeyAdapter() {
             @Override
             public void keyReleased(KeyEvent e) {
+                if (loggedInUser instanceof Student) return;
                 SwingUtilities.invokeLater(() -> filterList(editor.getText()));
             }
         });
 
-        // 3. BUILD LAYOUT
-        panel1.add(label1);
-        panel1.add(idCombobox);
+        idCombobox.addActionListener(e -> {
+            if ("comboBoxChanged".equals(e.getActionCommand())) {
+                Object selected = idCombobox.getSelectedItem();
+                if (selected != null) updateStudentDetails(selected.toString());
+            }
+        });
 
-        panel1.add(label2);
-        panel1.add(firstNameLabel);
+        checkEligibilityButton.addActionListener(e -> {
+            if (idCombobox.getItemCount() == 0 || idCombobox.getSelectedItem() == null) return;
+            String sel = idCombobox.getSelectedItem().toString();
+            if (sel.contains(" - ")) performEligibilityCheck();
+        });
 
-        panel1.add(label3);
-        panel1.add(lastNameLabel);
+        btnBack.addActionListener(e -> {
+            new Dashboard(loggedInUser).setVisible(true);
+            dispose();
+        });
 
-        panel1.add(label4);
-        panel1.add(majorLabel);
+        if (loggedInUser instanceof Student) {
+            setupStudentView((Student) loggedInUser);
+        }
 
-        panel1.add(label5);
-        panel1.add(yearLabel);
-
-        panel1.add(new JLabel("Eligibility Result:"));
-        panel1.add(eligibilityLabel);
-
-        // Empty placeholder for spacing
-        panel1.add(new JLabel(""));
-        panel1.add(new JLabel(""));
-
-        panel1.add(checkEligibilityButton);
-
-        setContentPane(panel1);
-        setDefaultCloseOperation(EXIT_ON_CLOSE);
-        setTitle("CRS - Student Eligibility Check");
-        setSize(650, 500);
-        setLocationRelativeTo(null); // Center on screen
-        setResizable(false);
         setVisible(true);
-
-        // 4. LISTENERS
-
-        // Update labels only when a valid item is SELECTED
-        idCombobox.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                // Only update if the action command is 'comboBoxChanged' (selection)
-                if ("comboBoxChanged".equals(e.getActionCommand())) {
-                    Object selected = idCombobox.getSelectedItem();
-                    if (selected != null) {
-                        updateStudentDetails(selected.toString());
-                    }
-                }
-            }
-        });
-
-        // Backend Connection
-        checkEligibilityButton.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                if (idCombobox.getItemCount() == 0 || idCombobox.getSelectedItem() == null) {
-                    JOptionPane.showMessageDialog(null, "Please select a valid student first.");
-                    return;
-                }
-
-                String currentSelection = idCombobox.getSelectedItem().toString();
-                if (!currentSelection.contains(" - ")) {
-                    JOptionPane.showMessageDialog(null, "Please select a valid student from the list.");
-                    return;
-                }
-
-                performEligibilityCheck();
-            }
-        });
     }
 
-    private void loadAllItems () {
-        // SORTING: Sort by ID
-        Collections.sort(students, new Comparator<String[]>() {
-            @Override
-            public int compare(String[] s1, String[] s2) {
-                return s1[0].compareToIgnoreCase(s2[0]);
-            }
-        });
+    private JLabel createInfoLabel(JPanel panel, String title) {
+        JLabel titleLbl = new JLabel(title);
+        titleLbl.setFont(LABEL_FONT);
+        titleLbl.setForeground(Color.GRAY);
 
-        // Add formatted items to memory list
-        for (String[] student : students) {
-            String s = String.format("%s - %s %s", student[0], student[1], student[2]);
-            allItems.add(s);
+        JLabel valueLbl = new JLabel("-");
+        valueLbl.setFont(VALUE_FONT);
+        valueLbl.setForeground(Color.BLACK);
+
+        panel.add(titleLbl);
+        panel.add(valueLbl);
+        return valueLbl;
+    }
+
+    private JButton createRoundedButton(String text, Color bgColor, Color fgColor) {
+        JButton btn = new JButton(text) {
+            @Override
+            protected void paintComponent(Graphics g) {
+                Graphics2D g2 = (Graphics2D) g.create();
+                g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+                int shadowGap = 3;
+                int arcSize = 30;
+                int width = getWidth() - shadowGap;
+                int height = getHeight() - shadowGap;
+                g2.setColor(new Color(200, 200, 200));
+                g2.fillRoundRect(shadowGap, shadowGap, width, height, arcSize, arcSize);
+                if (getModel().isPressed()) {
+                    g2.translate(1, 1);
+                    g2.setColor(bgColor.darker());
+                } else if (getModel().isRollover()) {
+                    g2.setColor(bgColor.brighter());
+                } else {
+                    g2.setColor(bgColor);
+                }
+                g2.fillRoundRect(0, 0, width, height, arcSize, arcSize);
+                g2.setColor(fgColor);
+                FontMetrics fm = g2.getFontMetrics();
+                int textX = (width - fm.stringWidth(getText())) / 2;
+                int textY = (height - fm.getHeight()) / 2 + fm.getAscent();
+                g2.drawString(getText(), textX, textY);
+                g2.dispose();
+            }
+        };
+        btn.setPreferredSize(new Dimension(200, 45));
+        btn.setFont(new Font("Segoe UI", Font.BOLD, 14));
+        btn.setForeground(fgColor);
+        btn.setFocusPainted(false);
+        btn.setBorderPainted(false);
+        btn.setContentAreaFilled(false);
+        btn.setCursor(new Cursor(Cursor.HAND_CURSOR));
+        return btn;
+    }
+
+    private void loadAllItems() {
+        Collections.sort(students, (s1, s2) -> s1[0].compareToIgnoreCase(s2[0]));
+        for (String[] s : students) {
+            allItems.add(String.format("%s - %s %s", s[0], s[1], s[2]));
         }
     }
 
-    private void addComboboxItems (List < String > itemsToShow) {
-        idCombobox.setModel(new DefaultComboBoxModel<>(itemsToShow.toArray(new String[0])));
-        idCombobox.setSelectedItem(null); // Clear selection initially
+    private void addComboboxItems(List<String> items) {
+        idCombobox.setModel(new DefaultComboBoxModel<>(items.toArray(new String[0])));
+        idCombobox.setSelectedItem(null);
     }
 
-    // The Filtering Logic
-    private void filterList (String text){
+    private void filterList(String text) {
         if (text.isEmpty()) {
-            // If empty, allow showing full list on dropdown click (optional)
-            // Or just keep current view.
-            // For now, let's allow refilling the list if user clears text.
-            if (idCombobox.getItemCount() != allItems.size()) {
-                addComboboxItems(allItems);
-            }
+            if (idCombobox.getItemCount() != allItems.size()) addComboboxItems(allItems);
             return;
         }
-
-        List<String> filteredItems = new ArrayList<>();
+        List<String> filtered = new ArrayList<>();
         for (String item : allItems) {
-            // Case-insensitive filtering.
-            // "Starts With" logic for ID (S00...) or Name searching
-            if (item.toLowerCase().contains(text.toLowerCase())) {
-                filteredItems.add(item);
-            }
+            if (item.toLowerCase().contains(text.toLowerCase())) filtered.add(item);
         }
-
-        // Only update if the list changed to prevent flickering
-        if (filteredItems.size() != idCombobox.getItemCount()) {
-            DefaultComboBoxModel<String> model = new DefaultComboBoxModel<>(filteredItems.toArray(new String[0]));
-            idCombobox.setModel(model);
-            idCombobox.setSelectedItem(text); // Keep user's text
-
-            // Show popup if we have matches
-            if (!filteredItems.isEmpty() && !idCombobox.isPopupVisible()) {
-                idCombobox.showPopup();
-            } else if (filteredItems.isEmpty()) {
-                idCombobox.hidePopup();
-            }
+        if (filtered.size() != idCombobox.getItemCount()) {
+            idCombobox.setModel(new DefaultComboBoxModel<>(filtered.toArray(new String[0])));
+            idCombobox.setSelectedItem(text);
+            if (!filtered.isEmpty()) idCombobox.showPopup();
+            else idCombobox.hidePopup();
         }
-
-        // Restore text cursor
-        JTextField editor = (JTextField) idCombobox.getEditor().getEditorComponent();
-        editor.setText(text);
+        ((JTextField) idCombobox.getEditor().getEditorComponent()).setText(text);
     }
 
-    private void updateStudentDetails (String selectedItem){
-        if (selectedItem == null || selectedItem.isEmpty()) {
-            firstNameLabel.setText("-");
-            lastNameLabel.setText("-");
-            majorLabel.setText("-");
-            yearLabel.setText("-");
-            eligibilityLabel.setText("Status: Unknown");
-            eligibilityLabel.setForeground(Color.BLACK);
+    private void updateStudentDetails(String selectedItem) {
+        if (selectedItem == null || selectedItem.isEmpty() || !selectedItem.contains(" - ")) {
+            resetLabels();
             return;
         }
+        try {
+            String id = selectedItem.split(" - ")[0].trim();
+            for (String[] s : students) {
+                if (s[0].equals(id)) {
+                    firstNameLabel.setText(s[1]);
+                    lastNameLabel.setText(s[2]);
+                    majorLabel.setText(s[3]);
+                    yearLabel.setText(s[4]);
 
-        // PARSE CHANGE: Extract ID from "ID - Name" format
-        if (selectedItem.contains(" - ")) {
-            try {
-                String id = selectedItem.split(" - ")[0].trim();
-
-                for (String[] student : students) {
-                    if (student[0].equals(id)) {
-                        firstNameLabel.setText(student[1]);
-                        lastNameLabel.setText(student[2]);
-                        majorLabel.setText(student[3]);
-                        yearLabel.setText(student[4]);
-
-                        eligibilityLabel.setText("Status: Unknown");
-                        eligibilityLabel.setForeground(Color.BLACK);
-                        return;
-                    }
+                    // Reset result labels when student changes (until button clicked)
+                    eligibilityLabel.setText("Unknown");
+                    eligibilityLabel.setForeground(Color.GRAY);
+                    cgpaLabel.setText("-");
+                    failedCountLabel.setText("-");
+                    return;
                 }
-            } catch (Exception e) {
-                // Ignore parsing errors
             }
-        }
+        } catch (Exception e) {}
+        resetLabels();
+    }
 
-        // Reset
+    private void resetLabels() {
         firstNameLabel.setText("-");
         lastNameLabel.setText("-");
         majorLabel.setText("-");
         yearLabel.setText("-");
-        eligibilityLabel.setText("Status: Unknown");
-        eligibilityLabel.setForeground(Color.BLACK);
+        eligibilityLabel.setText("Unknown");
+        eligibilityLabel.setForeground(Color.GRAY);
+        cgpaLabel.setText("-");
+        failedCountLabel.setText("-");
     }
 
-    // --- BACKEND LOGIC ---
-    private void performEligibilityCheck () {
+    private void performEligibilityCheck() {
         Object selectedObj = idCombobox.getSelectedItem();
         if (selectedObj == null) return;
-
         String selectedText = selectedObj.toString();
         if (!selectedText.contains(" - ")) return;
 
         String studentID = selectedText.split(" - ")[0].trim();
 
-        // 1. Initialize DAOs
         StudentDAO studentDAO = new StudentDAO();
         AcademicRecordDAO recordDAO = new AcademicRecordDAO();
-
-        // 2. Load Data
         List<Student> allStudents = studentDAO.loadAllStudents();
         recordDAO.loadRecords(allStudents);
 
-        recordDAO.loadRecords(allStudents);
-
-        // 3. Find target
-        Student targetStudent = null;
-        for (Student s : allStudents) {
-            if (s.getUserID().equals(studentID)) {
-                targetStudent = s;
-                break;
-            }
-        }
+        Student targetStudent = allStudents.stream()
+                .filter(s -> s.getUserID().equals(studentID))
+                .findFirst().orElse(null);
 
         if (targetStudent == null) {
-            JOptionPane.showMessageDialog(null, "Error: Student data not found in backend records.");
+            // Using a non-modal message label or status bar would be better than popup,
+            // but for errors, a popup is still standard.
+            // I'll update status label instead.
+            eligibilityLabel.setText("Data Error");
             return;
         }
 
-        // 4. Run Check
         EligibilityCheck checker = targetStudent.checkEligibility();
 
-        // 5. Update UI
+        // Update Labels (No Popup!)
+        cgpaLabel.setText(String.format("%.2f", targetStudent.getAcademicProfile().getCGPA()));
+        failedCountLabel.setText(String.valueOf(targetStudent.getAcademicProfile().getTotalFailedCourses()));
+
         if (checker.isEligible()) {
-            eligibilityLabel.setText("ELIGIBLE FOR RECOVERY");
-            eligibilityLabel.setForeground(eligibleColour);
-
-            String msg = String.format("Student: %s\nCGPA: %.2f\nFailed Courses: %d\n\nStatus: ELIGIBLE",
-                    targetStudent.getFullName(),
-                    targetStudent.getAcademicProfile().getCGPA(),
-                    targetStudent.getAcademicProfile().getTotalFailedCourses());
-
-            JOptionPane.showMessageDialog(null, msg, "Check Result", JOptionPane.INFORMATION_MESSAGE);
+            eligibilityLabel.setText("ELIGIBLE");
+            eligibilityLabel.setForeground(ELIGIBLE_COLOR);
         } else {
             eligibilityLabel.setText("NOT ELIGIBLE");
-            eligibilityLabel.setForeground(ineligibleColour);
-
-            String msg = String.format("Student: %s\nCGPA: %.2f\nFailed Courses: %d\n\nStatus: NOT ELIGIBLE",
-                    targetStudent.getFullName(),
-                    targetStudent.getAcademicProfile().getCGPA(),
-                    targetStudent.getAcademicProfile().getTotalFailedCourses());
-
-            JOptionPane.showMessageDialog(null, msg, "Check Result", JOptionPane.WARNING_MESSAGE);
+            eligibilityLabel.setForeground(INELIGIBLE_COLOR);
         }
     }
 
-    public static void main (String[]args){
-        SwingUtilities.invokeLater(() -> new CheckRecoveryEligibility());
+    private void setupStudentView(Student student) {
+        String targetID = student.getUserID();
+        for (int i = 0; i < idCombobox.getItemCount(); i++) {
+            String item = idCombobox.getItemAt(i);
+            if (item.startsWith(targetID + " - ")) {
+                idCombobox.setSelectedIndex(i);
+                break;
+            }
+        }
+        idCombobox.setEnabled(false);
+        idCombobox.setEditable(false);
+        SwingUtilities.invokeLater(() -> performEligibilityCheck());
+        checkEligibilityButton.setVisible(false);
+    }
+
+    public static void main(String[] args) {
+        SwingUtilities.invokeLater(() -> new CheckRecoveryEligibility(null));
     }
 }
