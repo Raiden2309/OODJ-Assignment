@@ -47,6 +47,27 @@ public class MilestoneActionPlan extends JFrame {
 
     public MilestoneActionPlan(User loggedInUser) {
 
+        JPanel backgroundPanel = new JPanel() {
+            private Image backgroundImage;
+            {
+                try {
+                    backgroundImage = new ImageIcon(getClass().getResource("/resources/bg3.png")).getImage();
+                } catch (Exception e) {
+                    setBackground(Color.WHITE);
+                }
+                setOpaque(false);
+            }
+            @Override
+            protected void paintComponent(Graphics g) {
+                super.paintComponent(g);
+                if (backgroundImage != null) {
+                    g.drawImage(backgroundImage, 0, 0, getWidth(), getHeight(), this);
+                }
+            }
+        };
+        backgroundPanel.setLayout(new BorderLayout());
+        setContentPane(backgroundPanel);
+
         this.loggedInUser = loggedInUser;
         this.milestoneDAO = new MilestoneDAO();
 
@@ -56,6 +77,7 @@ public class MilestoneActionPlan extends JFrame {
         setLayout(new BorderLayout());
 
         JPanel inputPanel = new JPanel(new GridLayout(7, 2));
+        inputPanel.setOpaque(false);
         inputPanel.add(new JLabel("Milestone ID:"));
         txtMilestoneID = new JTextField();
         inputPanel.add(txtMilestoneID);
@@ -85,6 +107,7 @@ public class MilestoneActionPlan extends JFrame {
         inputPanel.add(cmbStatus);
 
         JPanel buttonPanel = new JPanel(new FlowLayout());
+        buttonPanel.setBackground(new Color(120,172,229));
         btnAdd = new JButton("Add");
         btnUpdate = new JButton("Update");
         btnRemove = new JButton("Remove");
@@ -108,7 +131,6 @@ public class MilestoneActionPlan extends JFrame {
         buttonPanel.add(btnBack);
         add(buttonPanel, BorderLayout.SOUTH);
 
-        getContentPane().setBackground(new Color(229, 215, 139));
         inputPanel.setBackground(new Color(229, 215, 139));
         buttonPanel.setBackground(new Color(120,172,229));
         btnFailed = new JButton("Failed Component");
@@ -164,8 +186,8 @@ public class MilestoneActionPlan extends JFrame {
         leftButtonPanel.add(btnRecovery);
         leftButtonPanel.add(Box.createVerticalGlue());
 
-        lblMilestones = new JLabel("Milestone Action Plan", SwingConstants.CENTER);
-        lblMilestones.setFont(new Font("Arial", Font.BOLD, 22));
+        lblMilestones = new JLabel("MILESTONE ACTION PLAN", SwingConstants.CENTER);
+        lblMilestones.setFont(new Font("Comic Sans MS", Font.BOLD, 35));
         lblMilestones.setBorder(BorderFactory.createEmptyBorder(10,10,10,10));
 
         ImageIcon originalIcon = new ImageIcon(getClass().getResource("/resources/apulogo.png"));
@@ -174,13 +196,13 @@ public class MilestoneActionPlan extends JFrame {
         JLabel lblLogo = new JLabel(logoIcon);
 
         JPanel logoTitlePanel = new JPanel(new BorderLayout());
-        logoTitlePanel.setBackground(new Color(229, 215, 139));
+        logoTitlePanel.setOpaque(false);
         logoTitlePanel.setBorder(BorderFactory.createEmptyBorder(10,10,10,10));
         logoTitlePanel.add(lblLogo, BorderLayout.WEST);
         logoTitlePanel.add(lblMilestones, BorderLayout.CENTER);
 
         JPanel topPanel = new JPanel(new BorderLayout());
-        topPanel.setBackground(new Color(229, 215, 139));
+        topPanel.setOpaque(false);
         topPanel.add(logoTitlePanel, BorderLayout.NORTH);
         topPanel.add(inputPanel, BorderLayout.CENTER);
 
@@ -190,12 +212,12 @@ public class MilestoneActionPlan extends JFrame {
         rightPanel.setBackground(new Color(229,215,139));
 
         JScrollPane tableScroll = new JScrollPane(tblMilestone);
-        add(tableScroll, BorderLayout.CENTER);
+        tableScroll.setOpaque(false);
+        tableScroll.getViewport().setOpaque(false);
 
         add(topPanel, BorderLayout.NORTH);
-        add(rightPanel, BorderLayout.CENTER);
         add(leftButtonPanel, BorderLayout.WEST);
-        add(new JScrollPane(tblMilestone), BorderLayout.CENTER);
+        add(tableScroll, BorderLayout.CENTER);
         add(buttonPanel, BorderLayout.SOUTH);
 
         btnAdd.addActionListener(e -> addMilestone());

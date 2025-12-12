@@ -25,8 +25,27 @@ public class FailedComponentOverview extends JFrame {
 
     public FailedComponentOverview() {
 
+        frmFailed = new JPanel() {
+            private Image backgroundImage;
+            {
+                try {
+                    backgroundImage = new ImageIcon(getClass().getResource("/resources/bg3.png")).getImage();
+                } catch (Exception e) {
+                    setBackground(Color.WHITE);
+                }
+                setOpaque(false);
+            }
+            @Override
+            protected void paintComponent(Graphics g) {
+                super.paintComponent(g);
+                if (backgroundImage != null) {
+                    g.drawImage(backgroundImage, 0, 0, getWidth(), getHeight(), this);
+                }
+            }
+        };
+
         try {
-            frmFailed = new JPanel(new BorderLayout());
+            frmFailed.setLayout(new BorderLayout());
             setContentPane(frmFailed);
             setTitle("Failed Component Overview");
             setSize(1000, 700);
@@ -62,8 +81,8 @@ public class FailedComponentOverview extends JFrame {
             buttonPanel.add(Box.createVerticalStrut(100));
             buttonPanel.add(btnRecovery);
 
-            lblFailed = new JLabel("Failed Components");
-            lblFailed.setFont(new Font("Arial", Font.BOLD, 18));
+            lblFailed = new JLabel("FAILED COMPONENTS");
+            lblFailed.setFont(new Font("Comic Sans MS", Font.BOLD, 35));
             lblFailed.setForeground(Color.BLACK);
             lblFailed.setHorizontalAlignment(SwingConstants.CENTER);
             lblFailed.setBorder(BorderFactory.createEmptyBorder(10,10,10,10));
@@ -74,7 +93,7 @@ public class FailedComponentOverview extends JFrame {
             JLabel lblLogo = new JLabel(logoIcon);
 
             JPanel logoTitlePanel = new JPanel(new BorderLayout());
-            logoTitlePanel.setBackground(new Color(229, 215, 139));
+            logoTitlePanel.setOpaque(false);
             logoTitlePanel.setBorder(BorderFactory.createEmptyBorder(10,10,10,10));
             logoTitlePanel.add(lblLogo, BorderLayout.WEST);
             logoTitlePanel.add(lblFailed, BorderLayout.CENTER);
@@ -83,6 +102,9 @@ public class FailedComponentOverview extends JFrame {
             frmFailed.add(pnlFailed, BorderLayout.CENTER);
             frmFailed.add(btnBack, BorderLayout.SOUTH);
             frmFailed.add(logoTitlePanel, BorderLayout.NORTH);
+
+            pnlFailed.setOpaque(false);
+            pnlFailed.getViewport().setOpaque(false);
 
             loadFailedComponents();
 
@@ -112,6 +134,7 @@ public class FailedComponentOverview extends JFrame {
         catch (Exception e) {
             JOptionPane.showMessageDialog(null, "Error initializing GUI: " + e.getMessage());
         }
+
     }
 
     private void loadFailedComponents() {
