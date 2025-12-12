@@ -1,6 +1,6 @@
 package resources;
 
-import javax.swing.*;
+import  javax.swing.*;
 import data_access.DataAccess;
 import org.jdesktop.swingx.autocomplete.*;
 import report.GenerateReportPDF;

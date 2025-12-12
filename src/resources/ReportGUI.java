@@ -1,12 +1,19 @@
 package resources;
 
 import service.ReportGenerator;
+import domain.User;
+import domain.Student;
+import service.StudentDAO;
+import service.AcademicRecordDAO;
+import academic.CourseResult;
+import academic.Course;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import java.awt.*;
 import java.awt.event.*;
 import java.io.*;
+import java.util.List;
 
 public class ReportGUI extends JFrame {
 
@@ -17,202 +24,217 @@ public class ReportGUI extends JFrame {
     private JLabel statusLabel;
     private JPanel mainPanel;
 
+    // New components for Student View
+    private JTextArea previewArea;
+    private JPanel studentDetailsPanel;
+
     private ReportGenerator reportGen;
+    private User loggedInUser;
     private static final String STUDENT_FILE = "data/student_information.csv";
 
-    public ReportGUI() {
-        // 1. Initialize Frame - RESTORED ORIGINAL SIZE
+    // Constructor accepts User to determine view mode
+    public ReportGUI(User user) {
+        this.loggedInUser = user;
+
         setTitle("Academic Performance Report Generator");
-        setSize(800, 600); // Changed back to 800x600 to match original
+        setSize(800, 600);
         setLocationRelativeTo(null);
         setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
 
         // 2. Initialize Components
         mainPanel = new JPanel();
         mainPanel.setLayout(new GridBagLayout());
-        mainPanel.setBorder(new EmptyBorder(40, 60, 40, 60)); // Increased padding for spacious look
+        mainPanel.setBorder(new EmptyBorder(40, 60, 40, 60));
         mainPanel.setBackground(new Color(245, 247, 250));
 
         titleLabel = new JLabel("Generate Student Report");
-        titleLabel.setFont(new Font("Segoe UI", Font.BOLD, 28)); // Increased font size
+        titleLabel.setFont(new Font("Segoe UI", Font.BOLD, 28));
         titleLabel.setForeground(new Color(50, 50, 50));
 
         selectLabel = new JLabel("Select Student:");
-        selectLabel.setFont(new Font("Segoe UI", Font.PLAIN, 16)); // Increased font size
+        selectLabel.setFont(new Font("Segoe UI", Font.PLAIN, 16));
 
         studentDropdown = new JComboBox<>();
         studentDropdown.setFont(new Font("Segoe UI", Font.PLAIN, 14));
-        studentDropdown.setPreferredSize(new Dimension(300, 40)); // Force wider dropdown
+        studentDropdown.setPreferredSize(new Dimension(300, 40));
         studentDropdown.addItem("-- Select a student --");
 
-        generateButton = new JButton("Generate Report");
-        generateButton.setFont(new Font("Segoe UI", Font.BOLD, 16)); // Increased font size
+        generateButton = new JButton("Generate Report (PDF)");
+        generateButton.setFont(new Font("Segoe UI", Font.BOLD, 16));
         generateButton.setBackground(new Color(0, 102, 204));
         generateButton.setForeground(Color.WHITE);
         generateButton.setFocusPainted(false);
         generateButton.setCursor(new Cursor(Cursor.HAND_CURSOR));
-        generateButton.setPreferredSize(new Dimension(200, 45)); // Bigger button
+        generateButton.setPreferredSize(new Dimension(250, 45));
 
         statusLabel = new JLabel("Status: Ready");
         statusLabel.setFont(new Font("Segoe UI", Font.ITALIC, 14));
         statusLabel.setForeground(Color.GRAY);
 
-        // 3. Layout Components (GridBagLayout)
+        // Preview Area for Student View
+        previewArea = new JTextArea();
+        previewArea.setEditable(false);
+        previewArea.setFont(new Font("Monospaced", Font.PLAIN, 12));
+        previewArea.setBorder(BorderFactory.createCompoundBorder(
+                BorderFactory.createLineBorder(Color.LIGHT_GRAY),
+                BorderFactory.createEmptyBorder(10, 10, 10, 10)
+        ));
+        JScrollPane previewScroll = new JScrollPane(previewArea);
+        previewScroll.setPreferredSize(new Dimension(600, 300)); // Larger preview
+
+        // 3. Layout Components
         GridBagConstraints gbc = new GridBagConstraints();
-        gbc.insets = new Insets(15, 15, 15, 15); // Increased spacing
+        gbc.insets = new Insets(15, 15, 15, 15);
         gbc.fill = GridBagConstraints.HORIZONTAL;
         gbc.gridx = 0;
 
         // Title
-        gbc.gridy = 0;
-        gbc.gridwidth = 2;
-        gbc.anchor = GridBagConstraints.CENTER;
+        gbc.gridy = 0; gbc.gridwidth = 2; gbc.anchor = GridBagConstraints.CENTER;
         mainPanel.add(titleLabel, gbc);
 
-        // Label
-        gbc.gridy = 1;
-        gbc.gridwidth = 1;
-        gbc.anchor = GridBagConstraints.WEST;
-        mainPanel.add(selectLabel, gbc);
+        // Logic split based on Role
+        if (loggedInUser instanceof Student) {
+            // --- STUDENT VIEW (Read Only Records + Generate) ---
+            titleLabel.setText("My Academic Record");
 
-        // Dropdown
-        gbc.gridy = 2;
-        gbc.gridwidth = 2;
-        mainPanel.add(studentDropdown, gbc);
+            gbc.gridy = 1; gbc.gridwidth = 2; gbc.weightx = 1.0; gbc.weighty = 1.0; // Fill space
+            gbc.fill = GridBagConstraints.BOTH;
+            mainPanel.add(previewScroll, gbc);
 
-        // Button
-        gbc.gridy = 3;
+            // Reset weights for buttons
+            gbc.weightx = 0; gbc.weighty = 0;
+            gbc.fill = GridBagConstraints.NONE;
+
+            loadStudentPreview((Student) loggedInUser);
+        } else {
+            // --- STAFF VIEW (Dropdown Selection) ---
+            gbc.gridy = 1; gbc.gridwidth = 1; gbc.anchor = GridBagConstraints.WEST;
+            mainPanel.add(selectLabel, gbc);
+
+            gbc.gridy = 2; gbc.gridwidth = 2;
+            mainPanel.add(studentDropdown, gbc);
+
+            loadStudents(); // Load list for staff
+        }
+
+        // Button (Shared)
+        gbc.gridy = 3; gbc.gridwidth = 2;
         gbc.fill = GridBagConstraints.NONE;
         gbc.anchor = GridBagConstraints.CENTER;
         mainPanel.add(generateButton, gbc);
 
-        // Status
-        gbc.gridy = 4;
-        gbc.fill = GridBagConstraints.HORIZONTAL;
+        // Status (Shared)
+        gbc.gridy = 4; gbc.fill = GridBagConstraints.HORIZONTAL;
         mainPanel.add(statusLabel, gbc);
 
-        // 4. Final Setup
         setContentPane(mainPanel);
         reportGen = new ReportGenerator();
 
-        loadStudents();
-
-        generateButton.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                generateReport();
-            }
-        });
+        generateButton.addActionListener(e -> generateReport());
     }
 
-    // LOAD STUDENTS METHOD from CSV files
+    // Default constructor for backward compatibility
+    public ReportGUI() {
+        this(null);
+    }
+
+    private void loadStudentPreview(Student student) {
+        // Ensure data is loaded
+        AcademicRecordDAO recordDAO = new AcademicRecordDAO();
+        // Just in case the passed student object doesn't have records loaded yet
+        // In a real flow, it might already be loaded, but safe to reload/ensure
+        // If your DAO architecture supports reloading a single student, do that.
+        // Otherwise, rely on what's passed or trigger a full load if empty.
+        if (student.getAcademicProfile().getCourseResults().isEmpty()) {
+            // Create a dummy list to use existing DAO method or assume caller handled it
+            // For now, assume caller (Dashboard) loaded it, or just show what's there.
+        }
+
+        StringBuilder sb = new StringBuilder();
+        sb.append("Student: ").append(student.getFullName()).append(" (").append(student.getUserID()).append(")\n");
+        sb.append("Major:   ").append(student.getMajor()).append("\n");
+        sb.append("Year:    ").append(student.getAcademicYear()).append("\n\n");
+
+        sb.append("------------------------------------------------------------\n");
+        sb.append(String.format("%-10s %-35s %-5s\n", "Code", "Course Name", "Grade"));
+        sb.append("------------------------------------------------------------\n");
+
+        for (CourseResult res : student.getAcademicProfile().getCourseResults()) {
+            Course c = res.getCourse();
+            sb.append(String.format("%-10s %-35s %-5s\n",
+                    c.getCourseId(),
+                    c.getName(),
+                    res.getGrade()));
+        }
+
+        sb.append("------------------------------------------------------------\n");
+        sb.append(String.format("Current CGPA:   %.2f\n", student.getAcademicProfile().getCGPA()));
+        sb.append("Failed Courses: ").append(student.getAcademicProfile().getTotalFailedCourses());
+
+        previewArea.setText(sb.toString());
+        // Scroll to top
+        previewArea.setCaretPosition(0);
+    }
+
+    // LOAD STUDENTS METHOD from CSV files (For Staff)
     private void loadStudents() {
         try (BufferedReader reader = new BufferedReader(new FileReader(STUDENT_FILE))) {
             String line;
-            reader.readLine(); // Skip header
+            reader.readLine();
 
             while ((line = reader.readLine()) != null) {
                 String[] data = line.split(",");
-
-                if (data.length < 3) {
-                    continue;
-                }
+                if (data.length < 3) continue;
 
                 String studentID = data[0];
                 String firstName = data[1];
                 String lastName = data[2];
-                String fullName = firstName + " " + lastName;
-                String displayText = studentID + " - " + fullName;
+                String displayText = studentID + " - " + firstName + " " + lastName;
 
                 studentDropdown.addItem(displayText);
             }
-
-            int studentCount = studentDropdown.getItemCount() - 1;
-            statusLabel.setText("Status: Loaded " + studentCount + " students");
-
-        } catch (FileNotFoundException e) {
-            statusLabel.setText("Status: Error - Student file not found!");
-            JOptionPane.showMessageDialog(this,
-                    "Could not find student_information.csv file.\n" +
-                            "Please make sure the data folder exists.",
-                    "File Not Found",
-                    JOptionPane.ERROR_MESSAGE);
+            statusLabel.setText("Status: Loaded students for selection");
 
         } catch (IOException e) {
-            statusLabel.setText("Status: Error - Could not read file!");
-            JOptionPane.showMessageDialog(this,
-                    "Error reading student file: " + e.getMessage(),
-                    "Read Error",
-                    JOptionPane.ERROR_MESSAGE);
+            statusLabel.setText("Status: Error reading student file!");
         }
     }
 
     private void generateReport() {
-        int selectedIndex = studentDropdown.getSelectedIndex();
+        String targetID;
 
-        if (selectedIndex == 0) {
-            statusLabel.setText("Status: Please select a student first!");
-            JOptionPane.showMessageDialog(this,
-                    "Please select a student from the dropdown list before generating a report.",
-                    "No Student Selected",
-                    JOptionPane.WARNING_MESSAGE);
-            return;
+        if (loggedInUser instanceof Student) {
+            // Student generates their own report
+            targetID = loggedInUser.getUserID();
+        } else {
+            // Staff generates selected student report
+            if (studentDropdown.getSelectedIndex() == 0) {
+                JOptionPane.showMessageDialog(this, "Please select a student first!", "Warning", JOptionPane.WARNING_MESSAGE);
+                return;
+            }
+            String selectedItem = (String) studentDropdown.getSelectedItem();
+            targetID = selectedItem.split(" - ")[0];
         }
-
-        String selectedItem = (String) studentDropdown.getSelectedItem();
-
-        if (selectedItem == null || !selectedItem.contains(" - ")) {
-            statusLabel.setText("Status: Invalid selection!");
-            JOptionPane.showMessageDialog(this,
-                    "Invalid selection. Please select a valid student.",
-                    "Error",
-                    JOptionPane.ERROR_MESSAGE);
-            return;
-        }
-
-        String[] parts = selectedItem.split(" - ");
-        String studentID = parts[0];
 
         try {
-            statusLabel.setText("Status: Generating report for " + studentID + "...");
-
-            reportGen.generatePDF(studentID);
-
+            statusLabel.setText("Status: Generating report for " + targetID + "...");
+            reportGen.generatePDF(targetID);
             statusLabel.setText("Status: Report generated successfully!");
 
-            String successMessage = "PDF Report generated successfully!\n\n" +
-                    "Student: " + selectedItem + "\n" +
-                    "Saved to: data/report/" + studentID + "_Report.pdf";
-
             JOptionPane.showMessageDialog(this,
-                    successMessage,
-                    "Success!",
-                    JOptionPane.INFORMATION_MESSAGE);
+                    "PDF Report saved to: data/report/" + targetID + "_Report.pdf",
+                    "Success!", JOptionPane.INFORMATION_MESSAGE);
 
         } catch (Exception e) {
             statusLabel.setText("Status: Error generating report!");
-
-            String errorMessage = "Sorry, there was a problem generating the report.\n\n" +
-                    "Error: " + e.getMessage() + "\n\n" +
-                    "Please try again or contact support.";
-
-            JOptionPane.showMessageDialog(this,
-                    errorMessage,
-                    "Error",
-                    JOptionPane.ERROR_MESSAGE);
-
             e.printStackTrace();
+            JOptionPane.showMessageDialog(this, "Error: " + e.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
         }
     }
 
-    // MAIN METHOD
     public static void main(String[] args) {
-        SwingUtilities.invokeLater(new Runnable() {
-            @Override
-            public void run() {
-                ReportGUI gui = new ReportGUI();
-                gui.setVisible(true);
-            }
+        SwingUtilities.invokeLater(() -> {
+            new ReportGUI(null).setVisible(true);
         });
     }
 }

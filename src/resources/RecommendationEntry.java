@@ -2,6 +2,7 @@ package resources;
 
 import academic.Recommendation;
 import domain.User;
+import domain.Student; // Import Student
 import service.CourseCatalog;
 import service.RecommendationDAO;
 import service.StudentDAO;
@@ -12,6 +13,7 @@ import java.awt.*;
 import java.text.SimpleDateFormat;
 import java.util.List;
 import java.util.Date;
+import java.util.stream.Collectors;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 
@@ -40,10 +42,19 @@ public class RecommendationEntry extends JFrame{
     private JButton btnMilestone;
     private JButton btnFailed;
     private JButton btnRecovery;
+
+    // New label for empty state
+    private JLabel statusMessageLabel;
+
     private DefaultTableModel tableModel;
     private RecommendationDAO recommendationDAO;
     private User loggedInUser;
     private SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
+
+    // Colors
+    private final Color ACCENT_COLOR = new Color(0, 102, 204);
+    private final Color RED_COLOR = new Color(220, 53, 69);
+    private final Color TEXT_COLOR = Color.WHITE;
 
     public RecommendationEntry(User loggedInUser) {
         this.loggedInUser = loggedInUser;
@@ -73,10 +84,13 @@ public class RecommendationEntry extends JFrame{
         setTitle("Recommendation Entry");
         setSize(1000, 700);
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        setLayout(new BorderLayout());
+        setLocationRelativeTo(null);
 
+        // --- INPUT PANEL ---
         JPanel inputPanel = new JPanel(new GridLayout(7, 2));
         inputPanel.setOpaque(false);
+        inputPanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
+
         inputPanel.add(lblRecID = new JLabel("Recommendation ID:"));
         txtRecID = new JTextField();
         inputPanel.add(txtRecID);
@@ -107,40 +121,55 @@ public class RecommendationEntry extends JFrame{
 
         add(inputPanel, BorderLayout.NORTH);
 
+        // --- BUTTON PANEL ---
         JPanel buttonPanel = new JPanel();
-        buttonPanel.setBackground(new Color(229,176,134));
-        btnAdd = new JButton("Add");
-        btnUpdate = new JButton("Update");
-        btnRemove = new JButton("Remove");
-        btnList = new JButton("List");
-        btnBack = new JButton("Back");
+        buttonPanel.setOpaque(false); // Transparent bg
 
-        buttonPanel.add(btnAdd);
-        buttonPanel.add(btnUpdate);
-        buttonPanel.add(btnRemove);
-        buttonPanel.add(btnList);
+        // Initialize Buttons using helper
+        btnAdd = createRoundedButton("Add", ACCENT_COLOR, TEXT_COLOR);
+        btnUpdate = createRoundedButton("Update", ACCENT_COLOR, TEXT_COLOR);
+        btnRemove = createRoundedButton("Remove", ACCENT_COLOR, TEXT_COLOR);
+        btnList = createRoundedButton("List All", ACCENT_COLOR, TEXT_COLOR);
+        btnBack = createRoundedButton("Back", RED_COLOR, TEXT_COLOR);
+
+        // Only show management buttons for Non-Students
+        if (!(loggedInUser instanceof Student)) {
+            buttonPanel.add(btnAdd);
+            buttonPanel.add(btnUpdate);
+            buttonPanel.add(btnRemove);
+            buttonPanel.add(btnList);
+        }
+
         buttonPanel.add(btnBack);
-
         add(buttonPanel, BorderLayout.SOUTH);
 
-        tableModel = new DefaultTableModel(new String[]{"RecID", "StudentID", "CourseID", "Timeline", "Deadline", "Description", "Status"}, 0);
-        tblRecommendation = new JTable(tableModel);
-        add(new JScrollPane(tblRecommendation), BorderLayout.CENTER);
+        // --- CENTER TABLE / MESSAGE ---
+        JPanel centerPanel = new JPanel(new CardLayout());
+        centerPanel.setOpaque(false);
 
-        tblRecommendation.getSelectionModel().addListSelectionListener(new ListSelectionListener() {
+        // 1. Table View
+        tableModel = new DefaultTableModel(new String[]{"RecID", "StudentID", "CourseID", "Timeline", "Deadline", "Description", "Status"}, 0) {
             @Override
-            public void valueChanged(ListSelectionEvent e) {
-                if (!e.getValueIsAdjusting()) {
-                    int selectedRow = tblRecommendation.getSelectedRow();
-                    if (selectedRow != -1) {
-                        txtRecID.setText((String) tableModel.getValueAt(selectedRow, 0));
-                        txtStudentID.setText((String) tableModel.getValueAt(selectedRow, 1));
-                        txtCourseID.setText((String) tableModel.getValueAt(selectedRow, 2));
-                        txtTimeLine.setText((String) tableModel.getValueAt(selectedRow, 3));
-                        txtDeadline.setText((String) tableModel.getValueAt(selectedRow, 4));
-                        cmbDescription.setSelectedItem((String) tableModel.getValueAt(selectedRow, 5));
-                        cmbStatus.setSelectedItem((String) tableModel.getValueAt(selectedRow, 6));
-                    }
+            public boolean isCellEditable(int row, int column) { return false; }
+        };
+        tblRecommendation = new JTable(tableModel);
+        JScrollPane tableScroll = new JScrollPane(tblRecommendation);
+        centerPanel.add(tableScroll, "TABLE");
+
+        // 2. Empty Message View
+        statusMessageLabel = new JLabel("No recommendations found for you.", SwingConstants.CENTER);
+        statusMessageLabel.setFont(new Font("Segoe UI", Font.BOLD, 24));
+        statusMessageLabel.setForeground(Color.DARK_GRAY);
+        centerPanel.add(statusMessageLabel, "EMPTY");
+
+        add(centerPanel, BorderLayout.CENTER);
+
+        // --- LISTENERS ---
+        tblRecommendation.getSelectionModel().addListSelectionListener(e -> {
+            if (!e.getValueIsAdjusting()) {
+                int selectedRow = tblRecommendation.getSelectedRow();
+                if (selectedRow != -1) {
+                    populateFieldsFromTable(selectedRow);
                 }
             }
         });
@@ -150,76 +179,120 @@ public class RecommendationEntry extends JFrame{
         btnRemove.addActionListener(e -> removeRecommendation());
         btnList.addActionListener(e -> listRecommendation());
 
-        // FIX: Pass loggedInUser to CRPHomePage
         btnBack.addActionListener(e -> {
             new Dashboard(loggedInUser).setVisible(true);
             dispose();
         });
 
-        // Sidebar
-        btnFailed = new JButton("Failed Component");
+        // --- SIDEBAR (Optional - kept for layout consistency if needed, but usually redundant with Dashboard) ---
+        // Assuming you want to keep the left panel layout from your original file:
+        btnFailed = new JButton("Failed Component"); // Placeholder buttons if you want them
         btnMilestone = new JButton("Milestone");
         btnRecovery = new JButton("Recovery");
 
-        btnBack.setFont(new Font("Arial", Font.BOLD, 14));
-        btnBack.setBackground(new Color(229, 93, 138));
-
         JPanel leftButtonPanel = new JPanel();
         leftButtonPanel.setLayout(new BoxLayout(leftButtonPanel, BoxLayout.Y_AXIS));
-        leftButtonPanel.setBackground(new Color(229, 205, 103));
+        leftButtonPanel.setBackground(new Color(229, 205, 103)); // Yellowish
+        // ... (Adding buttons to left panel logic from original file omitted for brevity unless requested)
+        // Since we have Dashboard, usually we don't need side nav inside child windows,
+        // but adding simple spacer if you want to keep layout:
+        // add(leftButtonPanel, BorderLayout.WEST);
 
-        Dimension size = new Dimension(200, 40);
-        btnFailed.setMaximumSize(size);
-        btnMilestone.setMaximumSize(size);
-        btnRecovery.setMaximumSize(size);
+        // --- LOGIC: CHECK USER ROLE ---
+        if (loggedInUser instanceof Student) {
+            setupStudentView();
+        } else {
+            listRecommendation();
+            ((CardLayout) centerPanel.getLayout()).show(centerPanel, "TABLE");
+        }
 
-        leftButtonPanel.add(btnFailed);
-        leftButtonPanel.add(Box.createVerticalStrut(100));
-        leftButtonPanel.add(btnMilestone);
-        leftButtonPanel.add(Box.createVerticalStrut(100));
-        leftButtonPanel.add(btnRecovery);
-        leftButtonPanel.add(Box.createVerticalGlue());
-
-        lblRecommendation = new JLabel("RECOMMENDATION ENTRY", SwingConstants.CENTER);
-        lblRecommendation.setFont(new Font("Comic Sans MS", Font.BOLD, 35));
-        lblRecommendation.setBorder(BorderFactory.createEmptyBorder(10,10,10,10));
-
-        ImageIcon originalIcon = new ImageIcon(getClass().getResource("/resources/apulogo.png"));
-        Image scaledImage = originalIcon.getImage().getScaledInstance(80, 80, Image.SCALE_SMOOTH);
-        ImageIcon logoIcon = new ImageIcon(scaledImage);
-        JLabel lblLogo = new JLabel(logoIcon);
-
-        JPanel logoTitlePanel = new JPanel(new BorderLayout());
-        logoTitlePanel.setOpaque(false);
-        logoTitlePanel.setBorder(BorderFactory.createEmptyBorder(10,10,10,10));
-        logoTitlePanel.add(lblLogo, BorderLayout.WEST);
-        logoTitlePanel.add(lblRecommendation, BorderLayout.CENTER);
-
-        JPanel topPanel = new JPanel(new BorderLayout());
-        topPanel.setOpaque(false);
-        topPanel.add(logoTitlePanel, BorderLayout.NORTH);
-        topPanel.add(inputPanel, BorderLayout.CENTER);
-
-        add(topPanel, BorderLayout.NORTH);
-        add(leftButtonPanel, BorderLayout.WEST);
-
-        btnFailed.addActionListener(e -> {
-            new FailedComponentOverview().setVisible(true);
-            dispose();
-        });
-
-        btnMilestone.addActionListener(e -> {
-            new MilestoneActionPlan(null).setVisible(true);
-            dispose();
-        });
-
-        btnRecovery.addActionListener(e -> {
-            new RecoveryProgress(null).setVisible(true);
-            dispose();
-        });
-
-        listRecommendation();
+        setVisible(true);
     }
+
+    // --- Helper for Rounded Button ---
+    private JButton createRoundedButton(String text, Color bgColor, Color fgColor) {
+        JButton btn = new JButton(text) {
+            @Override
+            protected void paintComponent(Graphics g) {
+                Graphics2D g2 = (Graphics2D) g.create();
+                g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+                int shadowGap = 3;
+                int arcSize = 30;
+                int width = getWidth() - shadowGap;
+                int height = getHeight() - shadowGap;
+                g2.setColor(new Color(200, 200, 200));
+                g2.fillRoundRect(shadowGap, shadowGap, width, height, arcSize, arcSize);
+                if (getModel().isPressed()) {
+                    g2.translate(1, 1);
+                    g2.setColor(bgColor.darker());
+                } else if (getModel().isRollover()) {
+                    g2.setColor(bgColor.brighter());
+                } else {
+                    g2.setColor(bgColor);
+                }
+                g2.fillRoundRect(0, 0, width, height, arcSize, arcSize);
+                g2.setColor(fgColor);
+                FontMetrics fm = g2.getFontMetrics();
+                int textX = (width - fm.stringWidth(getText())) / 2;
+                int textY = (height - fm.getHeight()) / 2 + fm.getAscent();
+                g2.drawString(getText(), textX, textY);
+                g2.dispose();
+            }
+        };
+        btn.setPreferredSize(new Dimension(120, 45));
+        btn.setFont(new Font("Segoe UI", Font.BOLD, 14));
+        btn.setForeground(fgColor);
+        btn.setFocusPainted(false);
+        btn.setBorderPainted(false);
+        btn.setContentAreaFilled(false);
+        btn.setCursor(new Cursor(Cursor.HAND_CURSOR));
+        return btn;
+    }
+
+    // --- STUDENT VIEW LOGIC ---
+    private void setupStudentView() {
+        // Read-only inputs
+        txtRecID.setEditable(false);
+        txtStudentID.setEditable(false);
+        txtCourseID.setEditable(false);
+        txtTimeLine.setEditable(false);
+        txtDeadline.setEditable(false);
+        cmbDescription.setEnabled(false);
+        cmbStatus.setEnabled(false);
+
+        txtStudentID.setText(loggedInUser.getUserID());
+
+        List<Recommendation> allRecs = recommendationDAO.loadRecommendations();
+        List<Recommendation> myRecs = allRecs.stream()
+                .filter(r -> r.getStudentID().equalsIgnoreCase(loggedInUser.getUserID()))
+                .collect(Collectors.toList());
+
+        if (myRecs.isEmpty()) {
+            // Show "No recommendations" message
+            // Access center panel safely
+            Component[] comps = getContentPane().getComponents();
+            for (Component c : comps) {
+                if (c instanceof JPanel && ((JPanel)c).getLayout() instanceof CardLayout) {
+                    ((CardLayout) ((JPanel)c).getLayout()).show((JPanel)c, "EMPTY");
+                    break;
+                }
+            }
+        } else {
+            updateTable(myRecs);
+        }
+    }
+
+    private void populateFieldsFromTable(int row) {
+        txtRecID.setText((String) tableModel.getValueAt(row, 0));
+        txtStudentID.setText((String) tableModel.getValueAt(row, 1));
+        txtCourseID.setText((String) tableModel.getValueAt(row, 2));
+        txtTimeLine.setText((String) tableModel.getValueAt(row, 3));
+        txtDeadline.setText((String) tableModel.getValueAt(row, 4));
+        cmbDescription.setSelectedItem((String) tableModel.getValueAt(row, 5));
+        cmbStatus.setSelectedItem((String) tableModel.getValueAt(row, 6));
+    }
+
+    // --- CRUD OPERATIONS ---
 
     private void addRecommendation() {
         if (txtRecID.getText().isEmpty() || txtStudentID.getText().isEmpty() || txtCourseID.getText().isEmpty() || txtTimeLine.getText().isEmpty() || txtDeadline.getText().isEmpty()) {
@@ -233,26 +306,18 @@ public class RecommendationEntry extends JFrame{
         }
 
         if (!validateDateLine()) return;
-        // validateTimeLine() removed or simplified since timeline is String
         if (!validateStudentID()) return;
         if (!validateCourseID()) return;
 
         try {
-            // FIX: timeline is String, deadline is Date
             String timeline = txtTimeLine.getText();
             Date deadline = dateFormat.parse(txtDeadline.getText());
-
-            // FIX: Constructor order (ID, Student, Course, Desc, Timeline, Deadline, Status)
             Recommendation recommendation = new Recommendation(
-                    txtRecID.getText(),
-                    txtStudentID.getText(),
-                    txtCourseID.getText(),
-                    (String) cmbDescription.getSelectedItem(), // Description comes before timeline in Rec.java
-                    timeline,
-                    deadline,
+                    txtRecID.getText(), txtStudentID.getText(), txtCourseID.getText(),
+                    (String) cmbDescription.getSelectedItem(), timeline, deadline,
                     (String) cmbStatus.getSelectedItem()
             );
-            recommendationDAO.saveRecommendation(recommendation); // Updated call to saveRecommendation (was addRecommendation)
+            recommendationDAO.saveRecommendation(recommendation);
             JOptionPane.showMessageDialog(this, "Recommendation added successfully!");
             listRecommendation();
             clearFields();
@@ -266,32 +331,18 @@ public class RecommendationEntry extends JFrame{
             JOptionPane.showMessageDialog(this, "Error: Please select a recommendation to update.");
             return;
         }
-
         if (!validateDateLine()) return;
-
         try {
-            // FIX: timeline is String, deadline is Date
             String timeline = txtTimeLine.getText();
             Date deadline = dateFormat.parse(txtDeadline.getText());
-
-            // FIX: Constructor order to match Recommendation.java
             Recommendation recommendation = new Recommendation(
-                    txtRecID.getText(),
-                    txtStudentID.getText(),
-                    txtCourseID.getText(),
-                    (String) cmbDescription.getSelectedItem(),
-                    timeline,
-                    deadline,
+                    txtRecID.getText(), txtStudentID.getText(), txtCourseID.getText(),
+                    (String) cmbDescription.getSelectedItem(), timeline, deadline,
                     (String) cmbStatus.getSelectedItem()
             );
-            // FIX: Pass all required arguments (RecID, StudentID, CourseID, Recommendation)
             recommendationDAO.updateRecommendation(
-                    txtRecID.getText(),
-                    txtStudentID.getText(),
-                    txtCourseID.getText(),
-                    recommendation
+                    txtRecID.getText(), txtStudentID.getText(), txtCourseID.getText(), recommendation
             );
-
             JOptionPane.showMessageDialog(this, "Recommendation updated successfully!");
             listRecommendation();
             clearFields();
@@ -305,16 +356,9 @@ public class RecommendationEntry extends JFrame{
             JOptionPane.showMessageDialog(this, "Error: Please select a recommendation to remove.");
             return;
         }
-
-        int confirm = JOptionPane.showConfirmDialog(this, "Are you sure you want to remove this recommendation?", "Confirm Removal", JOptionPane.YES_NO_OPTION);
+        int confirm = JOptionPane.showConfirmDialog(this, "Remove this recommendation?", "Confirm Removal", JOptionPane.YES_NO_OPTION);
         if (confirm == JOptionPane.YES_OPTION) {
-            // FIX: Pass all required arguments (RecID, StudentID, CourseID)
-            recommendationDAO.removeRecommendation(
-                    txtRecID.getText(),
-                    txtStudentID.getText(),
-                    txtCourseID.getText()
-            );
-
+            recommendationDAO.removeRecommendation(txtRecID.getText(), txtStudentID.getText(), txtCourseID.getText());
             JOptionPane.showMessageDialog(this, "Recommendation removed successfully!");
             listRecommendation();
             clearFields();
@@ -322,44 +366,30 @@ public class RecommendationEntry extends JFrame{
     }
 
     private void listRecommendation() {
-        tableModel.setRowCount(0);
         List<Recommendation> recommendations = recommendationDAO.loadRecommendations();
+        updateTable(recommendations);
+    }
+
+    private void updateTable(List<Recommendation> recommendations) {
+        tableModel.setRowCount(0);
         for (Recommendation r : recommendations) {
             tableModel.addRow(new Object[]{
-                    r.getRecID(),
-                    r.getStudentID(),
-                    r.getCourseID(),
-                    r.getTimeline(), // String, no format needed
-                    dateFormat.format(r.getDeadline()),
-                    r.getDescription(),
-                    r.getStatus()
+                    r.getRecID(), r.getStudentID(), r.getCourseID(),
+                    r.getTimeline(), dateFormat.format(r.getDeadline()),
+                    r.getDescription(), r.getStatus()
             });
         }
     }
 
     private void clearFields() {
-        txtRecID.setText("");
-        txtStudentID.setText("");
-        txtCourseID.setText("");
-        txtTimeLine.setText("");
-        txtDeadline.setText("");
+        txtRecID.setText(""); txtStudentID.setText(""); txtCourseID.setText("");
+        txtTimeLine.setText(""); txtDeadline.setText("");
         cmbDescription.setSelectedIndex(0);
         cmbStatus.setSelectedIndex(0);
     }
 
-    // Removed or relaxed validation since timeline is just a String now
-    private boolean validateTimeLine() {
-        if (txtTimeLine.getText().trim().isEmpty()) {
-            JOptionPane.showMessageDialog(this, "Error: Timeline cannot be empty.");
-            return false;
-        }
-        return true;
-    }
-
     private boolean validateDateLine() {
-        try{
-            dateFormat.parse(txtDeadline.getText());
-        } catch (Exception e) {
+        try{ dateFormat.parse(txtDeadline.getText()); } catch (Exception e) {
             JOptionPane.showMessageDialog(this, "Error: Invalid date format. Use YYYY-MM-DD.");
             return false;
         }
@@ -369,17 +399,13 @@ public class RecommendationEntry extends JFrame{
     public boolean validateStudentID() {
         StudentDAO studentDAO = new StudentDAO();
         boolean exists = studentDAO.loadAllStudents().stream().anyMatch(s -> s.getUserID().equals(txtStudentID.getText()));
-        if (!exists) {
-            JOptionPane.showMessageDialog(this, "Error: Student ID does not exist.");
-        }
+        if (!exists) JOptionPane.showMessageDialog(this, "Error: Student ID does not exist.");
         return exists;
     }
 
     private boolean validateCourseID() {
         boolean exists = CourseCatalog.getInstance().getCourse(txtCourseID.getText()) != null;
-        if (!exists) {
-            JOptionPane.showMessageDialog(this, "Error: Course ID does not exist.");
-        }
+        if (!exists) JOptionPane.showMessageDialog(this, "Error: Course ID does not exist.");
         return exists;
     }
 

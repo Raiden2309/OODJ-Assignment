@@ -15,22 +15,25 @@ import java.text.SimpleDateFormat;
 import java.net.URL;
 import java.util.List;
 
-// Import your other views (Assume they are in 'resources' package or adjust imports)
+// Import other views
 import resources.FailedComponentOverview;
 import resources.RecommendationEntry;
 import resources.MilestoneActionPlan;
 import resources.RecoveryProgress;
-import resources.ManageAccountView; // Keep if ManageAccountView is still in 'ui'
-import resources.LoginView;         // Keep if LoginView is still in 'ui'
-import resources.CheckRecoveryEligibility; // Import if needed
+// Ensure these match your package structure
+import resources.ManageAccountView;
+import resources.LoginView;
+import resources.CheckRecoveryEligibility;
 
 public class Dashboard extends JFrame {
 
+    // Colors
     private final Color SIDEBAR_COLOR = new Color(33, 41, 54);
     private final Color SIDEBAR_HOVER_COLOR = new Color(55, 65, 81);
     private final Color TEXT_COLOR = new Color(236, 240, 241);
     private final Color ACCENT_COLOR = new Color(0, 102, 204);
     private final Color CONTENT_BG = new Color(245, 247, 250);
+    private final Color CARD_BG = Color.WHITE;
 
     private JPanel mainContentPanel;
     private User currentUser;
@@ -38,6 +41,8 @@ public class Dashboard extends JFrame {
 
     public Dashboard(User user) {
         this.currentUser = user;
+
+        // Reload student data if it's a student to ensure profile is up to date
         if (currentUser instanceof Student) {
             reloadStudentData();
         }
@@ -48,10 +53,11 @@ public class Dashboard extends JFrame {
         setDefaultCloseOperation(EXIT_ON_CLOSE);
         setExtendedState(JFrame.MAXIMIZED_BOTH);
 
+        // Main Container
         JPanel container = new JPanel(new BorderLayout());
         add(container);
 
-        // --- SIDEBAR ---
+        // --- 1. SIDEBAR ---
         JPanel sidebar = new JPanel();
         sidebar.setPreferredSize(new Dimension(280, 800));
         sidebar.setBackground(SIDEBAR_COLOR);
@@ -66,6 +72,7 @@ public class Dashboard extends JFrame {
         JLabel appTitle = new JLabel("<html><center>CRS MANAGEMENT<br><span style='font-size:10px; color:#bdc3c7'>SYSTEM</span></center></html>");
         appTitle.setFont(new Font("Segoe UI", Font.BOLD, 18));
         appTitle.setForeground(TEXT_COLOR);
+        appTitle.setAlignmentX(Component.CENTER_ALIGNMENT);
 
         sidebarHeader.add(appTitle);
         sidebar.add(sidebarHeader, BorderLayout.NORTH);
@@ -76,75 +83,73 @@ public class Dashboard extends JFrame {
         menuPanel.setBackground(SIDEBAR_COLOR);
         menuPanel.setBorder(new EmptyBorder(10, 10, 20, 10));
 
+        // Core Nav
         JButton btnHome = createMenuButton("Dashboard", "home.png");
-        menuPanel.add(btnHome);
-        menuPanel.add(Box.createVerticalStrut(15));
-
-        // --- ROLE BASED SIDEBAR CONTENT ---
-        String role = currentUser.getRole().getRoleName();
 
         JLabel lblCRP = new JLabel("  COURSE RECOVERY");
         lblCRP.setFont(new Font("Segoe UI", Font.BOLD, 11));
         lblCRP.setForeground(new Color(149, 165, 166));
         lblCRP.setAlignmentX(Component.LEFT_ALIGNMENT);
         lblCRP.setBorder(new EmptyBorder(10, 5, 5, 0));
-        menuPanel.add(lblCRP);
 
-        // Define Buttons
+        // CRP Functions
         JButton btnCheck = createMenuButton("Check Eligibility", "check.png");
         JButton btnFailed = createMenuButton("Failed Components", "course.png");
         JButton btnRec = createMenuButton("Recommendations", "report.png");
         JButton btnSet = createMenuButton("Milestone Plans", "check.png");
         JButton btnMonitor = createMenuButton("Progress Monitor", "check.png");
 
-        // Logic: Who sees what?
-        if ("Student".equalsIgnoreCase(role)) {
-            // Students see their own data
-            menuPanel.add(btnCheck); // Check My Eligibility
-            menuPanel.add(Box.createVerticalStrut(5));
-            menuPanel.add(btnFailed); // My Failed Components
-            menuPanel.add(Box.createVerticalStrut(5));
-            menuPanel.add(btnRec);    // My Recommendations
-            menuPanel.add(Box.createVerticalStrut(5));
-            menuPanel.add(btnSet);    // My Plans
-            menuPanel.add(Box.createVerticalStrut(5));
-            menuPanel.add(btnMonitor);// My Progress
-        }
-        else if ("AcademicOfficer".equalsIgnoreCase(role) || "CourseAdministrator".equalsIgnoreCase(role)) {
-            // Officers/Admins see management tools
-            // (You might want to rename buttons here for clarity, e.g. "Manage Recommendations")
-            menuPanel.add(btnCheck); // Check ANY Student
-            menuPanel.add(Box.createVerticalStrut(5));
-            menuPanel.add(btnFailed);
-            menuPanel.add(Box.createVerticalStrut(5));
-            menuPanel.add(btnRec);
-            menuPanel.add(Box.createVerticalStrut(5));
-            menuPanel.add(btnSet);
-            menuPanel.add(Box.createVerticalStrut(5));
-            menuPanel.add(btnMonitor);
-        }
-
-        menuPanel.add(Box.createVerticalStrut(25));
-
+        // Admin/User Nav
         JLabel lblAccount = new JLabel("  ACCOUNT");
         lblAccount.setFont(new Font("Segoe UI", Font.BOLD, 11));
         lblAccount.setForeground(new Color(149, 165, 166));
         lblAccount.setAlignmentX(Component.LEFT_ALIGNMENT);
         lblAccount.setBorder(new EmptyBorder(10, 5, 5, 0));
-        menuPanel.add(lblAccount);
 
         JButton btnAccount = createMenuButton("My Profile", "user.png");
-        menuPanel.add(btnAccount);
-
-        menuPanel.add(Box.createVerticalGlue());
-
         JButton btnLogout = createMenuButton("Logout", "logout.png");
+
+        // Add to Menu
+        menuPanel.add(btnHome);
+        menuPanel.add(Box.createVerticalStrut(20));
+
+        menuPanel.add(lblCRP);
+        menuPanel.add(Box.createVerticalStrut(10));
+        menuPanel.add(btnCheck);
+        menuPanel.add(Box.createVerticalStrut(5));
+        menuPanel.add(btnFailed);
+        menuPanel.add(Box.createVerticalStrut(5));
+        menuPanel.add(btnRec);
+        menuPanel.add(Box.createVerticalStrut(5));
+        menuPanel.add(btnSet);
+        menuPanel.add(Box.createVerticalStrut(5));
+        menuPanel.add(btnMonitor);
+
+        // For Staff: Add Student Management Button
+        String role = currentUser.getRole().getRoleName();
+        if ("AcademicOfficer".equalsIgnoreCase(role) || "CourseAdministrator".equalsIgnoreCase(role)) {
+            menuPanel.add(Box.createVerticalStrut(5));
+            JButton btnManageUsers = createMenuButton("Manage Students", "user.png");
+            btnManageUsers.addActionListener(e -> {
+                setActiveButton(btnManageUsers);
+                new StudentManagementView(currentUser).setVisible(true);
+                dispose();
+            });
+            menuPanel.add(btnManageUsers);
+        }
+
+        menuPanel.add(Box.createVerticalStrut(30));
+
+        menuPanel.add(lblAccount);
+        menuPanel.add(Box.createVerticalStrut(10));
+        menuPanel.add(btnAccount);
+        menuPanel.add(Box.createVerticalGlue());
         menuPanel.add(btnLogout);
 
         sidebar.add(menuPanel, BorderLayout.CENTER);
         container.add(sidebar, BorderLayout.WEST);
 
-        // --- CONTENT AREA ---
+        // --- 2. MAIN CONTENT ---
         JPanel rightPanel = new JPanel(new BorderLayout());
         rightPanel.setBackground(CONTENT_BG);
 
@@ -169,6 +174,7 @@ public class Dashboard extends JFrame {
         topHeader.add(sessionLabel, BorderLayout.EAST);
         rightPanel.add(topHeader, BorderLayout.NORTH);
 
+        // Content Area
         mainContentPanel = new JPanel(new CardLayout());
         mainContentPanel.setBackground(CONTENT_BG);
         mainContentPanel.add(createOverviewPanel(), "HOME");
@@ -177,14 +183,17 @@ public class Dashboard extends JFrame {
         container.add(rightPanel, BorderLayout.CENTER);
 
         // --- ACTIONS ---
+
         btnHome.addActionListener(e -> {
             setActiveButton(btnHome);
             switchView("HOME", "Dashboard Overview", pageTitle);
         });
 
+        // Launch windows
         btnCheck.addActionListener(e -> {
             setActiveButton(btnCheck);
             new CheckRecoveryEligibility(currentUser).setVisible(true);
+            dispose();
         });
 
         btnFailed.addActionListener(e -> {
@@ -214,6 +223,10 @@ public class Dashboard extends JFrame {
         btnAccount.addActionListener(e -> {
             setActiveButton(btnAccount);
             new ManageAccountView(currentUser).setVisible(true);
+            // Don't dispose dashboard for account view usually, but consistency:
+            // If ManageAccountView is modal/dialog, don't dispose. If full frame replacing dash, dispose.
+            // Based on previous code, ManageAccountView has a "Back" button to reopen Dashboard.
+            dispose();
         });
 
         btnLogout.addActionListener(e -> {
@@ -234,6 +247,7 @@ public class Dashboard extends JFrame {
         gbc.insets = new Insets(15, 15, 15, 15);
         gbc.fill = GridBagConstraints.BOTH;
 
+        // Welcome Card
         JPanel welcomeCard = new JPanel(new BorderLayout());
         welcomeCard.setBackground(Color.WHITE);
         welcomeCard.setBorder(createCardBorder());
@@ -251,11 +265,11 @@ public class Dashboard extends JFrame {
         welcomeLbl.setFont(new Font("Segoe UI", Font.BOLD, 24));
         welcomeLbl.setBorder(new EmptyBorder(20, 20, 20, 20));
 
-        // Logo logic (kept from previous step)
+        // Logo on Right
         JLabel logoLabel = new JLabel();
         logoLabel.setBorder(new EmptyBorder(10, 10, 10, 30));
         try {
-            URL logoUrl = getClass().getResource("apulogo.png");
+            URL logoUrl = getClass().getResource("/apulogo.png");
             if (logoUrl != null) {
                 ImageIcon icon = new ImageIcon(logoUrl);
                 Image img = icon.getImage().getScaledInstance(150, 150, Image.SCALE_SMOOTH);
@@ -269,7 +283,6 @@ public class Dashboard extends JFrame {
         gbc.gridx = 0; gbc.gridy = 0; gbc.gridwidth = 3; gbc.weightx = 1.0; gbc.weighty = 0.1;
         panel.add(welcomeCard, gbc);
 
-        // Only show Student Stats if user is a Student
         if (currentUser instanceof Student) {
             Student s = (Student) currentUser;
             double cgpa = s.getAcademicProfile().getCGPA();
@@ -334,6 +347,7 @@ public class Dashboard extends JFrame {
         btn.setMaximumSize(new Dimension(Integer.MAX_VALUE, 45));
 
         try {
+            // Using "icons/" prefix as files are in src/resources/icons
             URL iconUrl = getClass().getResource("icons/" + iconName);
             if (iconUrl != null) {
                 ImageIcon icon = new ImageIcon(iconUrl);
