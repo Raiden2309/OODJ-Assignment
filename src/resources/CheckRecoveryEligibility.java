@@ -301,7 +301,7 @@ public class CheckRecoveryEligibility extends JFrame {
             String msg = String.format("Student: %s\nCGPA: %.2f\nFailed Courses: %d\n\nStatus: ELIGIBLE",
                     targetStudent.getFullName(),
                     targetStudent.getAcademicProfile().getCGPA(),
-                    targetStudent.getAcademicProfile().getTotalFailedCourse());
+                    targetStudent.getAcademicProfile().getTotalFailedCourses());
 
             JOptionPane.showMessageDialog(null, msg, "Check Result", JOptionPane.INFORMATION_MESSAGE);
         } else {
@@ -311,7 +311,7 @@ public class CheckRecoveryEligibility extends JFrame {
             String msg = String.format("Student: %s\nCGPA: %.2f\nFailed Courses: %d\n\nStatus: NOT ELIGIBLE",
                     targetStudent.getFullName(),
                     targetStudent.getAcademicProfile().getCGPA(),
-                    targetStudent.getAcademicProfile().getTotalFailedCourse());
+                    targetStudent.getAcademicProfile().getTotalFailedCourses());
 
             JOptionPane.showMessageDialog(null, msg, "Check Result", JOptionPane.WARNING_MESSAGE);
         }
