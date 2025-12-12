@@ -1,7 +1,6 @@
 package resources;
 
 import domain.User;
-import resources.Dashboard; // IMPORT THE DASHBOARD CLASS
 import javax.swing.*;
 import javax.swing.border.LineBorder;
 import java.awt.event.*;
@@ -17,7 +16,6 @@ public class CRPHomePage extends JFrame {
     private JPanel frmCRP;
     private User loggedInUser;
 
-    // Constructor accepts User
     public CRPHomePage(User user) {
         this.loggedInUser = user;
 
@@ -49,74 +47,75 @@ public class CRPHomePage extends JFrame {
         setResizable(false);
 
         JPanel topPanel = new JPanel();
-        topPanel.setOpaque(false);
         topPanel.setLayout(new BoxLayout(topPanel, BoxLayout.Y_AXIS));
-        topPanel.setBorder(BorderFactory.createEmptyBorder(20, 0, 20, 0));
+        topPanel.setOpaque(false);
+        topPanel.setBorder(BorderFactory.createEmptyBorder(20, 10, 20, 10));
 
-        lblCRP = new JTextField("Course Recovery Plan");
-        lblCRP.setEditable(false);
-        lblCRP.setHorizontalAlignment(SwingConstants.CENTER);
-        lblCRP.setFont(new Font("Segoe UI", Font.BOLD, 36));
-        lblCRP.setBorder(null);
-        lblCRP.setOpaque(false);
-        lblCRP.setForeground(new Color(255, 255, 255));
-        lblCRP.setAlignmentX(Component.CENTER_ALIGNMENT);
+        ImageIcon originalIcon = new ImageIcon(getClass().getResource("/resources/apulogo.png"));
+        Image scaledImage = originalIcon.getImage().getScaledInstance(225, 225, Image.SCALE_SMOOTH);
+        JLabel lblLogo = new JLabel(new ImageIcon(scaledImage));
+        lblLogo.setAlignmentX(CENTER_ALIGNMENT);
 
-        topPanel.add(Box.createVerticalGlue());
-        topPanel.add(lblCRP);
-        topPanel.add(Box.createVerticalGlue());
+        JLabel lblTitle = new JLabel("CRP Home Page", SwingConstants.CENTER);
+        lblTitle.setFont(new Font("Arial", Font.BOLD, 50));
+        lblTitle.setForeground(new Color(74, 112, 229));
+        lblTitle.setAlignmentX(CENTER_ALIGNMENT);
 
-        JPanel centerPanel = new JPanel();
-        centerPanel.setOpaque(false);
-        centerPanel.setLayout(new GridBagLayout());
+        topPanel.add(lblLogo);
+        topPanel.add(Box.createVerticalStrut(20));
+        topPanel.add(lblTitle);
+
+        add(topPanel, BorderLayout.NORTH);
+
+        JPanel buttonPanel = new JPanel(new GridLayout(2, 2, 20, 20));
+        buttonPanel.setBorder(BorderFactory.createEmptyBorder(50, 150, 50, 150));
+        buttonPanel.setOpaque(false);
 
         btnFailed = new JButton("List Failed Components");
-        btnRec = new JButton("Add/Update Recommendation");
+        btnRec = new JButton("Recommendation Entry");
         btnSet = new JButton("Set Milestone Action Plan");
-        btnMonitor = new JButton("Monitor Student Progress");
-        btnBack = new JButton("Back");
+        btnMonitor = new JButton("Monitor Recovery Progress");
+
+        btnFailed.setFont(new Font("Arial", Font.BOLD, 16));
+        btnRec.setFont(new Font("Arial", Font.BOLD, 16));
+        btnSet.setFont(new Font("Arial", Font.BOLD, 16));
+        btnMonitor.setFont(new Font("Arial", Font.BOLD, 16));
+
+        btnFailed.setBackground(new Color(229, 193, 95));
+        btnFailed.setForeground(Color.BLACK);
+        btnRec.setBackground(new Color(229, 193, 95));
+        btnRec.setForeground(Color.BLACK);
+        btnSet.setBackground(new Color(229, 193, 95));
+        btnSet.setForeground(Color.BLACK);
+        btnMonitor.setBackground(new Color(229, 193, 95));
+        btnMonitor.setForeground(Color.BLACK);
 
         styleButton(btnFailed);
         styleButton(btnRec);
         styleButton(btnSet);
         styleButton(btnMonitor);
 
-        btnBack.setFont(new Font("Segoe UI", Font.BOLD, 14));
+        buttonPanel.add(btnFailed);
+        buttonPanel.add(btnRec);
+        buttonPanel.add(btnSet);
+        buttonPanel.add(btnMonitor);
+
+        add(buttonPanel, BorderLayout.CENTER);
+
+        btnBack = new JButton("Back");
+        btnBack.setFont(new Font("Arial", Font.BOLD, 14));
+        JPanel backPanel = new JPanel();
+        backPanel.setOpaque(false);
+        btnBack.setPreferredSize(new Dimension(150, 50));
         btnBack.setBackground(new Color(229, 93, 138));
-        btnBack.setForeground(Color.WHITE);
-        btnBack.setPreferredSize(new Dimension(100, 40));
-        btnBack.setFocusPainted(false);
-        btnBack.setBorder(new LineBorder(new Color(180, 70, 100), 2, true));
+        backPanel.add(btnBack);
+        add(backPanel, BorderLayout.SOUTH);
 
-        GridBagConstraints gbc = new GridBagConstraints();
-        gbc.insets = new Insets(15, 10, 15, 10);
-        gbc.fill = GridBagConstraints.HORIZONTAL;
-
-        gbc.gridx = 0; gbc.gridy = 0;
-        centerPanel.add(btnFailed, gbc);
-
-        gbc.gridx = 0; gbc.gridy = 1;
-        centerPanel.add(btnRec, gbc);
-
-        gbc.gridx = 0; gbc.gridy = 2;
-        centerPanel.add(btnSet, gbc);
-
-        gbc.gridx = 0; gbc.gridy = 3;
-        centerPanel.add(btnMonitor, gbc);
-
-        JPanel bottomPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT, 30, 20));
-        bottomPanel.setOpaque(false);
-        bottomPanel.add(btnBack);
-
-        frmCRP.setLayout(new BorderLayout());
-        frmCRP.add(topPanel, BorderLayout.NORTH);
-        frmCRP.add(centerPanel, BorderLayout.CENTER);
-        frmCRP.add(bottomPanel, BorderLayout.SOUTH);
-
+        btnBack.setBorder(new LineBorder(new Color(200, 50, 100), 2, true));
         btnBack.addMouseListener(new MouseAdapter() {
             @Override
             public void mouseEntered(MouseEvent e) {
-                btnBack.setBackground(new Color(200, 80, 120));
+                btnBack.setBackground(new Color(200, 50, 100));
             }
             @Override
             public void mouseExited(MouseEvent e) {
@@ -124,30 +123,27 @@ public class CRPHomePage extends JFrame {
             }
         });
 
-        // --- BUTTON ACTIONS ---
         btnFailed.addActionListener(e -> {
-            new FailedComponentOverview().setVisible(true);
+            new FailedComponentOverview(loggedInUser).setVisible(true);
             dispose();
         });
 
         btnRec.addActionListener(e -> {
-            new RecommendationEntry(null).setVisible(true);
+            new RecommendationEntry(loggedInUser).setVisible(true);
             dispose();
         });
 
         btnSet.addActionListener(e-> {
-            new MilestoneActionPlan(null).setVisible(true);
+            new MilestoneActionPlan(loggedInUser).setVisible(true);
             dispose();
         });
 
         btnMonitor.addActionListener(e-> {
-            new RecoveryProgress(null).setVisible(true);
+            new RecoveryProgress(loggedInUser).setVisible(true);
             dispose();
         });
 
-        // FIX: Pass 'loggedInUser' to Dashboard constructor
-        // This resolves "Expected 1 argument but found 0"
-        btnBack.addActionListener(e-> {
+        btnBack.addActionListener(e -> {
             new Dashboard(loggedInUser).setVisible(true);
             dispose();
         });
@@ -156,10 +152,6 @@ public class CRPHomePage extends JFrame {
     private void styleButton(JButton button) {
         button.setBorder(BorderFactory.createLineBorder(new Color(200, 150, 100), 2, true));
         button.setFocusPainted(false);
-        button.setFont(new Font("Segoe UI", Font.BOLD, 14));
-        button.setPreferredSize(new Dimension(300, 50));
-        button.setBackground(new Color(229, 193, 205));
-
         button.addMouseListener(new MouseAdapter() {
             @Override
             public void mouseEntered(MouseEvent e) {
@@ -167,13 +159,12 @@ public class CRPHomePage extends JFrame {
             }
             @Override
             public void mouseExited(MouseEvent e) {
-                button.setBackground(new Color(229, 193, 205));
+                button.setBackground(new Color(229, 193, 95));
             }
         });
     }
 
-    // Test Main (Optional)
     public static void main(String[] args) {
-        SwingUtilities.invokeLater(() -> new CRPHomePage(null));
+        new CRPHomePage(null).setVisible(true);
     }
 }

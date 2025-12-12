@@ -1,7 +1,6 @@
 package service;
 
 import academic.RecoveryMilestone;
-import domain.User;
 
 import java.io.*;
 import java.text.SimpleDateFormat;
@@ -15,14 +14,11 @@ public class MilestoneDAO {
 
     public List<RecoveryMilestone> loadMilestones() {
         List<RecoveryMilestone> milestones = new ArrayList<>();
-        File file = new File(MILESTONES_FILE_PATH);
-        if (!file.exists()) {
-            return milestones;
-        }
+        System.err.println("Attempting to load milestones from file: " + MILESTONES_FILE_PATH);
 
-        try (BufferedReader br = new BufferedReader(new FileReader(file))) {
+        try (BufferedReader br = new BufferedReader(new FileReader(MILESTONES_FILE_PATH))) {
             String line;
-            br.readLine(); // Skip header
+            br.readLine();
 
             while ((line = br.readLine()) != null) {
                 String[] values = line.split(",");
@@ -36,93 +32,66 @@ public class MilestoneDAO {
                     String status = values[6].trim();
 
                     milestones.add(new RecoveryMilestone(
-                            milestoneID, studentID, courseID, studyWeek, taskDescription, deadline, status
-                    ));
+                            milestoneID,
+                            studentID,
+                            courseID,
+                            studyWeek,
+                            taskDescription,
+                            deadline,
+                            status)
+                    );
                 }
             }
-        } catch (Exception e) {
+            System.err.println("Successfully loaded " + milestones.size() + " recommendations.");
+        }
+        catch (Exception e) {
             System.err.println("Error loading milestones: " + e.getMessage());
         }
         return milestones;
     }
 
-    public void addMilestone(RecoveryMilestone milestone, User loggedInUser) {
+    public void saveMilestone(RecoveryMilestone milestone) {
         try (BufferedWriter bw = new BufferedWriter(new FileWriter(MILESTONES_FILE_PATH, true))) {
-            File file = new File(MILESTONES_FILE_PATH);
-            if (file.length() == 0) {
-                bw.write("MilestoneID,StudentID,CourseID,StudyWeek,TaskDescription,Deadline,Status");
-                bw.newLine();
-            }
             bw.write(milestone.toString());
             bw.newLine();
-        } catch (IOException e) {
-            System.err.println("Error adding milestone: " + e.getMessage());
+        }
+        catch (IOException e) {
+            System.err.println("Error saving milestone: " + e.getMessage());
         }
     }
 
-    public void addMilestone(RecoveryMilestone milestone) {
-        addMilestone(milestone, null);
-    }
-
-    public void updateMilestone(RecoveryMilestone updatedMilestone) {
+    public void updateMilestone(String milestoneID, RecoveryMilestone updatedMilestone) {
         List<RecoveryMilestone> milestones = loadMilestones();
-        boolean found = false;
 
         for (int i = 0; i < milestones.size(); i++) {
-            // FIX: Use trim() and equalsIgnoreCase() for robust matching
-            String currentID = milestones.get(i).getMilestoneID().trim();
-            String targetID = updatedMilestone.getMilestoneID().trim();
-
-            if (currentID.equalsIgnoreCase(targetID)) {
-                milestones.set(i, updatedMilestone); // Replace object with new one (containing new status)
-                found = true;
+            if (milestones.get(i).getMilestoneID().equals(milestoneID)) {
+                milestones.set(i, updatedMilestone);
                 break;
             }
         }
-
-        if (found) {
-            rewriteFile(milestones);
-            System.out.println("Milestone " + updatedMilestone.getMilestoneID() + " updated successfully.");
-        } else {
-            System.err.println("Milestone ID not found for update: " + updatedMilestone.getMilestoneID());
+        try (BufferedWriter bw = new BufferedWriter(new FileWriter(MILESTONES_FILE_PATH))) {
+            bw.write("MilestoneID,StudentID,CourseID,StudyWeek,TaskDescription,Deadline,Status\n");
+            for (RecoveryMilestone m : milestones) {
+                bw.write(m.toString());
+                bw.newLine();
+            }
+        } catch (IOException e) {
+            System.err.println("Error updating milestones: " + e.getMessage());
         }
     }
 
     public void removeMilestone(String milestoneID) {
         List<RecoveryMilestone> milestones = loadMilestones();
-        // FIX: Use trim() and equalsIgnoreCase()
-        boolean removed = milestones.removeIf(m -> m.getMilestoneID().trim().equalsIgnoreCase(milestoneID.trim()));
+        milestones.removeIf(m -> m.getMilestoneID().equals(milestoneID));
 
-        if (removed) {
-            rewriteFile(milestones);
-        } else {
-            System.err.println("Milestone ID not found for removal: " + milestoneID);
-        }
-    }
-
-    public String generateNextID() {
-        List<RecoveryMilestone> milestones = loadMilestones();
-        int maxId = 0;
-        for (RecoveryMilestone m : milestones) {
-            try {
-                String numPart = m.getMilestoneID().replaceAll("[^0-9]", "");
-                int id = Integer.parseInt(numPart);
-                if (id > maxId) maxId = id;
-            } catch (Exception e) {}
-        }
-        return String.format("M%03d", maxId + 1);
-    }
-
-    private void rewriteFile(List<RecoveryMilestone> milestones) {
         try (BufferedWriter bw = new BufferedWriter(new FileWriter(MILESTONES_FILE_PATH))) {
-            bw.write("MilestoneID,StudentID,CourseID,StudyWeek,TaskDescription,Deadline,Status");
-            bw.newLine();
+            bw.write("MilestoneID,StudentID,CourseID,StudyWeek,TaskDescription,Deadline,Status\n");
             for (RecoveryMilestone m : milestones) {
-                bw.write(m.toString()); // Ensure toString() outputs CSV format correctly
+                bw.write(m.toString());
                 bw.newLine();
             }
         } catch (IOException e) {
-            System.err.println("Error updating file: " + e.getMessage());
+            System.err.println("Error removing milestone: " + e.getMessage());
         }
     }
 }
