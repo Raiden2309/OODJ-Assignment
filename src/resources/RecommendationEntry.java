@@ -83,7 +83,7 @@ public class RecommendationEntry extends JFrame{
 
         setTitle("Recommendation Entry");
         setSize(1000, 700);
-        setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
         setLocationRelativeTo(null);
 
         // --- INPUT PANEL ---
@@ -180,7 +180,6 @@ public class RecommendationEntry extends JFrame{
         btnList.addActionListener(e -> listRecommendation());
 
         btnBack.addActionListener(e -> {
-            new Dashboard(loggedInUser).setVisible(true);
             dispose();
         });
 

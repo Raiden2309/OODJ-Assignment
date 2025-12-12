@@ -2,6 +2,7 @@ package resources;
 
 import domain.User;
 import domain.Student;
+import domain.AcademicOfficer;
 import service.UserDAO;
 import service.StudentDAO;
 
@@ -9,6 +10,8 @@ import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import javax.swing.table.DefaultTableModel;
 import java.awt.*;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
 import java.util.List;
 
 public class ManageAccountView extends JFrame {
@@ -26,7 +29,6 @@ public class ManageAccountView extends JFrame {
         setTitle("Account Settings - " + currentUser.getUserID());
         setSize(1000, 700);
         setLocationRelativeTo(null);
-        // DISPOSE_ON_CLOSE ensures only this window closes, keeping Dashboard open
         setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
         setLayout(new BorderLayout());
 
@@ -35,18 +37,14 @@ public class ManageAccountView extends JFrame {
         headerPanel.setBackground(new Color(0, 102, 204));
         headerPanel.setBorder(new EmptyBorder(15, 20, 15, 20));
 
-        // Header Title Panel (Left)
         JPanel leftHeader = new JPanel(new FlowLayout(FlowLayout.LEFT, 15, 0));
         leftHeader.setOpaque(false);
-
-        // REMOVED BACK BUTTON as requested
 
         JLabel appTitle = new JLabel("Course Recovery System");
         appTitle.setFont(new Font("Segoe UI", Font.BOLD, 18));
         appTitle.setForeground(Color.WHITE);
 
         leftHeader.add(appTitle);
-
         headerPanel.add(leftHeader, BorderLayout.WEST);
         add(headerPanel, BorderLayout.NORTH);
 
@@ -73,9 +71,6 @@ public class ManageAccountView extends JFrame {
         String role = currentUser.getRole().getRoleName();
 
         if ("AcademicOfficer".equalsIgnoreCase(role)) {
-            // Note: If you moved Student Management to sidebar,
-            // this panel might just be "Account Actions" for Admin too.
-            // Keeping logic flexible here.
             rightCard = createCard("Account Actions");
             populateSettingsActions(rightCard);
         } else {
@@ -89,6 +84,8 @@ public class ManageAccountView extends JFrame {
         contentPanel.add(rightCard, gbc);
 
         add(contentPanel, BorderLayout.CENTER);
+
+        setVisible(true);
     }
 
     private JPanel createCard(String title) {
@@ -130,15 +127,13 @@ public class ManageAccountView extends JFrame {
 
         detailsPanel.add(Box.createVerticalGlue());
 
-        // Logout Button
-        JButton logoutBtn = new JButton("Logout");
-        styleButton(logoutBtn, new Color(255, 69, 58));
+        // Logout Button - Rounded
+        JButton logoutBtn = createRoundedButton("Logout", new Color(255, 69, 58), Color.WHITE);
         logoutBtn.setAlignmentX(Component.LEFT_ALIGNMENT);
-        logoutBtn.setMaximumSize(new Dimension(150, 40));
+        // We override preferred size in createRoundedButton, so max size helps limit width
+        logoutBtn.setMaximumSize(new Dimension(150, 45));
+
         logoutBtn.addActionListener(e -> {
-            // Close all windows and go to Login
-            // Since this is DISPOSE_ON_CLOSE, we might need to close Dashboard too if we want full logout
-            // Ideally, loop through frames, but simple approach:
             for (Window w : Window.getWindows()) {
                 w.dispose();
             }
@@ -161,16 +156,18 @@ public class ManageAccountView extends JFrame {
         gbc.fill = GridBagConstraints.HORIZONTAL;
         gbc.insets = new Insets(10, 0, 10, 0);
         gbc.weightx = 1.0;
+        gbc.anchor = GridBagConstraints.NORTH;
 
-        JButton changePassBtn = new JButton("Change Password");
-        styleButton(changePassBtn, new Color(0, 102, 204));
+        // Change Password Button - Rounded
+        JButton changePassBtn = createRoundedButton("Change Password", new Color(0, 102, 204), Color.WHITE);
         changePassBtn.addActionListener(e -> showChangePasswordDialog());
         actionPanel.add(changePassBtn, gbc);
 
+        // Student Specific Actions
         if (currentUser instanceof Student) {
             gbc.gridy = 1;
-            JButton viewRecordsBtn = new JButton("View Academic Records (PDF)");
-            styleButton(viewRecordsBtn, new Color(40, 167, 69));
+            // View Records Button - Rounded
+            JButton viewRecordsBtn = createRoundedButton("View Academic Records (PDF)", new Color(40, 167, 69), Color.WHITE);
 
             viewRecordsBtn.addActionListener(e -> {
                 new ReportGUI(currentUser).setVisible(true);
@@ -179,15 +176,12 @@ public class ManageAccountView extends JFrame {
             actionPanel.add(viewRecordsBtn, gbc);
         }
 
-        JPanel container = new JPanel(new BorderLayout());
-        container.setBackground(Color.WHITE);
-        container.add(actionPanel, BorderLayout.NORTH);
+        JPanel wrapper = new JPanel(new BorderLayout());
+        wrapper.setBackground(Color.WHITE);
+        wrapper.add(actionPanel, BorderLayout.NORTH);
 
-        card.add(container, BorderLayout.CENTER);
+        card.add(wrapper, BorderLayout.CENTER);
     }
-
-    // Removed populateAdminPanel as you requested it to be separate in previous turns
-    // If you need it back, I can re-add it, but based on logic flow, it is now in StudentManagementView
 
     private void addDetailRow(JPanel panel, String label, String value) {
         JPanel row = new JPanel(new GridLayout(1, 2));
@@ -253,12 +247,55 @@ public class ManageAccountView extends JFrame {
         }
     }
 
-    private void styleButton(JButton btn, Color bgColor) {
+    // --- Helper for Rounded Button with Shadow & Hover ---
+    private JButton createRoundedButton(String text, Color bgColor, Color fgColor) {
+        JButton btn = new JButton(text) {
+            @Override
+            protected void paintComponent(Graphics g) {
+                Graphics2D g2 = (Graphics2D) g.create();
+                g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+
+                int shadowGap = 3;
+                int arcSize = 30; // Roundness
+                int width = getWidth() - shadowGap;
+                int height = getHeight() - shadowGap;
+
+                // Draw Soft Shadow
+                g2.setColor(new Color(200, 200, 200));
+                g2.fillRoundRect(shadowGap, shadowGap, width, height, arcSize, arcSize);
+
+                // Hover Effect
+                if (getModel().isPressed()) {
+                    g2.translate(1, 1);
+                    g2.setColor(bgColor.darker());
+                } else if (getModel().isRollover()) {
+                    g2.setColor(bgColor.brighter());
+                } else {
+                    g2.setColor(bgColor);
+                }
+
+                // Draw Button Body
+                g2.fillRoundRect(0, 0, width, height, arcSize, arcSize);
+
+                // Paint Text
+                g2.setColor(fgColor);
+                FontMetrics fm = g2.getFontMetrics();
+                int textX = (width - fm.stringWidth(getText())) / 2;
+                int textY = (height - fm.getHeight()) / 2 + fm.getAscent();
+                g2.drawString(getText(), textX, textY);
+
+                g2.dispose();
+            }
+        };
+
+        btn.setPreferredSize(new Dimension(250, 45)); // Consistent size
         btn.setFont(new Font("Segoe UI", Font.BOLD, 14));
-        btn.setBackground(bgColor);
-        btn.setForeground(Color.WHITE);
+        btn.setForeground(fgColor);
         btn.setFocusPainted(false);
+        btn.setBorderPainted(false);
+        btn.setContentAreaFilled(false);
         btn.setCursor(new Cursor(Cursor.HAND_CURSOR));
-        btn.setPreferredSize(new Dimension(250, 40));
+
+        return btn;
     }
 }

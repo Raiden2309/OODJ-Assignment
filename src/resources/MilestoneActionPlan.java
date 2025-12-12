@@ -76,7 +76,7 @@ public class MilestoneActionPlan extends JFrame {
 
         setTitle("Milestone Action Plan");
         setSize(1000, 700);
-        setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
         setLocationRelativeTo(null);
 
         // --- INPUT PANEL ---
@@ -170,7 +170,6 @@ public class MilestoneActionPlan extends JFrame {
         btnList.addActionListener(e -> listMilestones());
 
         btnBack.addActionListener(e -> {
-            new Dashboard(loggedInUser).setVisible(true);
             dispose();
         });
 

@@ -6,7 +6,7 @@ import java.util.List;
 public class CourseRecoveryPlan {
     private String planID;
     private String courseID;
-    private String recommendation;
+    private String recommendation; // This field holds the value
     private List<RecoveryMilestone> milestones;
     private String status;
 
@@ -27,6 +27,7 @@ public class CourseRecoveryPlan {
     }
 
     public String updateProgress() {
+        // NOTE: Assuming RecoveryMilestone::getStatus returns boolean for completionStatus
         long completed = milestones.stream().filter(RecoveryMilestone::getStatus).count();
         if (milestones.isEmpty()) {
             this.status = "No Milestones";
@@ -42,7 +43,11 @@ public class CourseRecoveryPlan {
         return planID;
     }
 
-    // NEW GETTER - This fixes your error
+    // FIX ADDED: Public getter for the 'recommendation' field
+    public String getRecommendation() {
+        return recommendation;
+    }
+
     public String getCourseID() {
         return courseID;
     }

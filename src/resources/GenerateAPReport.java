@@ -79,7 +79,7 @@ public class GenerateAPReport extends JFrame {
 
         // 4. FRAME SETTINGS
         setContentPane(panel1);
-        setDefaultCloseOperation(EXIT_ON_CLOSE);
+        setDefaultCloseOperation(DISPOSE_ON_CLOSE);
         setTitle("Academic Performance Report");
         setSize(600, 400); // Made slightly wider
         setLocationRelativeTo(null); // Centers window on screen

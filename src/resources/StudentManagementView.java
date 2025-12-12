@@ -3,7 +3,7 @@ package resources;
 import domain.User;
 import domain.Student;
 import service.StudentDAO;
-import service.UserDAO; // Needed to persist status changes
+import service.UserDAO;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
@@ -40,8 +40,7 @@ public class StudentManagementView extends JFrame {
         headerPanel.add(title);
 
         // Back Button
-        JButton backBtn = new JButton("Back to Dashboard");
-        styleButton(backBtn, new Color(108, 117, 125));
+        JButton backBtn = createRoundedButton("Back to Dashboard", new Color(108, 117, 125), Color.WHITE);
         backBtn.addActionListener(e -> {
             new Dashboard(loggedInUser).setVisible(true);
             dispose();
@@ -78,11 +77,8 @@ public class StudentManagementView extends JFrame {
         JPanel actionPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT, 15, 20));
         actionPanel.setBackground(Color.WHITE);
 
-        JButton activateBtn = new JButton("Activate Account");
-        styleButton(activateBtn, new Color(40, 167, 69));
-
-        JButton deactivateBtn = new JButton("Deactivate Account");
-        styleButton(deactivateBtn, new Color(220, 53, 69));
+        JButton activateBtn = createRoundedButton("Activate Account", new Color(40, 167, 69), Color.WHITE);
+        JButton deactivateBtn = createRoundedButton("Deactivate Account", new Color(220, 53, 69), Color.WHITE);
 
         actionPanel.add(activateBtn);
         actionPanel.add(deactivateBtn);
@@ -127,7 +123,6 @@ public class StudentManagementView extends JFrame {
                 "Confirm " + action, JOptionPane.YES_NO_OPTION);
 
         if (confirm == JOptionPane.YES_OPTION) {
-            // Find student object to update
             List<Student> all = studentDAO.loadAllStudents();
             Student target = null;
             for(Student s : all) {
@@ -139,11 +134,9 @@ public class StudentManagementView extends JFrame {
 
             if(target != null) {
                 target.setActive(isActive);
-                // Save changes (assuming userDAO handles the credential status)
-                // Note: userDAO.saveUserCredentials saves the isActive state if User class has it
                 if(userDAO.saveUserCredentials(target)) {
                     JOptionPane.showMessageDialog(this, "Success! User " + studentID + " is now " + (isActive ? "Active" : "Inactive"));
-                    loadStudentData(); // Refresh table
+                    loadStudentData();
                 } else {
                     JOptionPane.showMessageDialog(this, "Error saving status.", "Error", JOptionPane.ERROR_MESSAGE);
                 }
@@ -151,12 +144,50 @@ public class StudentManagementView extends JFrame {
         }
     }
 
-    private void styleButton(JButton btn, Color bg) {
+    private JButton createRoundedButton(String text, Color bgColor, Color fgColor) {
+        JButton btn = new JButton(text) {
+            @Override
+            protected void paintComponent(Graphics g) {
+                Graphics2D g2 = (Graphics2D) g.create();
+                g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+
+                int shadowGap = 3;
+                int arcSize = 30;
+                int width = getWidth() - shadowGap;
+                int height = getHeight() - shadowGap;
+
+                g2.setColor(new Color(200, 200, 200));
+                g2.fillRoundRect(shadowGap, shadowGap, width, height, arcSize, arcSize);
+
+                if (getModel().isPressed()) {
+                    g2.translate(1, 1);
+                    g2.setColor(bgColor.darker());
+                } else if (getModel().isRollover()) {
+                    g2.setColor(bgColor.brighter());
+                } else {
+                    g2.setColor(bgColor);
+                }
+
+                g2.fillRoundRect(0, 0, width, height, arcSize, arcSize);
+
+                g2.setColor(fgColor);
+                FontMetrics fm = g2.getFontMetrics();
+                int textX = (width - fm.stringWidth(getText())) / 2;
+                int textY = (height - fm.getHeight()) / 2 + fm.getAscent();
+                g2.drawString(getText(), textX, textY);
+
+                g2.dispose();
+            }
+        };
+
+        btn.setPreferredSize(new Dimension(180, 45));
         btn.setFont(new Font("Segoe UI", Font.BOLD, 14));
-        btn.setBackground(bg);
-        btn.setForeground(Color.WHITE);
+        btn.setForeground(fgColor);
         btn.setFocusPainted(false);
+        btn.setBorderPainted(false);
+        btn.setContentAreaFilled(false);
         btn.setCursor(new Cursor(Cursor.HAND_CURSOR));
-        btn.setPreferredSize(new Dimension(180, 40));
+
+        return btn;
     }
 }
