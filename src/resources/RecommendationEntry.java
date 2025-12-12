@@ -49,6 +49,27 @@ public class RecommendationEntry extends JFrame{
 
     public RecommendationEntry(User loggedInUser) {
 
+        JPanel backgroundPanel = new JPanel() {
+            private Image backgroundImage;
+            {
+                try {
+                    backgroundImage = new ImageIcon(getClass().getResource("/resources/bg3.png")).getImage();
+                } catch (Exception e) {
+                    setBackground(Color.WHITE);
+                }
+                setOpaque(false);
+            }
+            @Override
+            protected void paintComponent(Graphics g) {
+                super.paintComponent(g);
+                if (backgroundImage != null) {
+                    g.drawImage(backgroundImage, 0, 0, getWidth(), getHeight(), this);
+                }
+            }
+        };
+        backgroundPanel.setLayout(new BorderLayout());
+        setContentPane(backgroundPanel);
+
         this.loggedInUser = loggedInUser;
         this.recommendationDAO = new RecommendationDAO();
 
@@ -58,6 +79,7 @@ public class RecommendationEntry extends JFrame{
         setLayout(new BorderLayout());
 
         JPanel inputPanel = new JPanel(new GridLayout(8, 2));
+        inputPanel.setOpaque(false);
         inputPanel.add(new JLabel("RecID:"));
         txtRecID = new JTextField();
         inputPanel.add(txtRecID);
@@ -181,8 +203,8 @@ public class RecommendationEntry extends JFrame{
         leftButtonPanel.add(btnRecovery);
         leftButtonPanel.add(Box.createVerticalGlue());
 
-        lblRecommendation = new JLabel("Recommendation Entry", SwingConstants.CENTER);
-        lblRecommendation.setFont(new Font("Arial", Font.BOLD, 22));
+        lblRecommendation = new JLabel("RECOMMENDATION ENTRY", SwingConstants.CENTER);
+        lblRecommendation.setFont(new Font("Comic Sans MS", Font.BOLD, 35));
         lblRecommendation.setBorder(BorderFactory.createEmptyBorder(10,10,10,10));
 
         ImageIcon originalIcon = new ImageIcon(getClass().getResource("/resources/apulogo.png"));
@@ -191,13 +213,13 @@ public class RecommendationEntry extends JFrame{
         JLabel lblLogo = new JLabel(logoIcon);
 
         JPanel logoTitlePanel = new JPanel(new BorderLayout());
-        logoTitlePanel.setBackground(new Color(229, 215, 139));
+        logoTitlePanel.setOpaque(false);
         logoTitlePanel.setBorder(BorderFactory.createEmptyBorder(10,10,10,10));
         logoTitlePanel.add(lblLogo, BorderLayout.WEST);
         logoTitlePanel.add(lblRecommendation, BorderLayout.CENTER);
 
         JPanel topPanel = new JPanel(new BorderLayout());
-        topPanel.setBackground(new Color(229, 215, 139));
+        topPanel.setOpaque(false);
         topPanel.add(logoTitlePanel, BorderLayout.NORTH);
         topPanel.add(inputPanel, BorderLayout.CENTER);
 
@@ -207,6 +229,8 @@ public class RecommendationEntry extends JFrame{
         rightPanel.setBackground(new Color(229,215,139));
 
         JScrollPane tableScroll = new JScrollPane(tblRecommendation);
+        tableScroll.setOpaque(false);
+        tableScroll.getViewport().setOpaque(false);
         add(tableScroll, BorderLayout.CENTER);
 
         add(topPanel, BorderLayout.NORTH);

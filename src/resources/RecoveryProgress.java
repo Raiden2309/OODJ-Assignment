@@ -31,6 +31,27 @@ public class RecoveryProgress extends JFrame {
 
     public RecoveryProgress(User loggedInUser) {
 
+        JPanel backgroundPanel = new JPanel() {
+            private Image backgroundImage;
+            {
+                try {
+                    backgroundImage = new ImageIcon(getClass().getResource("/resources/bg3.png")).getImage();
+                } catch (Exception e) {
+                    setBackground(Color.WHITE);
+                }
+                setOpaque(false);
+            }
+            @Override
+            protected void paintComponent(Graphics g) {
+                super.paintComponent(g);
+                if (backgroundImage != null) {
+                    g.drawImage(backgroundImage, 0, 0, getWidth(), getHeight(), this);
+                }
+            }
+        };
+        backgroundPanel.setLayout(new BorderLayout());
+        setContentPane(backgroundPanel);
+
         this.loggedInUser = loggedInUser;
         this.recoveryDAO = new RecoveryDAO();
 
@@ -45,6 +66,7 @@ public class RecoveryProgress extends JFrame {
 
         //let user input der
         JPanel inputPanel = new JPanel(new GridLayout(3, 2));
+        inputPanel.setOpaque(false);
         inputPanel.add(lblAttemptID = new JLabel("AttemptID:"));
         txtAttemptID = new JTextField();
         inputPanel.add(txtAttemptID);
@@ -56,6 +78,7 @@ public class RecoveryProgress extends JFrame {
         add(inputPanel, BorderLayout.NORTH);
 
         JPanel buttonPanel = new JPanel();
+        buttonPanel.setBackground(new Color(229,176,134));
         btnSave = new JButton("Save");
         buttonPanel.add(btnSave);
 
@@ -125,8 +148,8 @@ public class RecoveryProgress extends JFrame {
         leftButtonPanel.add(btnMilestone);
         leftButtonPanel.add(Box.createVerticalGlue());
 
-        lblRecovery = new JLabel("Recovery Progress", SwingConstants.CENTER);
-        lblRecovery.setFont(new Font("Arial", Font.BOLD, 22));
+        lblRecovery = new JLabel("RECOVERY PROGRESS", SwingConstants.CENTER);
+        lblRecovery.setFont(new Font("Comic Sans MS", Font.BOLD, 35));
         lblRecovery.setBorder(BorderFactory.createEmptyBorder(10,10,10,10));
 
         ImageIcon originalIcon = new ImageIcon(getClass().getResource("/resources/apulogo.png"));
@@ -135,13 +158,13 @@ public class RecoveryProgress extends JFrame {
         JLabel lblLogo = new JLabel(logoIcon);
 
         JPanel logoTitlePanel = new JPanel(new BorderLayout());
-        logoTitlePanel.setBackground(new Color(229, 215, 139));
+        logoTitlePanel.setOpaque(false);
         logoTitlePanel.setBorder(BorderFactory.createEmptyBorder(10,10,10,10));
         logoTitlePanel.add(lblLogo, BorderLayout.WEST);
         logoTitlePanel.add(lblRecovery, BorderLayout.CENTER);
 
         JPanel topPanel = new JPanel(new BorderLayout());
-        topPanel.setBackground(new Color(229, 215, 139));
+        topPanel.setOpaque(false);
         topPanel.add(logoTitlePanel, BorderLayout.NORTH);
         topPanel.add(inputPanel, BorderLayout.CENTER);
 
@@ -151,12 +174,13 @@ public class RecoveryProgress extends JFrame {
         rightPanel.setBackground(new Color(229,215,139));
 
         JScrollPane tableScroll = new JScrollPane(tblAttempt);
+        tableScroll.setOpaque(false);
+        tableScroll.getViewport().setOpaque(false);
         add(tableScroll, BorderLayout.CENTER);
 
         add(topPanel, BorderLayout.NORTH);
-        add(rightPanel, BorderLayout.CENTER);
         add(leftButtonPanel, BorderLayout.WEST);
-        add(new JScrollPane(tblAttempt), BorderLayout.CENTER);
+        add(tableScroll, BorderLayout.CENTER);
         add(buttonPanel, BorderLayout.SOUTH);
 
         btnFailed.addActionListener(e -> {
