@@ -1,5 +1,5 @@
 AttemptID,StudentID,CourseID,FailedComponent,ExamScore,AssignmentScore,RecoveryStatus
-A001,S005,C201,Exam,60,75,Passed
+A001,S005,C201,Exam,60,75,In Progress
 A002,S017,C204,Exam,55,60,Completed
 A003,S010,C217,Exam,48,50,Failed - Proceed to 2nd Attempt
 A004,S015,C212,Assignment,58,35,Completed
