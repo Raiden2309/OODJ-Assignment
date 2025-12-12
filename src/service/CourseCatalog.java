@@ -5,6 +5,7 @@ import academic.Course;
 import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.IOException;
+import java.util.Collection;
 import java.util.Map;
 import java.util.HashMap;
 
@@ -43,11 +44,11 @@ public class CourseCatalog {
 
                     Course course = new Course (courseID,
                             courseName,
-                            String.valueOf(credits),
+                            credits,
                             semester,
                             instructor,
-                            String.valueOf(examWeight),
-                            String.valueOf(assignmentWeight)
+                            examWeight,
+                            assignmentWeight
                     );
 
                     courses.put(courseID, course);
@@ -63,5 +64,9 @@ public class CourseCatalog {
 
     public Course getCourse(String courseID){
         return courses.get(courseID);
+    }
+
+    public Collection<Course> getAllCourses() {
+        return this.courses.values();
     }
 }

@@ -1,6 +1,5 @@
 package resources;
 
-import data_access.DataAccess;
 import service.EnrolledCourseDAO;
 import service.StudentDAO;
 import academic.EligibilityCheck;
@@ -41,8 +40,8 @@ public class CheckRecoveryEligibility extends JFrame {
     final Color ineligibleColour = Color.RED;
 
     // Backend Access
-    DataAccess data = new DataAccess();
-    List<String[]> students = data.getStudents();
+    StudentDAO studentDAO = new StudentDAO();
+    List<Student> students = studentDAO.loadAllStudents();
 
     // List to hold the full data for filtering
     private List<String> allItems = new ArrayList<>();
@@ -195,16 +194,16 @@ public class CheckRecoveryEligibility extends JFrame {
 
     private void loadAllItems () {
         // SORTING: Sort by ID
-        Collections.sort(students, new Comparator<String[]>() {
+        Collections.sort(students, new Comparator<Student>() {
             @Override
-            public int compare(String[] s1, String[] s2) {
-                return s1[0].compareToIgnoreCase(s2[0]);
+            public int compare(Student s1, Student s2) {
+                return s1.getStudentId().compareToIgnoreCase(s2.getStudentId());
             }
         });
 
         // Add formatted items to memory list
-        for (String[] student : students) {
-            String s = String.format("%s - %s %s", student[0], student[1], student[2]);
+        for (Student student : students) {
+            String s = String.format("%s - %s", student.getStudentId(), student.getFullName());
             allItems.add(s);
         }
     }
@@ -270,12 +269,12 @@ public class CheckRecoveryEligibility extends JFrame {
             try {
                 String id = selectedItem.split(" - ")[0].trim();
 
-                for (String[] student : students) {
-                    if (student[0].equals(id)) {
-                        firstNameLabel.setText(student[1]);
-                        lastNameLabel.setText(student[2]);
-                        majorLabel.setText(student[3]);
-                        yearLabel.setText(student[4]);
+                for (Student student : students) {
+                    if (student.getStudentId().equals(id)) {
+                        firstNameLabel.setText(student.getFirstName());
+                        lastNameLabel.setText(student.getLastName());
+                        majorLabel.setText(student.getMajor());
+                        yearLabel.setText(student.getAcademicYear());
 
                         eligibilityLabel.setText("Unknown");
                         eligibilityLabel.setForeground(Color.BLACK);
@@ -331,29 +330,28 @@ public class CheckRecoveryEligibility extends JFrame {
 
         // 4. Run Check
         EligibilityCheck checker = targetStudent.checkEligibility();
+        String eligibilityStatus;
 
         // 5. Update UI
-        if (checker.isEligible()) {
+        if (checker.isEligible())
+        {
             eligibilityLabel.setText("ELIGIBLE FOR RECOVERY");
             eligibilityLabel.setForeground(eligibleColour);
-
-            String msg = String.format("Student: %s\nCGPA: %.2f\nFailed Courses: %d\n\nStatus: ELIGIBLE",
-                    targetStudent.getFullName(),
-                    targetStudent.getAcademicProfile().getCGPA(),
-                    targetStudent.getAcademicProfile().getTotalFailedCourse());
-
-            JOptionPane.showMessageDialog(null, msg, "Check Result", JOptionPane.INFORMATION_MESSAGE);
-        } else {
+            eligibilityStatus = "ELIGIBLE";
+        }
+        else
+        {
             eligibilityLabel.setText("NOT ELIGIBLE");
             eligibilityLabel.setForeground(ineligibleColour);
-
-            String msg = String.format("Student: %s\nCGPA: %.2f\nFailed Courses: %d\n\nStatus: NOT ELIGIBLE",
-                    targetStudent.getFullName(),
-                    targetStudent.getAcademicProfile().getCGPA(),
-                    targetStudent.getAcademicProfile().getTotalFailedCourse());
-
-            JOptionPane.showMessageDialog(null, msg, "Check Result", JOptionPane.WARNING_MESSAGE);
+            eligibilityStatus = "NOT ELIGIBLE";
         }
+        String msg = String.format("Student: %s\nCGPA: %.2f\nFailed Courses: %d\n\nStatus: %s",
+                targetStudent.getFullName(),
+                targetStudent.getAcademicProfile().getCGPA(),
+                targetStudent.getAcademicProfile().getTotalFailedCourse(),
+                eligibilityStatus);
+
+        JOptionPane.showMessageDialog(null, msg, "Check Result", JOptionPane.INFORMATION_MESSAGE);
     }
 
     public static void main (String[]args){

@@ -1,5 +1,8 @@
 package domain;
-import data_access.DataAccess;
+import academic.Course;
+import academic.EnrolledCourse;
+import service.CourseCatalog;
+import service.EnrolledCourseDAO;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -11,25 +14,27 @@ public class StudentPerformance
     private int totalCredits = 0;
     private int failedCourses = 0;
 
+    EnrolledCourseDAO enrolledCourseDAO = new EnrolledCourseDAO();
+    List<EnrolledCourse> studentEnrolments = enrolledCourseDAO.loadAllEnrolledCourses();
+    CourseCatalog courses = CourseCatalog.getInstance();
+
     public StudentPerformance(String studentId) {
         this.studentId = studentId;
     }
 
-    public List<String[]> getPerformance(DataAccess data)
+    public List<String[]> getPerformance()
     {
-        List<String[]> enrolledCourses = data.getEnrolledCourses(new String[]{studentId});
-        List<String[]> courses = data.getCourses(null);
         List<String[]> student_enrollments = new ArrayList<>();
 
-        for (String[] enrolledCourse : enrolledCourses)
+        for (EnrolledCourse ec : studentEnrolments)
         {
-            String courseId = enrolledCourse[1];
-            double examScore = Double.parseDouble(enrolledCourse[4]);
-            double assignmentScore = Double.parseDouble(enrolledCourse[5]);
+            String courseId = ec.getCourseID();
+            double examScore = ec.getExamScore();
+            double assignmentScore = ec.getAssignmentScore();
 
-            for (String[] course : courses)
+            for (Course course : courses.getAllCourses())
             {
-                if (course[0].equals(courseId))
+                if (course.getCourseId().equals(courseId) && ec.getStudentID().equals(studentId))
                 {
                     student_enrollments.add((String[]) getStudentEnrolledCourses(course, examScore, assignmentScore));
                     break;
@@ -40,11 +45,11 @@ public class StudentPerformance
         return student_enrollments;
     }
 
-    public String[] getStudentEnrolledCourses(String[] course, double examScore, double assignmentScore)
+    public String[] getStudentEnrolledCourses(Course course, double examScore, double assignmentScore)
     {
-        int creditHours = Integer.parseInt(course[2]);
-        double examWeightage = Double.parseDouble(course[4]) / 100;
-        double assignmentWeightage = Double.parseDouble(course[5]) / 100;
+        int creditHours = course.getCredits();
+        double examWeightage = course.getExamWeight() / 100;
+        double assignmentWeightage = course.getAssignmentWeight() / 100;
         double finalScore = (examScore * examWeightage) + (assignmentScore * assignmentWeightage);
         String grade = calculateGrade(finalScore)[0];
         double gpa = Double.parseDouble(calculateGrade(finalScore)[1]);
@@ -56,7 +61,7 @@ public class StudentPerformance
         {
             this.failedCourses++;
         }
-        return new String[]{course[0], course[1], course[2], grade, String.valueOf(gpa)};
+        return new String[]{course.getCourseId(), course.getName(), String.valueOf(creditHours), grade, String.valueOf(gpa)};
     }
 
     public String[] calculateGrade(double score)

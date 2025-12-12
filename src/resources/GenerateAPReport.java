@@ -1,9 +1,10 @@
 package resources;
 
 import javax.swing.*;
-import data_access.DataAccess;
+import domain.Student;
 import org.jdesktop.swingx.autocomplete.*;
 import report.GenerateReportPDF;
+import service.StudentDAO;
 
 import java.awt.*;
 import java.awt.event.*;
@@ -26,6 +27,9 @@ public class GenerateAPReport extends JFrame {
 
     final Font txtFont = new Font("Arial", Font.PLAIN, 14);
     final Font categoryFont = new Font("Arial", Font.BOLD, 14);
+
+    StudentDAO studentDAO = new StudentDAO();
+    List<Student> students = studentDAO.loadAllStudents();
 
     public GenerateAPReport()
     {
@@ -60,13 +64,11 @@ public class GenerateAPReport extends JFrame {
         yearLabel.setFont(txtFont);
 
         // 2. LOAD DATA
-        DataAccess data = new DataAccess();
-        java.util.List<String[]> students = data.getStudents();
         idCombobox.addItem("-- Select student --");
 
-        for (String[] student : students)
+        for (Student student : students)
         {
-            String s = String.format("%s - %s %s", student[0], student[1], student[2]);
+            String s = String.format("%s - %s", student.getStudentId(), student.getFullName());
             idCombobox.addItem(s);
         }
 
@@ -142,15 +144,15 @@ public class GenerateAPReport extends JFrame {
                         String id = parts[0].trim();
                         // The rest is the name (we don't strictly need to parse name from string since we lookup by ID)
 
-                        for (String[] student : students)
+                        for (Student student : students)
                         {
-                            if (student[0].equals(id))
+                            if (student.getStudentId().equals(id))
                             {
                                 // Update Labels from real data
-                                idLabel.setText(student[0]);
-                                nameLabel.setText(student[1] + " " + student[2]);
-                                majorLabel.setText(student[3]);
-                                yearLabel.setText(student[4]);
+                                idLabel.setText(student.getStudentId());
+                                nameLabel.setText(student.getFullName());
+                                majorLabel.setText(student.getMajor());
+                                yearLabel.setText(student.getAcademicYear());
                             }
                         }
                     }
@@ -174,13 +176,11 @@ public class GenerateAPReport extends JFrame {
                         GenerateReportPDF pdf = new GenerateReportPDF();
 
                         // Safely get ID
-                        String selectedText = idCombobox.getSelectedItem().toString();
-                        String studentId = selectedText.split(" - ")[0].trim();
 
                         // Call your PDF generator
-                        pdf.createDocument(studentId);
+                        pdf.createDocument(idLabel.getText());
 
-                        String message = String.format("Report for %s successfully generated!\nSaved to Downloads folder.", studentId);
+                        String message = String.format("Report for %s successfully generated!\nSaved to Downloads folder.", idLabel.getText());
                         JOptionPane.showMessageDialog(null, message, "Success", JOptionPane.INFORMATION_MESSAGE);
 
                     } catch (Exception ex) {

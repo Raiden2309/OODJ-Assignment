@@ -1,15 +1,17 @@
 package report;
 
+import academic.EnrolledCourse;
 import com.itextpdf.text.*;
 import com.itextpdf.text.pdf.*;
-import data_access.DataAccess;
+import domain.Student;
 import domain.StudentPerformance;
+import service.EnrolledCourseDAO;
+import service.StudentDAO;
 
 import java.io.*;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
@@ -20,8 +22,11 @@ public class GenerateReportPDF
     private final Font column = FontFactory.getFont(FontFactory.TIMES_BOLD, 12, BaseColor.BLACK);
     private final String pdfTitle = "Student Academic Performance Report";
 
-    DataAccess data = new DataAccess();
-    List<String[]> students = data.getStudents();
+    StudentDAO studentDAO = new StudentDAO();
+    List<Student> students = studentDAO.loadAllStudents();
+
+    EnrolledCourseDAO enrolledCourseDAO = new EnrolledCourseDAO();
+    List<EnrolledCourse> studentEnrolments = enrolledCourseDAO.loadAllEnrolledCourses();
 
     int totalCreditHours = 0;
     double totalGpa = 0;
@@ -57,13 +62,13 @@ public class GenerateReportPDF
             header.setAlignment(Element.ALIGN_CENTER);
             doc.add(header);
 
-            for (String[] student : students)
+            for (Student student : students)
             {
-                if (student[0].equals(studentId))
+                if (student.getStudentId().equals(studentId))
                 {
-                    String name = student[1] + " " + student[2];
-                    String major = student[3];
-                    String year = student[4];
+                    String name = student.getFullName();
+                    String major = student.getMajor();
+                    String year = student.getAcademicYear();
                     String[] info = {name, studentId, major, year};
 
                     for (int i = 0; i < student_info.length; i++)
@@ -91,39 +96,35 @@ public class GenerateReportPDF
         }
     }
 
-    public  void separateByYear(String studentId, Document doc)
+    public void separateByYear(String studentId, Document doc)
     {
-        List<String[]> enrolledCourses = data.getEnrolledCourses(new String[]{studentId});
         int displayedYear = 0;
         int displayedSemester = 0;
 
-        for (String[] enrolledCourse : enrolledCourses)
+        for (EnrolledCourse ec : studentEnrolments)
         {
-            int year = Integer.parseInt(enrolledCourse[2]);
-            int semester = Integer.parseInt(enrolledCourse[3]);
+            if (ec.getStudentID().equals(studentId)) {
+                int year = ec.getYear();
+                int semester = ec.getSemester();
 
-            try
-            {
-                if (year != displayedYear)
-                {
-                    Paragraph yearHeader = new Paragraph("YEAR " + enrolledCourse[2], heading);
-                    doc.add(yearHeader);
-                    displayedYear = year;
-                    displayedSemester = 0;
-                }
+                try {
+                    if (year != displayedYear) {
+                        Paragraph yearHeader = new Paragraph("YEAR " + year, heading);
+                        doc.add(yearHeader);
+                        displayedYear = year;
+                        displayedSemester = 0;
+                    }
 
-                if (semester != displayedSemester)
-                {
-                    Paragraph semHeader = new Paragraph("SEMESTER " + enrolledCourse[3], body);
-                    semHeader.setSpacingAfter(10);
-                    doc.add(semHeader);
-                    displayedSemester = semester;
-                    generateTable(studentId, doc, displayedYear, displayedSemester);
+                    if (semester != displayedSemester) {
+                        Paragraph semHeader = new Paragraph("SEMESTER " + semester, body);
+                        semHeader.setSpacingAfter(10);
+                        doc.add(semHeader);
+                        displayedSemester = semester;
+                        generateTable(studentId, doc, displayedYear, displayedSemester);
+                    }
+                } catch (Exception e) {
+                    System.out.println("Error: " + e);
                 }
-            }
-            catch (Exception e)
-            {
-                System.out.println("Error: " + e);
             }
         }
     }
@@ -165,31 +166,29 @@ public class GenerateReportPDF
 
     public void addRows(String studentId, PdfPTable tab, int displayedYear, int displayedSemester)
     {
-        DataAccess data = new DataAccess();
         StudentPerformance perf = new StudentPerformance(studentId);
-        List<String[]> enrolledCourses = data.getEnrolledCourses(new String[]{studentId});
         int creditsBySemester = 0;
         double gpaBySemester = 0;
 
-        for (String[] enrolledCourse : enrolledCourses)
+        for (EnrolledCourse ec : studentEnrolments)
         {
-            if (Integer.parseInt(enrolledCourse[2]) == displayedYear && Integer.parseInt(enrolledCourse[3]) == displayedSemester)
+            if (ec.getYear() == displayedYear && ec.getSemester() == displayedSemester)
             {
-                for (String[] row : perf.getPerformance(data))
+                for (String[] record : perf.getPerformance())
                 {
-                    if (row[0].equals(enrolledCourse[1]))
+                    if (record[0].equals(ec.getCourseID()) && ec.getStudentID().equals(studentId))
                     {
-                        int creditHours = Integer.parseInt(row[2]);
-                        double gradePoint = Double.parseDouble(row[4]);
+                        int creditHours = Integer.parseInt(record[2]);
+                        double gradePoint = Double.parseDouble(record[4]);
 
                         creditsBySemester += creditHours;
                         gpaBySemester += gradePoint * creditHours;
 
-                        for (String s : row)
+                        for (String r : record)
                         {
                             PdfPCell cell = new PdfPCell();
 
-                            cell.setPhrase(new Phrase(s, body));
+                            cell.setPhrase(new Phrase(r, body));
                             cell.setHorizontalAlignment(Element.ALIGN_CENTER);
                             tab.addCell(cell);
                         }
@@ -197,15 +196,11 @@ public class GenerateReportPDF
                 }
             }
         }
-        addSummary(studentId, tab, creditsBySemester, gpaBySemester);
+        addSummary(tab, creditsBySemester, gpaBySemester);
     }
 
-    public void addSummary(String studentId, PdfPTable tab, int creditHours, double gpa)
+    public void addSummary(PdfPTable tab, int creditHours, double gpa)
     {
-        DataAccess data = new DataAccess();
-        StudentPerformance perf = new StudentPerformance(studentId);
-        perf.getPerformance(data);
-
         final List<String> summaryTitles = Arrays.asList("Total Credit Hours", "GPA", "CGPA");
         final int totalSummary = summaryTitles.size();
 

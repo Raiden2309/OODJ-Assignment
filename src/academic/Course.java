@@ -4,13 +4,13 @@ public class Course
 {
     private String courseId;
     private String name;
-    private String credits;
+    private int credits;
     private String semester;
     private String instructor;
-    private String examWeight;
-    private String assignmentWeight;
+    private double examWeight;
+    private double assignmentWeight;
 
-    public Course(String courseId, String name, String credits, String semester, String instructor, String examWeight, String assignmentWeight)
+    public Course(String courseId, String name, int credits, String semester, String instructor, double examWeight, double assignmentWeight)
     {
         this.courseId = courseId;
         this.name = name;
@@ -29,7 +29,7 @@ public class Course
         return name;
     }
 
-    public String getCredits() {
+    public int getCredits() {
         return credits;
     }
 
@@ -39,11 +39,11 @@ public class Course
         return instructor;
     }
 
-    public String getExamWeight() {
+    public double getExamWeight() {
         return examWeight;
     }
 
-    public String getAssignmentWeight()
+    public double getAssignmentWeight()
     {
         return assignmentWeight;
     }
