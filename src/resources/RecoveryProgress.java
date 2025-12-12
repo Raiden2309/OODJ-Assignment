@@ -27,9 +27,11 @@ public class RecoveryProgress extends JFrame {
     private JButton btnFailed;
     private DefaultTableModel tableModel;
     private RecoveryDAO recoveryDAO;
-    private User loggedInUser; //for login derrr
+    private User loggedInUser;
 
     public RecoveryProgress(User loggedInUser) {
+        // Store the user so we can pass it back later
+        this.loggedInUser = loggedInUser;
 
         JPanel backgroundPanel = new JPanel() {
             private Image backgroundImage;
@@ -52,7 +54,6 @@ public class RecoveryProgress extends JFrame {
         backgroundPanel.setLayout(new BorderLayout());
         setContentPane(backgroundPanel);
 
-        this.loggedInUser = loggedInUser;
         this.recoveryDAO = new RecoveryDAO();
 
         setTitle("Recovery Progress");
@@ -117,8 +118,10 @@ public class RecoveryProgress extends JFrame {
         });
 
         btnSave.addActionListener(e -> saveStatusUpdate());
+
+        // FIX: Pass loggedInUser back to CRPHomePage constructor
         btnBack.addActionListener(e -> {
-            new CRPHomePage().setVisible(true);
+            new Dashboard(loggedInUser).setVisible(true);
             dispose();
         });
 
@@ -184,7 +187,7 @@ public class RecoveryProgress extends JFrame {
         add(buttonPanel, BorderLayout.SOUTH);
 
         btnFailed.addActionListener(e -> {
-            new FailedComponentOverview().setVisible(true);
+            new FailedComponentOverview().setVisible(true); // Ideally pass user here too if updated
             dispose();
 
         });

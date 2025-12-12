@@ -1,6 +1,5 @@
 package resources;
 
-
 import academic.Recommendation;
 import domain.User;
 import service.CourseCatalog;
@@ -15,7 +14,6 @@ import java.util.List;
 import java.util.Date;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
-
 
 public class RecommendationEntry extends JFrame{
     private JTextField txtStudentID;
@@ -48,6 +46,8 @@ public class RecommendationEntry extends JFrame{
     private SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
 
     public RecommendationEntry(User loggedInUser) {
+        this.loggedInUser = loggedInUser;
+        this.recommendationDAO = new RecommendationDAO();
 
         JPanel backgroundPanel = new JPanel() {
             private Image backgroundImage;
@@ -70,51 +70,49 @@ public class RecommendationEntry extends JFrame{
         backgroundPanel.setLayout(new BorderLayout());
         setContentPane(backgroundPanel);
 
-        this.loggedInUser = loggedInUser;
-        this.recommendationDAO = new RecommendationDAO();
-
-        setTitle("Course Recovery Recommendation Entry");
+        setTitle("Recommendation Entry");
         setSize(1000, 700);
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setLayout(new BorderLayout());
 
-        JPanel inputPanel = new JPanel(new GridLayout(8, 2));
+        JPanel inputPanel = new JPanel(new GridLayout(7, 2));
         inputPanel.setOpaque(false);
-        inputPanel.add(new JLabel("RecID:"));
+        inputPanel.add(lblRecID = new JLabel("Recommendation ID:"));
         txtRecID = new JTextField();
         inputPanel.add(txtRecID);
 
-        inputPanel.add(new JLabel("Student ID:"));
+        inputPanel.add(lblStudentID = new JLabel("Student ID:"));
         txtStudentID = new JTextField();
         inputPanel.add(txtStudentID);
 
-        inputPanel.add(new JLabel("Course ID:"));
+        inputPanel.add(lblCourseID = new JLabel("Course ID:"));
         txtCourseID = new JTextField();
         inputPanel.add(txtCourseID);
 
-        inputPanel.add(new JLabel("Description:"));
-        cmbDescription = new JComboBox<>(new String[]{"Exam", "Assignment", "Project", "Overall Fail"});
-        inputPanel.add(cmbDescription);
-
-        inputPanel.add(new JLabel("Timeline:"));
+        inputPanel.add(lblTimeline = new JLabel("Timeline (String):"));
         txtTimeLine = new JTextField();
         inputPanel.add(txtTimeLine);
 
-        inputPanel.add(new JLabel("Deadline:"));
+        inputPanel.add(lblDeadline = new JLabel("Deadline (YYYY-MM-DD):"));
         txtDeadline = new JTextField();
         inputPanel.add(txtDeadline);
 
-        inputPanel.add(new JLabel("Status:"));
-        cmbStatus = new JComboBox<>(new String[]{"Pending", "Approved", "Rejected", "Completed", "Cancelled"});
+        inputPanel.add(lblDescription = new JLabel("Description:"));
+        cmbDescription = new JComboBox<>(new String[]{"Retake Exam", "Attend Tutorial", "Submit Assignment", "Review Materials"});
+        inputPanel.add(cmbDescription);
+
+        inputPanel.add(lblStatus = new JLabel("Status:"));
+        cmbStatus = new JComboBox<>(new String[]{"Pending", "Completed", "In Progress"});
         inputPanel.add(cmbStatus);
 
         add(inputPanel, BorderLayout.NORTH);
 
         JPanel buttonPanel = new JPanel();
+        buttonPanel.setBackground(new Color(229,176,134));
         btnAdd = new JButton("Add");
         btnUpdate = new JButton("Update");
         btnRemove = new JButton("Remove");
-        btnList = new JButton("List All");
+        btnList = new JButton("List");
         btnBack = new JButton("Back");
 
         buttonPanel.add(btnAdd);
@@ -122,28 +120,10 @@ public class RecommendationEntry extends JFrame{
         buttonPanel.add(btnRemove);
         buttonPanel.add(btnList);
         buttonPanel.add(btnBack);
+
         add(buttonPanel, BorderLayout.SOUTH);
 
-        btnAdd.setEnabled(true);
-        btnUpdate.setEnabled(true);
-        btnRemove.setEnabled(true);
-        btnBack.setEnabled(true);//may delete after hehe :D
-
-        /*if (!(loggedInUser instanceof CourseAdministrator)) {
-            btnAdd.setEnabled(false);
-            btnUpdate.setEnabled(false);
-            btnRemove.setEnabled(false);
-        }*/
-
-        tableModel = new DefaultTableModel(new String[]{"RecID", "Student ID", "Course ID", "Description", "Timeline", "Deadline", "Status"}, 0) {
-            @Override
-            public boolean isCellEditable(int row, int column) {
-
-                return column == 6;
-
-            }
-        };
-
+        tableModel = new DefaultTableModel(new String[]{"RecID", "StudentID", "CourseID", "Timeline", "Deadline", "Description", "Status"}, 0);
         tblRecommendation = new JTable(tableModel);
         add(new JScrollPane(tblRecommendation), BorderLayout.CENTER);
 
@@ -156,10 +136,10 @@ public class RecommendationEntry extends JFrame{
                         txtRecID.setText((String) tableModel.getValueAt(selectedRow, 0));
                         txtStudentID.setText((String) tableModel.getValueAt(selectedRow, 1));
                         txtCourseID.setText((String) tableModel.getValueAt(selectedRow, 2));
-                        cmbDescription.setSelectedItem((String) tableModel.getValueAt(selectedRow, 3));
-                        txtTimeLine.setText((String) tableModel.getValueAt(selectedRow, 4));
-                        txtDeadline.setText((String) tableModel.getValueAt(selectedRow, 5));
-                        cmbStatus.setSelectedItem(tableModel.getValueAt(selectedRow, 6));
+                        txtTimeLine.setText((String) tableModel.getValueAt(selectedRow, 3));
+                        txtDeadline.setText((String) tableModel.getValueAt(selectedRow, 4));
+                        cmbDescription.setSelectedItem((String) tableModel.getValueAt(selectedRow, 5));
+                        cmbStatus.setSelectedItem((String) tableModel.getValueAt(selectedRow, 6));
                     }
                 }
             }
@@ -168,22 +148,19 @@ public class RecommendationEntry extends JFrame{
         btnAdd.addActionListener(e -> addRecommendation());
         btnUpdate.addActionListener(e -> updateRecommendation());
         btnRemove.addActionListener(e -> removeRecommendation());
-        btnList.addActionListener(e -> listRecommendations());
+        btnList.addActionListener(e -> listRecommendation());
+
+        // FIX: Pass loggedInUser to CRPHomePage
         btnBack.addActionListener(e -> {
-            new CRPHomePage().setVisible(true);
+            new Dashboard(loggedInUser).setVisible(true);
             dispose();
         });
 
-        getContentPane().setBackground(new Color(229, 215, 139));
-        inputPanel.setBackground(new Color(229, 215, 139));
-        buttonPanel.setBackground(new Color(169,229,152));
+        // Sidebar
         btnFailed = new JButton("Failed Component");
         btnMilestone = new JButton("Milestone");
-        btnRecovery = new JButton("Recovery Progress");
-        btnAdd.setFont(new Font("Arial", Font.BOLD, 14));
-        btnUpdate.setFont(new Font("Arial", Font.BOLD, 14));
-        btnRemove.setFont(new Font("Arial", Font.BOLD, 14));
-        btnList.setFont(new Font("Arial", Font.BOLD, 14));
+        btnRecovery = new JButton("Recovery");
+
         btnBack.setFont(new Font("Arial", Font.BOLD, 14));
         btnBack.setBackground(new Color(229, 93, 138));
 
@@ -224,176 +201,162 @@ public class RecommendationEntry extends JFrame{
         topPanel.add(inputPanel, BorderLayout.CENTER);
 
         add(topPanel, BorderLayout.NORTH);
-
-        JPanel rightPanel = new JPanel(new BorderLayout());
-        rightPanel.setBackground(new Color(229,215,139));
-
-        JScrollPane tableScroll = new JScrollPane(tblRecommendation);
-        tableScroll.setOpaque(false);
-        tableScroll.getViewport().setOpaque(false);
-        add(tableScroll, BorderLayout.CENTER);
-
-        add(topPanel, BorderLayout.NORTH);
-        add(rightPanel, BorderLayout.CENTER);
         add(leftButtonPanel, BorderLayout.WEST);
-        add(new JScrollPane(tblRecommendation), BorderLayout.CENTER);
-        add(buttonPanel, BorderLayout.SOUTH);
-
-        btnBack.addActionListener(e -> {
-            new CRPHomePage().setVisible(true);
-            dispose();
-        });
 
         btnFailed.addActionListener(e -> {
             new FailedComponentOverview().setVisible(true);
             dispose();
-
         });
 
         btnMilestone.addActionListener(e -> {
             new MilestoneActionPlan(null).setVisible(true);
             dispose();
-
         });
 
         btnRecovery.addActionListener(e -> {
             new RecoveryProgress(null).setVisible(true);
             dispose();
-
         });
 
-        listRecommendations();
-    }
-
-    private void clearFields() {
-        int result = JOptionPane.showConfirmDialog(
-                this,
-                "Clear all fields?",
-                "Confirm Clear",
-                JOptionPane.OK_CANCEL_OPTION
-        );
-
-        if (result == JOptionPane.OK_OPTION) {
-            txtRecID.setText("");
-            txtStudentID.setText("");
-            txtCourseID.setText("");
-            txtTimeLine.setText("");
-            txtDeadline.setText("");
-            cmbDescription.setSelectedIndex(0);
-            cmbStatus.setSelectedIndex(0);
-            tblRecommendation.clearSelection();
-        }
+        listRecommendation();
     }
 
     private void addRecommendation() {
-        if (!validateEmptyFields()) return;
-        if (!validateDateLine()) return;
-        if (!validateStudentID()) return;
-        if (!validateCourseID()) return;
-        if (isDuplicateRecID(txtRecID.getText())) {
-            JOptionPane.showMessageDialog(this, "Error: RecID already exists. Please use a unique ID.");
+        if (txtRecID.getText().isEmpty() || txtStudentID.getText().isEmpty() || txtCourseID.getText().isEmpty() || txtTimeLine.getText().isEmpty() || txtDeadline.getText().isEmpty()) {
+            JOptionPane.showMessageDialog(this, "Error: All fields must be filled.");
             return;
         }
 
-        int confirm = JOptionPane.showConfirmDialog(this, "Are you sure you want to add this recommendation?", "Confirm Add", JOptionPane.OK_CANCEL_OPTION);
-        if (confirm != JOptionPane.OK_OPTION) return;
-
-        try {
-            String recID = txtRecID.getText();
-            String studentID = txtStudentID.getText();
-            String courseID = txtCourseID.getText();
-            String timeline = txtTimeLine.getText();
-            Date deadline = dateFormat.parse(txtDeadline.getText());
-            String description = (String) cmbDescription.getSelectedItem();
-            String status = (String) cmbStatus.getSelectedItem();
-
-            Recommendation recommendations = new Recommendation(recID, studentID, courseID, description, timeline, deadline, status);
-            recommendationDAO.saveRecommendation(recommendations);
-            JOptionPane.showMessageDialog(this, "Recommendation added!");
-            listRecommendations();
-            clearFields();
-        } catch (Exception e) {
-            JOptionPane.showMessageDialog(this, "Error: Invalid date format. Use YYYY-MM-DD.");
+        if (isDuplicateRecID(txtRecID.getText())) {
+            JOptionPane.showMessageDialog(this, "Error: Duplicate Recommendation ID.");
+            return;
         }
 
-    }
-
-    private void updateRecommendation() {
-        if (!validateEmptyFields()) return;
         if (!validateDateLine()) return;
+        // validateTimeLine() removed or simplified since timeline is String
         if (!validateStudentID()) return;
         if (!validateCourseID()) return;
 
-        int confirm = JOptionPane.showConfirmDialog(this, "Are you sure you want to update this recommendation?", "Confirm Update", JOptionPane.OK_CANCEL_OPTION);
-        if (confirm != JOptionPane.OK_OPTION) return;
-
         try {
-            String recID = txtRecID.getText();
-            String studentID = txtStudentID.getText();
-            String courseID = txtCourseID.getText();
+            // FIX: timeline is String, deadline is Date
             String timeline = txtTimeLine.getText();
             Date deadline = dateFormat.parse(txtDeadline.getText());
-            String description = (String) cmbDescription.getSelectedItem();
-            String status = (String) cmbStatus.getSelectedItem();
 
-            Recommendation updatedRecommendation = new Recommendation(recID, studentID, courseID, description, timeline, deadline, status);
-            recommendationDAO.updateRecommendation(recID, studentID, courseID, updatedRecommendation);
-            JOptionPane.showMessageDialog(this, "Recommendation added!");
-            listRecommendations();
+            // FIX: Constructor order (ID, Student, Course, Desc, Timeline, Deadline, Status)
+            Recommendation recommendation = new Recommendation(
+                    txtRecID.getText(),
+                    txtStudentID.getText(),
+                    txtCourseID.getText(),
+                    (String) cmbDescription.getSelectedItem(), // Description comes before timeline in Rec.java
+                    timeline,
+                    deadline,
+                    (String) cmbStatus.getSelectedItem()
+            );
+            recommendationDAO.saveRecommendation(recommendation); // Updated call to saveRecommendation (was addRecommendation)
+            JOptionPane.showMessageDialog(this, "Recommendation added successfully!");
+            listRecommendation();
             clearFields();
         } catch (Exception e) {
-            JOptionPane.showMessageDialog(this, "Error: Unexpected error during update.");
+            JOptionPane.showMessageDialog(this, "Error adding recommendation: " + e.getMessage());
+        }
+    }
+
+    private void updateRecommendation() {
+        if (tblRecommendation.getSelectedRow() == -1) {
+            JOptionPane.showMessageDialog(this, "Error: Please select a recommendation to update.");
+            return;
+        }
+
+        if (!validateDateLine()) return;
+
+        try {
+            // FIX: timeline is String, deadline is Date
+            String timeline = txtTimeLine.getText();
+            Date deadline = dateFormat.parse(txtDeadline.getText());
+
+            // FIX: Constructor order to match Recommendation.java
+            Recommendation recommendation = new Recommendation(
+                    txtRecID.getText(),
+                    txtStudentID.getText(),
+                    txtCourseID.getText(),
+                    (String) cmbDescription.getSelectedItem(),
+                    timeline,
+                    deadline,
+                    (String) cmbStatus.getSelectedItem()
+            );
+            // FIX: Pass all required arguments (RecID, StudentID, CourseID, Recommendation)
+            recommendationDAO.updateRecommendation(
+                    txtRecID.getText(),
+                    txtStudentID.getText(),
+                    txtCourseID.getText(),
+                    recommendation
+            );
+
+            JOptionPane.showMessageDialog(this, "Recommendation updated successfully!");
+            listRecommendation();
+            clearFields();
+        } catch (Exception e) {
+            JOptionPane.showMessageDialog(this, "Error updating recommendation: " + e.getMessage());
         }
     }
 
     private void removeRecommendation() {
-        int selectedRow = tblRecommendation.getSelectedRow();
-
-        if (selectedRow == -1) {
-            JOptionPane.showMessageDialog(this, "Error: Select a row to remove!");
+        if (tblRecommendation.getSelectedRow() == -1) {
+            JOptionPane.showMessageDialog(this, "Error: Please select a recommendation to remove.");
             return;
         }
 
-        int confirm = JOptionPane.showConfirmDialog(this, "Are you sure you want to remove this recommendation?", "Confirm Remove", JOptionPane.OK_CANCEL_OPTION);
+        int confirm = JOptionPane.showConfirmDialog(this, "Are you sure you want to remove this recommendation?", "Confirm Removal", JOptionPane.YES_NO_OPTION);
+        if (confirm == JOptionPane.YES_OPTION) {
+            // FIX: Pass all required arguments (RecID, StudentID, CourseID)
+            recommendationDAO.removeRecommendation(
+                    txtRecID.getText(),
+                    txtStudentID.getText(),
+                    txtCourseID.getText()
+            );
 
-        if (confirm != JOptionPane.OK_OPTION) return;
-
-        String recID = (String) tableModel.getValueAt(selectedRow, 0);
-        String studentID = (String) tableModel.getValueAt(selectedRow, 1);
-        String courseID = (String) tableModel.getValueAt(selectedRow, 2);
-        recommendationDAO.removeRecommendation(recID, studentID, courseID);
-        JOptionPane.showMessageDialog(this, "Milestone removed!");
-        listRecommendations();
-        clearFields();
+            JOptionPane.showMessageDialog(this, "Recommendation removed successfully!");
+            listRecommendation();
+            clearFields();
+        }
     }
 
-    private void listRecommendations() {
+    private void listRecommendation() {
         tableModel.setRowCount(0);
         List<Recommendation> recommendations = recommendationDAO.loadRecommendations();
-        for (Recommendation rec : recommendations) {
-            tableModel.addRow(new Object[] {
-                    rec.getRecID(),
-                    rec.getStudentID(),
-                    rec.getCourseID(),
-                    rec.getDescription(),
-                    rec.getTimeline(),
-                    dateFormat.format(rec.getDeadline()),
-                    rec.getStatus()
+        for (Recommendation r : recommendations) {
+            tableModel.addRow(new Object[]{
+                    r.getRecID(),
+                    r.getStudentID(),
+                    r.getCourseID(),
+                    r.getTimeline(), // String, no format needed
+                    dateFormat.format(r.getDeadline()),
+                    r.getDescription(),
+                    r.getStatus()
             });
         }
     }
 
-    private boolean validateEmptyFields() {
-        if (txtRecID.getText().trim().isEmpty() || txtStudentID.getText().trim().isEmpty() ||
-                txtCourseID.getText().trim().isEmpty() || txtTimeLine.getText().trim().isEmpty() ||
-                txtDeadline.getText().trim().isEmpty()) {
-            JOptionPane.showMessageDialog(this, "Error: All fields must be filled. Cannot leave any field empty.");
+    private void clearFields() {
+        txtRecID.setText("");
+        txtStudentID.setText("");
+        txtCourseID.setText("");
+        txtTimeLine.setText("");
+        txtDeadline.setText("");
+        cmbDescription.setSelectedIndex(0);
+        cmbStatus.setSelectedIndex(0);
+    }
+
+    // Removed or relaxed validation since timeline is just a String now
+    private boolean validateTimeLine() {
+        if (txtTimeLine.getText().trim().isEmpty()) {
+            JOptionPane.showMessageDialog(this, "Error: Timeline cannot be empty.");
             return false;
         }
         return true;
     }
 
-    public boolean validateDateLine() {
+    private boolean validateDateLine() {
         try{
             dateFormat.parse(txtDeadline.getText());
         } catch (Exception e) {
@@ -425,15 +388,8 @@ public class RecommendationEntry extends JFrame{
     }
 
     public static void main(String[] args) {
-        /*User admin = new CourseAdministrator("adminID", "Admin Name");
-        SwingUtilities.invokeLater(() -> {
-            new RecommendationEntry(admin).setVisible(true);
-        });*/
-
         SwingUtilities.invokeLater(() -> {
             new RecommendationEntry(null).setVisible(true);
         });
     }
-
-
 }

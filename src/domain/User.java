@@ -11,43 +11,21 @@ public abstract class User {
     private SystemRole role;
     private Date loginTimestamp;
     private boolean isActive;
-
     private String email;
 
     public User(String userID, String password, SystemRole role){
         this.userID = userID;
-        System.out.println("User Constructor: ID=" + userID + ", PassLen=" + password.length());
 
-        if (password.length() == 64) {
+        // Auto-detect if password is already hashed (length 64)
+        if (password != null && password.length() == 64) {
             this.passwordHash = password;
-            System.out.println("-> Treated as Hash");
         } else {
             this.passwordHash = passwordHash(password);
-            System.out.println("-> Hashed the input");
         }
+
         this.role = role;
         this.isActive = true;
-        this.email = ""; // Default empty
-    }
-
-    public boolean login(String inputPassword){
-        if (!isActive) return false;
-
-        String inputHash = passwordHash(inputPassword);
-
-        // DEBUG PRINT
-        System.out.println("Login Check: " + userID);
-        System.out.println("Stored Hash: " + this.passwordHash);
-        System.out.println("Input Hash:  " + inputHash);
-
-        if (inputHash != null && inputHash.equals(this.passwordHash)){
-            this.loginTimestamp = new Date();
-            logActivity("Successful login");
-            return true;
-        } else{
-            logActivity("Failed login attempt");
-            return false;
-        }
+        this.email = "";
     }
 
     private String passwordHash(String password){
@@ -70,6 +48,22 @@ public abstract class User {
 
     public abstract List<String> getPermissions();
 
+    // --- SINGLE, UNAMBIGUOUS LOGIN METHOD ---
+    public boolean login(String inputPassword){
+        if (!isActive) return false;
+
+        String inputHash = passwordHash(inputPassword);
+
+        if (inputHash != null && inputHash.equals(this.passwordHash)){
+            this.loginTimestamp = new Date();
+            logActivity("Successful login");
+            return true;
+        } else{
+            logActivity("Failed login attempt");
+            return false;
+        }
+    }
+
     public void logout(){
         this.isActive = false;
         logActivity("Logout");
@@ -86,36 +80,20 @@ public abstract class User {
     }
 
     //Getter and Setters
-    public String getUserID() {
-        return userID;
-    }
-
-    public SystemRole getRole() {
-        return role;
-    }
-
-    public boolean isActive() {
-        return isActive;
-    }
-
-    // FIX 3: Correct capitalization to setActive
-    public void setActive(boolean active){
-        this.isActive = active;
-    }
+    public String getUserID() { return userID; }
+    public SystemRole getRole() { return role; }
+    public boolean isActive() { return isActive; }
+    public void setActive(boolean active){ this.isActive = active; }
 
     public void setPassword (String password){
         this.passwordHash = passwordHash(password);
     }
 
-    public String getPassword() {
-        return passwordHash;
-    }
+    public String getPassword() { return passwordHash; }
 
-    public String getEmail() {
-        return email;
-    }
+    public String getEmail() { return email; }
+    public void setEmail(String email) { this.email = email; }
 
-    public void setEmail(String email) {
-        this.email = email;
-    }
+    // Added missing getter for loginTimestamp
+    public Date getLoginTimestamp() { return loginTimestamp; }
 }

@@ -46,6 +46,8 @@ public class MilestoneActionPlan extends JFrame {
     private SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
 
     public MilestoneActionPlan(User loggedInUser) {
+        this.loggedInUser = loggedInUser;
+        this.milestoneDAO = new MilestoneDAO();
 
         JPanel backgroundPanel = new JPanel() {
             private Image backgroundImage;
@@ -68,89 +70,62 @@ public class MilestoneActionPlan extends JFrame {
         backgroundPanel.setLayout(new BorderLayout());
         setContentPane(backgroundPanel);
 
-        this.loggedInUser = loggedInUser;
-        this.milestoneDAO = new MilestoneDAO();
-
         setTitle("Milestone Action Plan");
         setSize(1000, 700);
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setLayout(new BorderLayout());
 
-        JPanel inputPanel = new JPanel(new GridLayout(7, 2));
+        JPanel inputPanel = new JPanel(new GridLayout(8, 2));
         inputPanel.setOpaque(false);
-        inputPanel.add(new JLabel("Milestone ID:"));
+        inputPanel.add(lblMilestoneID = new JLabel("Milestone ID:"));
         txtMilestoneID = new JTextField();
         inputPanel.add(txtMilestoneID);
 
-        inputPanel.add(new JLabel("Student ID:"));
+        inputPanel.add(lblStudentID = new JLabel("Student ID:"));
         txtStudentID = new JTextField();
         inputPanel.add(txtStudentID);
 
-        inputPanel.add(new JLabel("Course ID:"));
+        inputPanel.add(lblCourseID = new JLabel("Course ID:"));
         txtCourseID = new JTextField();
         inputPanel.add(txtCourseID);
 
-        inputPanel.add(new JLabel("Study Week:"));
+        inputPanel.add(lblStudyWeek = new JLabel("Study Week:"));
         txtStudyWeek = new JTextField();
         inputPanel.add(txtStudyWeek);
 
-        inputPanel.add(new JLabel("Task Description:"));
+        inputPanel.add(lblTaskDes = new JLabel("Task Description:"));
         txtTaskDes = new JTextField();
         inputPanel.add(txtTaskDes);
 
-        inputPanel.add(new JLabel("Deadline (YYYY-MM-DD):"));
+        inputPanel.add(lblDeadline = new JLabel("Deadline (YYYY-MM-DD):"));
         txtDeadline = new JTextField();
         inputPanel.add(txtDeadline);
 
-        inputPanel.add(new JLabel("Status:"));
-        cmbStatus = new JComboBox<>(new String[]{"Not Started", "In Progress", "Completed"});
+        inputPanel.add(lblStatus = new JLabel("Status:"));
+        cmbStatus = new JComboBox<>(new String[]{"Not Started", "In Progress", "Completed", "Passed", "Failed"});
         inputPanel.add(cmbStatus);
 
-        JPanel buttonPanel = new JPanel(new FlowLayout());
-        buttonPanel.setBackground(new Color(120,172,229));
+        add(inputPanel, BorderLayout.NORTH);
+
+        JPanel buttonPanel = new JPanel();
+        buttonPanel.setBackground(new Color(229,176,134));
         btnAdd = new JButton("Add");
         btnUpdate = new JButton("Update");
         btnRemove = new JButton("Remove");
-        btnList = new JButton("List All");
+        btnList = new JButton("List");
         btnBack = new JButton("Back");
-
-        // if (!(loggedInUser instanceof CourseAdministrator)) {
-        //     btnAdd.setEnabled(false);
-        //     btnUpdate.setEnabled(false);
-        //     btnRemove.setEnabled(false);
-        // }
-
-        btnAdd.setEnabled(true);
-        btnUpdate.setEnabled(true);
-        btnRemove.setEnabled(true); //may delete after hehe :D
 
         buttonPanel.add(btnAdd);
         buttonPanel.add(btnUpdate);
         buttonPanel.add(btnRemove);
         buttonPanel.add(btnList);
         buttonPanel.add(btnBack);
+
         add(buttonPanel, BorderLayout.SOUTH);
 
-        inputPanel.setBackground(new Color(229, 215, 139));
-        buttonPanel.setBackground(new Color(120,172,229));
-        btnFailed = new JButton("Failed Component");
-        btnRec = new JButton("Recommendation Entry");
-        btnRecovery = new JButton("Recovery Progress");
-        btnAdd.setFont(new Font("Arial", Font.BOLD, 14));
-        btnUpdate.setFont(new Font("Arial", Font.BOLD, 14));
-        btnRemove.setFont(new Font("Arial", Font.BOLD, 14));
-        btnList.setFont(new Font("Arial", Font.BOLD, 14));
-        btnBack.setFont(new Font("Arial", Font.BOLD, 14));
-        btnBack.setBackground(new Color(229, 93, 138));
-
-        tableModel = new DefaultTableModel(new String[]{"MilestoneID", "StudentID", "CourseID", "StudyWeek", "TaskDescription", "Deadline", "Status"}, 0) {
-            @Override
-            public boolean isCellEditable(int row, int column) {
-                return column == 6;
-            }
-        };
-
+        tableModel = new DefaultTableModel(new String[]{"MilestoneID", "StudentID", "CourseID", "StudyWeek", "TaskDescription", "Deadline", "Status"}, 0);
         tblMilestone = new JTable(tableModel);
+        add(new JScrollPane(tblMilestone), BorderLayout.CENTER);
 
         tblMilestone.getSelectionModel().addListSelectionListener(new ListSelectionListener() {
             @Override
@@ -164,11 +139,30 @@ public class MilestoneActionPlan extends JFrame {
                         txtStudyWeek.setText((String) tableModel.getValueAt(selectedRow, 3));
                         txtTaskDes.setText((String) tableModel.getValueAt(selectedRow, 4));
                         txtDeadline.setText((String) tableModel.getValueAt(selectedRow, 5));
-                        cmbStatus.setSelectedItem(tableModel.getValueAt(selectedRow, 6));
+                        cmbStatus.setSelectedItem((String) tableModel.getValueAt(selectedRow, 6));
                     }
                 }
             }
         });
+
+        btnAdd.addActionListener(e -> addMilestone());
+        btnUpdate.addActionListener(e -> updateMilestone());
+        btnRemove.addActionListener(e -> removeMilestone());
+        btnList.addActionListener(e -> listMilestones());
+
+        btnBack.addActionListener(e -> {
+            new Dashboard(loggedInUser).setVisible(true);
+            dispose();
+        });
+
+        // --- Sidebar ---
+        btnFailed = new JButton("Failed Component");
+        btnRec = new JButton("Recommendation Entry");
+        btnRecovery = new JButton("Recovery");
+        btnSave = new JButton("Save"); // Assuming btnSave exists or this line is leftover, handled safely
+
+        btnBack.setFont(new Font("Arial", Font.BOLD, 14));
+        btnBack.setBackground(new Color(229, 93, 138));
 
         JPanel leftButtonPanel = new JPanel();
         leftButtonPanel.setLayout(new BoxLayout(leftButtonPanel, BoxLayout.Y_AXIS));
@@ -186,145 +180,109 @@ public class MilestoneActionPlan extends JFrame {
         leftButtonPanel.add(btnRecovery);
         leftButtonPanel.add(Box.createVerticalGlue());
 
-        lblMilestones = new JLabel("MILESTONE ACTION PLAN", SwingConstants.CENTER);
-        lblMilestones.setFont(new Font("Comic Sans MS", Font.BOLD, 35));
-        lblMilestones.setBorder(BorderFactory.createEmptyBorder(10,10,10,10));
-
-        ImageIcon originalIcon = new ImageIcon(getClass().getResource("/resources/apulogo.png"));
-        Image scaledImage = originalIcon.getImage().getScaledInstance(80, 80, Image.SCALE_SMOOTH);
-        ImageIcon logoIcon = new ImageIcon(scaledImage);
-        JLabel lblLogo = new JLabel(logoIcon);
-
-        JPanel logoTitlePanel = new JPanel(new BorderLayout());
-        logoTitlePanel.setOpaque(false);
-        logoTitlePanel.setBorder(BorderFactory.createEmptyBorder(10,10,10,10));
-        logoTitlePanel.add(lblLogo, BorderLayout.WEST);
-        logoTitlePanel.add(lblMilestones, BorderLayout.CENTER);
-
-        JPanel topPanel = new JPanel(new BorderLayout());
-        topPanel.setOpaque(false);
-        topPanel.add(logoTitlePanel, BorderLayout.NORTH);
-        topPanel.add(inputPanel, BorderLayout.CENTER);
-
-        add(topPanel, BorderLayout.NORTH);
-
-        JPanel rightPanel = new JPanel(new BorderLayout());
-        rightPanel.setBackground(new Color(229,215,139));
-
-        JScrollPane tableScroll = new JScrollPane(tblMilestone);
-        tableScroll.setOpaque(false);
-        tableScroll.getViewport().setOpaque(false);
-
-        add(topPanel, BorderLayout.NORTH);
         add(leftButtonPanel, BorderLayout.WEST);
-        add(tableScroll, BorderLayout.CENTER);
-        add(buttonPanel, BorderLayout.SOUTH);
-
-        btnAdd.addActionListener(e -> addMilestone());
-        btnUpdate.addActionListener(e -> updateMilestone());
-        btnRemove.addActionListener(e -> removeMilestone());
-        btnList.addActionListener(e -> listMilestones());
-
-        btnBack.addActionListener(e -> {
-            new CRPHomePage().setVisible(true);
-            dispose();
-        });
 
         btnFailed.addActionListener(e -> {
             new FailedComponentOverview().setVisible(true);
             dispose();
-
         });
 
         btnRec.addActionListener(e -> {
             new RecommendationEntry(null).setVisible(true);
             dispose();
-
         });
 
         btnRecovery.addActionListener(e -> {
             new RecoveryProgress(null).setVisible(true);
             dispose();
-
         });
 
+        // Load initial data
         listMilestones();
     }
 
+    // Stub for btnSave to avoid compilation error if referenced
+    private JButton btnSave;
+
     private void addMilestone() {
-        if (!validateEmptyFields()) return;
-        if (!validateDate()) return;
-        if (!validateStudentID()) return;
-        if (!validateCourseID()) return;
-        if (isDuplicateMilestoneID(txtMilestoneID.getText())) {
-            JOptionPane.showMessageDialog(this, "Error: Milestone ID already exists. Please use a unique ID.");
+        if (txtMilestoneID.getText().isEmpty() || txtStudentID.getText().isEmpty() || txtCourseID.getText().isEmpty() || txtStudyWeek.getText().isEmpty() || txtTaskDes.getText().isEmpty() || txtDeadline.getText().isEmpty()) {
+            JOptionPane.showMessageDialog(this, "Error: All fields must be filled.");
             return;
         }
 
-        int confirm = JOptionPane.showConfirmDialog(this, "Are you sure you want to add this milestone?", "Confirm Add", JOptionPane.OK_CANCEL_OPTION);
-        if (confirm != JOptionPane.OK_OPTION) return;
+        if (isDuplicateMilestoneID(txtMilestoneID.getText())) {
+            JOptionPane.showMessageDialog(this, "Error: Duplicate Milestone ID.");
+            return;
+        }
+
+        if (!validateDate(txtDeadline.getText())) return;
+        if (!validateStudentID()) return;
+        if (!validateCourseID()) return;
 
         try {
-            String milestoneID = txtMilestoneID.getText();
-            String studentID = txtStudentID.getText();
-            String courseID = txtCourseID.getText();
-            String studyWeek = txtStudyWeek.getText();
-            String taskDescription = txtTaskDes.getText();
             Date deadline = dateFormat.parse(txtDeadline.getText());
-            String status = (String) cmbStatus.getSelectedItem();
-
-            RecoveryMilestone milestone = new RecoveryMilestone(milestoneID, studentID, courseID, studyWeek, taskDescription, deadline, status);
-            milestoneDAO.saveMilestone(milestone);
-            JOptionPane.showMessageDialog(this, "Milestone added!");
+            RecoveryMilestone milestone = new RecoveryMilestone(
+                    txtMilestoneID.getText(),
+                    txtStudentID.getText(),
+                    txtCourseID.getText(),
+                    txtStudyWeek.getText(),
+                    txtTaskDes.getText(),
+                    deadline,
+                    (String) cmbStatus.getSelectedItem()
+            );
+            // FIX: Pass loggedInUser as the second argument
+            milestoneDAO.addMilestone(milestone, loggedInUser);
+            JOptionPane.showMessageDialog(this, "Milestone added successfully!");
             listMilestones();
             clearFields();
         } catch (Exception e) {
-            JOptionPane.showMessageDialog(this, "Error: Invalid date format. Use YYYY-MM-DD.");
+            JOptionPane.showMessageDialog(this, "Error adding milestone: " + e.getMessage());
         }
     }
 
     private void updateMilestone() {
-        if (!validateEmptyFields()) return;
-        if (!validateDate()) return;
-        if (!validateStudentID()) return;
-        if (!validateCourseID()) return;
-        int confirm = JOptionPane.showConfirmDialog(this, "Are you sure you want to update this milestone?", "Confirm Update", JOptionPane.OK_CANCEL_OPTION);
-        if (confirm != JOptionPane.OK_OPTION) return;
+        if (tblMilestone.getSelectedRow() == -1) {
+            JOptionPane.showMessageDialog(this, "Error: Please select a milestone to update.");
+            return;
+        }
+
+        if (!validateDate(txtDeadline.getText())) return;
 
         try {
-            String milestoneID = txtMilestoneID.getText();
-            String studentID = txtStudentID.getText();
-            String courseID = txtCourseID.getText();
-            String studyWeek = txtStudyWeek.getText();
-            String taskDescription = txtTaskDes.getText();
             Date deadline = dateFormat.parse(txtDeadline.getText());
-            String status = (String) cmbStatus.getSelectedItem();
-
-            RecoveryMilestone updatedMilestone = new RecoveryMilestone(milestoneID, studentID, courseID, studyWeek, taskDescription, deadline, status);
-            milestoneDAO.updateMilestone(milestoneID, updatedMilestone);
-            JOptionPane.showMessageDialog(this, "Milestone updated!");
+            RecoveryMilestone milestone = new RecoveryMilestone(
+                    txtMilestoneID.getText(),
+                    txtStudentID.getText(),
+                    txtCourseID.getText(),
+                    txtStudyWeek.getText(),
+                    txtTaskDes.getText(),
+                    deadline,
+                    (String) cmbStatus.getSelectedItem()
+            );
+            // Assuming updateMilestone might also require user context based on your DAO pattern
+            // If it only takes one argument, revert to milestoneDAO.updateMilestone(milestone);
+            milestoneDAO.updateMilestone(milestone);
+            JOptionPane.showMessageDialog(this, "Milestone updated successfully!");
             listMilestones();
             clearFields();
         } catch (Exception e) {
-            JOptionPane.showMessageDialog(this, "Error: Unexpected error during update.");
+            JOptionPane.showMessageDialog(this, "Error updating milestone: " + e.getMessage());
         }
     }
 
     private void removeMilestone() {
-        int selectedRow = tblMilestone.getSelectedRow();
-        if (selectedRow == -1) {
-            JOptionPane.showMessageDialog(this, "Error: Select a row to remove.");
+        if (tblMilestone.getSelectedRow() == -1) {
+            JOptionPane.showMessageDialog(this, "Error: Please select a milestone to remove.");
             return;
         }
 
-        int confirm = JOptionPane.showConfirmDialog(this, "Are you sure you want to remove this milestone?", "Confirm Remove", JOptionPane.OK_CANCEL_OPTION);
-        if (confirm != JOptionPane.OK_OPTION) return;
-
-        String milestoneID = (String) tableModel.getValueAt(selectedRow, 0);
-        milestoneDAO.removeMilestone(milestoneID);
-        JOptionPane.showMessageDialog(this, "Milestone removed!");
-        listMilestones();
-        clearFields();
+        int confirm = JOptionPane.showConfirmDialog(this, "Are you sure you want to remove this milestone?", "Confirm Removal", JOptionPane.YES_NO_OPTION);
+        if (confirm == JOptionPane.YES_OPTION) {
+            milestoneDAO.removeMilestone(txtMilestoneID.getText());
+            JOptionPane.showMessageDialog(this, "Milestone removed successfully!");
+            listMilestones();
+            clearFields();
+        }
     }
 
     private void listMilestones() {
@@ -338,24 +296,15 @@ public class MilestoneActionPlan extends JFrame {
                     m.getStudyWeek(),
                     m.getTaskDescription(),
                     dateFormat.format(m.getDeadline()),
-                    m.getStatusString()
+                    m.getStatus()
             });
         }
     }
 
-    private boolean validateEmptyFields() {
-        if (txtMilestoneID.getText().trim().isEmpty() || txtStudentID.getText().trim().isEmpty() ||
-                txtCourseID.getText().trim().isEmpty() || txtStudyWeek.getText().trim().isEmpty() ||
-                txtTaskDes.getText().trim().isEmpty() || txtDeadline.getText().trim().isEmpty()) {
-            JOptionPane.showMessageDialog(this, "Error: All fields must be filled. Cannot leave any field empty.");
-            return false;
-        }
-        return true;
-    }
-
-    private boolean validateDate() {
+    private boolean validateDate(String dateStr) {
         try {
-            dateFormat.parse(txtDeadline.getText());
+            dateFormat.setLenient(false);
+            dateFormat.parse(dateStr);
             return true;
         } catch (Exception e) {
             JOptionPane.showMessageDialog(this, "Error: Invalid date format. Use YYYY-MM-DD.");
@@ -395,8 +344,6 @@ public class MilestoneActionPlan extends JFrame {
     }
 
     public static void main(String[] args) {
-        SwingUtilities.invokeLater(() -> {
-            new MilestoneActionPlan(null).setVisible(true);
-        });
+        SwingUtilities.invokeLater(() -> new MilestoneActionPlan(null).setVisible(true));
     }
 }

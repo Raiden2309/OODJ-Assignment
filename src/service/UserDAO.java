@@ -72,20 +72,33 @@ public class UserDAO {
     private User createUserInstance(String id, String hash, String roleName, String email) {
         // Simple role mapping
         SystemRole role = new SystemRole(roleName, new ArrayList<>());
+        User user = null;
 
         switch (roleName) {
             case "Student":
                 // Assuming Student constructor matches: ID, Hash, Role, First, Last, Major, Year, Email
-                return new Student(id, hash, role, "", "", "", "", email);
+                user = new Student(id, hash, role, "", "", "", "", email);
+                break;
             case "AcademicOfficer":
-                // Assuming AcademicOfficer constructor matches: ID, Hash, Role, First, Last, Office
-                return new AcademicOfficer(id, hash, role, "", "", "");
+                // Constructor: ID, Hash, Role, First, Last, Office
+                // Does NOT accept email, so we set it manually below
+                user = new AcademicOfficer(id, hash, role, "", "", "");
+                break;
             case "CourseAdministrator":
-                // Assuming CourseAdministrator constructor matches: ID, Hash, Role, First, Last, Dept
-                return new CourseAdministrator(id, hash, role, "", "", "");
+                // Constructor: ID, Hash, Role, First, Last, Dept
+                // Does NOT accept email, so we set it manually below
+                user = new CourseAdministrator(id, hash, role, "", "", "");
+                break;
             default:
                 return null;
         }
+
+        // FIX: Explicitly set the email for ALL user types if the constructor didn't handle it
+        if (user != null && (user.getEmail() == null || user.getEmail().isEmpty())) {
+            user.setEmail(email);
+        }
+
+        return user;
     }
 
     // FIX: Added the missing login method required by LoginView

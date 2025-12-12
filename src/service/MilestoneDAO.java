@@ -1,6 +1,7 @@
 package service;
 
 import academic.RecoveryMilestone;
+import domain.User; // Import User
 
 import java.io.*;
 import java.text.SimpleDateFormat;
@@ -18,7 +19,7 @@ public class MilestoneDAO {
 
         try (BufferedReader br = new BufferedReader(new FileReader(MILESTONES_FILE_PATH))) {
             String line;
-            br.readLine();
+            br.readLine(); // Skip header
 
             while ((line = br.readLine()) != null) {
                 String[] values = line.split(",");
@@ -38,60 +39,79 @@ public class MilestoneDAO {
                             studyWeek,
                             taskDescription,
                             deadline,
-                            status)
-                    );
+                            status
+                    ));
                 }
             }
-            System.err.println("Successfully loaded " + milestones.size() + " recommendations.");
-        }
-        catch (Exception e) {
+            System.err.println("Successfully loaded " + milestones.size() + " milestones.");
+        } catch (Exception e) {
             System.err.println("Error loading milestones: " + e.getMessage());
         }
         return milestones;
     }
 
-    public void saveMilestone(RecoveryMilestone milestone) {
+    // FIX: Updated to accept User object to match GUI call
+    public void addMilestone(RecoveryMilestone milestone, User loggedInUser) {
+        System.out.println("User " + (loggedInUser != null ? loggedInUser.getUserID() : "Unknown") + " is adding a milestone.");
+
         try (BufferedWriter bw = new BufferedWriter(new FileWriter(MILESTONES_FILE_PATH, true))) {
+            // Ensure file ends with newline before appending if not empty,
+            // but usually append just works if previous write had newline.
+            // Using toString() method of RecoveryMilestone which should format as CSV line
             bw.write(milestone.toString());
             bw.newLine();
-        }
-        catch (IOException e) {
-            System.err.println("Error saving milestone: " + e.getMessage());
+        } catch (IOException e) {
+            System.err.println("Error adding milestone: " + e.getMessage());
         }
     }
 
-    public void updateMilestone(String milestoneID, RecoveryMilestone updatedMilestone) {
+    // Overloaded method for backward compatibility if needed
+    public void addMilestone(RecoveryMilestone milestone) {
+        addMilestone(milestone, null);
+    }
+
+    // FIX: Update signature if your GUI calls updateMilestone with User too
+    public void updateMilestone(RecoveryMilestone updatedMilestone) {
         List<RecoveryMilestone> milestones = loadMilestones();
+        boolean found = false;
 
         for (int i = 0; i < milestones.size(); i++) {
-            if (milestones.get(i).getMilestoneID().equals(milestoneID)) {
+            if (milestones.get(i).getMilestoneID().equals(updatedMilestone.getMilestoneID())) {
                 milestones.set(i, updatedMilestone);
+                found = true;
                 break;
             }
         }
-        try (BufferedWriter bw = new BufferedWriter(new FileWriter(MILESTONES_FILE_PATH))) {
-            bw.write("MilestoneID,StudentID,CourseID,StudyWeek,TaskDescription,Deadline,Status\n");
-            for (RecoveryMilestone m : milestones) {
-                bw.write(m.toString());
-                bw.newLine();
-            }
-        } catch (IOException e) {
-            System.err.println("Error updating milestones: " + e.getMessage());
+
+        if (found) {
+            rewriteFile(milestones);
+        } else {
+            System.err.println("Milestone ID not found for update: " + updatedMilestone.getMilestoneID());
         }
     }
 
     public void removeMilestone(String milestoneID) {
         List<RecoveryMilestone> milestones = loadMilestones();
-        milestones.removeIf(m -> m.getMilestoneID().equals(milestoneID));
+        boolean removed = milestones.removeIf(m -> m.getMilestoneID().equals(milestoneID));
 
+        if (removed) {
+            rewriteFile(milestones);
+        } else {
+            System.err.println("Milestone ID not found for removal: " + milestoneID);
+        }
+    }
+
+    // Helper to rewrite file (DRY principle)
+    private void rewriteFile(List<RecoveryMilestone> milestones) {
         try (BufferedWriter bw = new BufferedWriter(new FileWriter(MILESTONES_FILE_PATH))) {
-            bw.write("MilestoneID,StudentID,CourseID,StudyWeek,TaskDescription,Deadline,Status\n");
+            bw.write("MilestoneID,StudentID,CourseID,StudyWeek,TaskDescription,Deadline,Status");
+            bw.newLine();
             for (RecoveryMilestone m : milestones) {
                 bw.write(m.toString());
                 bw.newLine();
             }
         } catch (IOException e) {
-            System.err.println("Error removing milestone: " + e.getMessage());
+            System.err.println("Error updating file: " + e.getMessage());
         }
     }
 }

@@ -26,7 +26,7 @@ public class AcademicProfile{
         return CGPA;
     }
 
-    public int getTotalFailedCourse(){
+    public int getTotalFailedCourses(){
         return (int) courseResults.stream()
                 .filter(r -> r.getGrade().equals("F"))
                 .count();
@@ -54,7 +54,7 @@ public class AcademicProfile{
 
     //Extra func from edwin's one
     public boolean isEligibleForRecovery(String courseID) {
-        int failedCourses = getTotalFailedCourse();
+        int failedCourses = getTotalFailedCourses();
 
         if (failedCourses >= 3) {
             return false;

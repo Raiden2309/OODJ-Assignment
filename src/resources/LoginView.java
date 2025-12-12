@@ -2,6 +2,8 @@ package resources;
 
 import service.UserDAO;
 import domain.User;
+import resources.Dashboard; // IMPORT THE DASHBOARD
+
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import javax.swing.border.CompoundBorder;
@@ -11,6 +13,8 @@ import java.awt.event.*;
 import java.net.URL;
 import java.util.Properties;
 import java.io.*;
+import java.util.Date;
+import java.text.SimpleDateFormat;
 
 public class LoginView extends JFrame {
 
@@ -22,7 +26,10 @@ public class LoginView extends JFrame {
     private JLabel registerLink;
     private UserDAO userDAO;
 
+    // Properties for "Remember Me"
     private final String CONFIG_FILE = "config.properties";
+    private final SimpleDateFormat TIMESTAMP_FORMAT = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+    private final String LOG_FILE = "data/activity_log.csv";
 
     public LoginView() {
         userDAO = new UserDAO();
@@ -257,15 +264,65 @@ public class LoginView extends JFrame {
         User user = userDAO.login(email, password);
 
         if (user != null) {
+            // Track activity log
+            trackUserActivity(user, "LOGIN");
+
             if (rememberMeCheck.isSelected()) {
                 savePreferences(email);
             } else {
                 savePreferences("");
             }
-            JOptionPane.showMessageDialog(this, "Login Successful!\nRole: " + user.getRole().getRoleName());
-            dispose();
+
+            // --- NEW: Format and Show Timestamp ---
+            Date sessionStart = user.getLoginTimestamp();
+            SimpleDateFormat fmt = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+            String timeStr = (sessionStart != null) ? fmt.format(sessionStart) : "Now";
+
+            String welcomeMsg = "Login Successful!\n" +
+                    "Role: " + user.getRole().getRoleName() + "\n" +
+                    "Session Started: " + timeStr;
+
+            JOptionPane.showMessageDialog(this, welcomeMsg);
+
+            // Add Shutdown Hook to track logout
+            Runtime.getRuntime().addShutdownHook(new Thread(() -> {
+                trackUserActivity(user, "LOGOUT");
+            }));
+
+            // --- OPEN DASHBOARD HERE ---
+            dispose(); // Close LoginView
+            new Dashboard(user).setVisible(true); // Open Dashboard with logged-in user
+
         } else {
             JOptionPane.showMessageDialog(this, "Invalid Email or Password", "Login Failed", JOptionPane.ERROR_MESSAGE);
+        }
+    }
+
+    // NEW FUNCTION: Logs Login/Logout timestamps to a CSV file
+    private void trackUserActivity(User user, String action) {
+        String timestamp = TIMESTAMP_FORMAT.format(new Date());
+        // Simple CSV format: Timestamp, UserID, Action
+        String logEntry = String.format("%s,%s,%s", timestamp, user.getUserID(), action);
+
+        File file = new File(LOG_FILE);
+        boolean isNewFile = !file.exists();
+
+        // Print to console for immediate verification
+        System.out.println("Logging Activity: " + logEntry);
+
+        // Append to file
+        try (FileWriter fw = new FileWriter(file, true);
+             BufferedWriter bw = new BufferedWriter(fw);
+             PrintWriter out = new PrintWriter(bw)) {
+
+            // Write header if new file
+            if (isNewFile) {
+                out.println("Timestamp,UserID,Action");
+            }
+
+            out.println(logEntry);
+        } catch (IOException e) {
+            System.err.println("Error logging activity: " + e.getMessage());
         }
     }
 
