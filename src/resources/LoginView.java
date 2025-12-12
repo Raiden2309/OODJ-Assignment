@@ -79,7 +79,7 @@ public class LoginView extends JFrame {
         titleLabel.setForeground(new Color(0, 102, 204));
         titleLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
 
-        JLabel subTitleLabel = new JLabel("Hello! Let's get started");
+        JLabel subTitleLabel = new JLabel("Welcome to the CRS");
         subTitleLabel.setFont(new Font("Segoe UI", Font.PLAIN, 16));
         subTitleLabel.setForeground(Color.GRAY);
         subTitleLabel.setAlignmentX(Component.CENTER_ALIGNMENT);

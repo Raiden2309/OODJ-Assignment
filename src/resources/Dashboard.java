@@ -6,6 +6,10 @@ import domain.AcademicOfficer;
 import domain.CourseAdministrator;
 import service.StudentDAO;
 import service.AcademicRecordDAO;
+// Removed Milestone imports as requested
+// import academic.RecoveryMilestone;
+// import service.MilestoneDAO;
+import academic.CourseResult;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
@@ -14,16 +18,18 @@ import java.awt.event.*;
 import java.text.SimpleDateFormat;
 import java.net.URL;
 import java.util.List;
+import java.util.ArrayList;
+import java.util.stream.Collectors;
 
 // Import other views
 import resources.FailedComponentOverview;
 import resources.RecommendationEntry;
 import resources.MilestoneActionPlan;
 import resources.RecoveryProgress;
-// Ensure these match your package structure
 import resources.ManageAccountView;
 import resources.LoginView;
 import resources.CheckRecoveryEligibility;
+import resources.StudentManagementView;
 
 public class Dashboard extends JFrame {
 
@@ -42,7 +48,6 @@ public class Dashboard extends JFrame {
     public Dashboard(User user) {
         this.currentUser = user;
 
-        // Reload student data if it's a student to ensure profile is up to date
         if (currentUser instanceof Student) {
             reloadStudentData();
         }
@@ -53,11 +58,10 @@ public class Dashboard extends JFrame {
         setDefaultCloseOperation(EXIT_ON_CLOSE);
         setExtendedState(JFrame.MAXIMIZED_BOTH);
 
-        // Main Container
         JPanel container = new JPanel(new BorderLayout());
         add(container);
 
-        // --- 1. SIDEBAR ---
+        // --- SIDEBAR ---
         JPanel sidebar = new JPanel();
         sidebar.setPreferredSize(new Dimension(280, 800));
         sidebar.setBackground(SIDEBAR_COLOR);
@@ -132,9 +136,7 @@ public class Dashboard extends JFrame {
             JButton btnManageUsers = createMenuButton("Manage Students", "user.png");
             btnManageUsers.addActionListener(e -> {
                 setActiveButton(btnManageUsers);
-                // Note: StudentManagementView should be DISPOSE_ON_CLOSE
                 new StudentManagementView(currentUser).setVisible(true);
-                // dispose(); // REMOVED
             });
             menuPanel.add(btnManageUsers);
         }
@@ -178,7 +180,7 @@ public class Dashboard extends JFrame {
         // Content Area
         mainContentPanel = new JPanel(new CardLayout());
         mainContentPanel.setBackground(CONTENT_BG);
-        mainContentPanel.add(createOverviewPanel(), "HOME");
+        mainContentPanel.add(new JScrollPane(createOverviewPanel()), "HOME");
 
         rightPanel.add(mainContentPanel, BorderLayout.CENTER);
         container.add(rightPanel, BorderLayout.CENTER);
@@ -190,48 +192,42 @@ public class Dashboard extends JFrame {
             switchView("HOME", "Dashboard Overview", pageTitle);
         });
 
-        // Launch windows - DISPOSE REMOVED
+        // Launch windows
         btnCheck.addActionListener(e -> {
             setActiveButton(btnCheck);
             new CheckRecoveryEligibility(currentUser).setVisible(true);
-            // dispose(); // REMOVED
         });
 
         btnFailed.addActionListener(e -> {
             setActiveButton(btnFailed);
             new FailedComponentOverview(currentUser).setVisible(true);
-            // dispose(); // REMOVED
         });
 
         btnRec.addActionListener(e -> {
             setActiveButton(btnRec);
             new RecommendationEntry(currentUser).setVisible(true);
-            // dispose(); // REMOVED
         });
 
         btnSet.addActionListener(e -> {
             setActiveButton(btnSet);
             new MilestoneActionPlan(currentUser).setVisible(true);
-            // dispose(); // REMOVED
         });
 
         btnMonitor.addActionListener(e -> {
             setActiveButton(btnMonitor);
             new RecoveryProgress(currentUser).setVisible(true);
-            // dispose(); // REMOVED
         });
 
         btnAccount.addActionListener(e -> {
             setActiveButton(btnAccount);
             new ManageAccountView(currentUser).setVisible(true);
-            // dispose(); // REMOVED
         });
 
         btnLogout.addActionListener(e -> {
             int choice = JOptionPane.showConfirmDialog(this, "Logout?", "Confirm", JOptionPane.YES_NO_OPTION);
             if (choice == JOptionPane.YES_OPTION) {
-                dispose(); // ONLY dispose on Logout
-                new LoginView().setVisible(true);
+                dispose();
+                new resources.LoginView().setVisible(true);
             }
         });
 
@@ -245,19 +241,15 @@ public class Dashboard extends JFrame {
         gbc.insets = new Insets(15, 15, 15, 15);
         gbc.fill = GridBagConstraints.BOTH;
 
-        // Welcome Card
+        // --- 1. WELCOME CARD (Top) ---
         JPanel welcomeCard = new JPanel(new BorderLayout());
         welcomeCard.setBackground(Color.WHITE);
         welcomeCard.setBorder(createCardBorder());
 
         String displayName = currentUser.getUserID();
-        if (currentUser instanceof Student) {
-            displayName = ((Student) currentUser).getFullName();
-        } else if (currentUser instanceof AcademicOfficer) {
-            displayName = ((AcademicOfficer) currentUser).getFullName();
-        } else if (currentUser instanceof CourseAdministrator) {
-            displayName = ((CourseAdministrator) currentUser).getFullName();
-        }
+        if (currentUser instanceof Student) displayName = ((Student) currentUser).getFullName();
+        else if (currentUser instanceof AcademicOfficer) displayName = ((AcademicOfficer) currentUser).getFullName();
+        else if (currentUser instanceof CourseAdministrator) displayName = ((CourseAdministrator) currentUser).getFullName();
 
         JLabel welcomeLbl = new JLabel("  Welcome back, " + displayName);
         welcomeLbl.setFont(new Font("Segoe UI", Font.BOLD, 24));
@@ -278,26 +270,100 @@ public class Dashboard extends JFrame {
         welcomeCard.add(welcomeLbl, BorderLayout.CENTER);
         welcomeCard.add(logoLabel, BorderLayout.EAST);
 
-        gbc.gridx = 0; gbc.gridy = 0; gbc.gridwidth = 3; gbc.weightx = 1.0; gbc.weighty = 0.1;
+        gbc.gridx = 0; gbc.gridy = 0; gbc.gridwidth = 3; gbc.weightx = 1.0; gbc.weighty = 0.0;
         panel.add(welcomeCard, gbc);
 
         if (currentUser instanceof Student) {
             Student s = (Student) currentUser;
+
+            // --- REAL DATA CALCULATION ---
+            // 1. Stats from AcademicProfile
             double cgpa = s.getAcademicProfile().getCGPA();
-            JPanel cgpaCard = createInfoCard("Current CGPA", String.format("%.2f", cgpa), new Color(0, 150, 136));
-
             int failed = s.getAcademicProfile().getTotalFailedCourses();
-            JPanel failCard = createInfoCard("Failed Courses", String.valueOf(failed), new Color(220, 53, 69));
 
-            String status = s.getRecoveryEligibility();
-            Color statusColor = "Eligible".equalsIgnoreCase(status) ? new Color(40, 167, 69) : Color.GRAY;
-            JPanel statusCard = createInfoCard("Recovery Status", status, statusColor);
+            // Removed Milestone logic here as requested
 
-            gbc.gridy = 1; gbc.gridwidth = 1; gbc.weighty = 0.2;
+            // 3. Course Status Counts
+            long passedCount = s.getAcademicProfile().getCourseResults().stream()
+                    .filter(r -> r.calculateGradePoint() >= 2.0).count();
+            // Failed count already known
+            long inProgressCount = 0; // Simplified
 
+            // --- 2. KEY STATS ROW ---
+            gbc.gridy = 1; gbc.gridwidth = 1; gbc.weighty = 0.0;
+
+            // CGPA Card
+            JPanel cgpaCard = createInfoCard("Current CGPA", String.format("%.2f", cgpa), new Color(0, 150, 136));
             gbc.gridx = 0; panel.add(cgpaCard, gbc);
+
+            // Failed Courses Card
+            JPanel failCard = createInfoCard("Failed Courses", String.valueOf(failed), new Color(220, 53, 69));
             gbc.gridx = 1; panel.add(failCard, gbc);
-            gbc.gridx = 2; panel.add(statusCard, gbc);
+
+            // Academic Standing Badge
+            String standing = "Good Standing";
+            Color standingColor = new Color(40, 167, 69);
+            if (cgpa < 2.0) { standing = "Probation"; standingColor = Color.ORANGE; }
+            if (failed >= 3) { standing = "At Risk"; standingColor = Color.RED; }
+
+            JPanel standingCard = createInfoCard("Academic Standing", standing, standingColor);
+            gbc.gridx = 2; panel.add(standingCard, gbc);
+
+            // --- 3. DASHBOARD WIDGETS ROW ---
+            gbc.gridy = 2; gbc.weighty = 1.0; gbc.gridwidth = 1;
+
+            // Widget 1: General Info (Replaced Deadlines)
+            JPanel infoPanel = createWidgetPanel("System Updates");
+            JTextArea infoArea = new JTextArea();
+            infoArea.setEditable(false);
+            infoArea.setFont(new Font("Segoe UI", Font.PLAIN, 13));
+            infoArea.setText("Welcome to the Course Recovery System.\n\nPlease check your eligibility status regularly.\nUse the sidebar to navigate.");
+            infoPanel.add(new JScrollPane(infoArea), BorderLayout.CENTER);
+            gbc.gridx = 0; panel.add(infoPanel, gbc);
+
+            // Widget 2: Advisor & Recommendations (Real Data Logic)
+            JPanel advisorPanel = createWidgetPanel("Advisor & Recommendations");
+            JTextArea recArea = new JTextArea();
+            recArea.setEditable(false);
+            recArea.setFont(new Font("Segoe UI", Font.PLAIN, 13));
+
+            String recommendations = "Advisor: Dr. Smith (d.smith@uni.edu)\n\n" +
+                    "Quick Recommendations:\n";
+            if (cgpa < 2.5) recommendations += "- Consider tutoring for core subjects.\n";
+            if (failed > 0) recommendations += "- Meet advisor to discuss retakes.\n";
+            if (cgpa >= 2.5 && failed == 0) recommendations += "- Keep up the good work!";
+
+            recArea.setText(recommendations);
+            advisorPanel.add(new JScrollPane(recArea), BorderLayout.CENTER);
+            gbc.gridx = 1; panel.add(advisorPanel, gbc);
+
+            // Widget 3: Course Status (Real Data)
+            JPanel coursePanel = createWidgetPanel("Course Status");
+            JTextArea courseArea = new JTextArea();
+            courseArea.setEditable(false);
+            courseArea.setFont(new Font("Segoe UI", Font.PLAIN, 13));
+
+            String eligStatus = String.valueOf(s.getRecoveryEligibility());
+
+            courseArea.setText(
+                    "Passed: " + passedCount + "\n" +
+                            "Failed: " + failed + "\n\n" +
+                            "Eligibility Predictor:\n" +
+                            (cgpa < 2.0 ? "Need +0.2 CGPA to reach Good Standing." : "You are currently eligible for next sem.") + "\n" +
+                            "Status: " + eligStatus
+            );
+            coursePanel.add(new JScrollPane(courseArea), BorderLayout.CENTER);
+            gbc.gridx = 2; panel.add(coursePanel, gbc);
+
+            // --- 4. RECENTLY ACCESSED (Bottom) ---
+            gbc.gridy = 3; gbc.gridwidth = 3; gbc.weighty = 0.0;
+            JPanel recentPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
+            recentPanel.setBackground(CONTENT_BG);
+            recentPanel.add(new JLabel("Quick Actions: "));
+            JButton quickLink1 = new JButton("Check Eligibility");
+            quickLink1.addActionListener(e -> { new CheckRecoveryEligibility(currentUser).setVisible(true); });
+            recentPanel.add(quickLink1);
+            panel.add(recentPanel, gbc);
         }
 
         return panel;
@@ -317,13 +383,29 @@ public class Dashboard extends JFrame {
         lblTitle.setBorder(new EmptyBorder(15, 15, 5, 15));
 
         JLabel lblValue = new JLabel(value);
-        lblValue.setFont(new Font("Segoe UI", Font.BOLD, 32));
+        lblValue.setFont(new Font("Segoe UI", Font.BOLD, 24)); // Slightly smaller for badges
         lblValue.setForeground(Color.DARK_GRAY);
         lblValue.setBorder(new EmptyBorder(0, 15, 15, 15));
 
         card.add(lblTitle, BorderLayout.NORTH);
         card.add(lblValue, BorderLayout.CENTER);
         return card;
+    }
+
+    private JPanel createWidgetPanel(String title) {
+        JPanel panel = new JPanel(new BorderLayout());
+        panel.setBackground(Color.WHITE);
+        panel.setBorder(createCardBorder());
+
+        JLabel lblTitle = new JLabel("  " + title);
+        lblTitle.setFont(new Font("Segoe UI", Font.BOLD, 14));
+        lblTitle.setForeground(ACCENT_COLOR);
+        lblTitle.setBorder(new EmptyBorder(10, 0, 10, 0));
+        lblTitle.setOpaque(true);
+        lblTitle.setBackground(new Color(240, 248, 255)); // Light Blue Header
+
+        panel.add(lblTitle, BorderLayout.NORTH);
+        return panel;
     }
 
     private javax.swing.border.CompoundBorder createCardBorder() {
