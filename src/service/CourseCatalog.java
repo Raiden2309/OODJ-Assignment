@@ -24,15 +24,16 @@ public class CourseCatalog {
     }
 
     public void loadCourses(){
-        System.err.println("Loading courses from file: " + COURSE_FILE_PATH);
-
-        try (BufferedReader br = new BufferedReader(new FileReader(COURSE_FILE_PATH))) {
+        try (BufferedReader br = new BufferedReader(new FileReader(COURSE_FILE_PATH)))
+        {
             String line;
             br.readLine();
 
-            while ((line = br.readLine()) != null){
+            while ((line = br.readLine()) != null)
+            {
                 String[] values = line.split(",");
-                if (values.length >= 7){
+                if (values.length >= 7)
+                {
                     String courseID = values[0].trim();
                     String courseName = values[1].trim();
                     String semester = values[3].trim();
@@ -42,7 +43,8 @@ public class CourseCatalog {
                     int examWeight =  Integer.parseInt(values[5].trim());
                     int assignmentWeight = Integer.parseInt(values[6].trim());
 
-                    Course course = new Course (courseID,
+                    Course course = new Course(
+                            courseID,
                             courseName,
                             credits,
                             semester,
@@ -50,15 +52,13 @@ public class CourseCatalog {
                             examWeight,
                             assignmentWeight
                     );
-
                     courses.put(courseID, course);
                 }
             }
-            System.err.println("Successfully loaded " + courses.size() + " courses.");
-        } catch (IOException e){
-            System.err.println("ERROR: Failed to load courses from file." + e.getMessage());
-        } catch (NumberFormatException e){
-            System.err.println("ERROR: Data format error in course file." + e.getMessage());
+        }
+        catch (Exception e)
+        {
+            System.err.println("Error:" + e.getMessage());
         }
     }
 
