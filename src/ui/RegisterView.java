@@ -1,5 +1,6 @@
 package ui;
 
+import domain.User;
 import service.UserDAO;
 import service.StudentDAO;
 import domain.Student;
@@ -13,6 +14,8 @@ import java.awt.*;
 import java.awt.event.*;
 import java.net.URL;
 import java.util.ArrayList;
+import java.util.List;
+import java.util.stream.Collectors;
 
 public class RegisterView extends JFrame {
 
@@ -144,8 +147,13 @@ public class RegisterView extends JFrame {
         mainPanel.add(leftPanel);
         mainPanel.add(rightPanel);
 
-        registerButton.addActionListener(e -> handleRegister());
-        getRootPane().setDefaultButton(registerButton);
+        registerButton.addActionListener(this::handleRegister);
+        loginLink.addMouseListener(new MouseAdapter() {
+            public void mouseClicked(MouseEvent e) {
+                dispose();
+                new LoginView().setVisible(true);
+            }
+        });
 
         setVisible(true);
     }
@@ -246,20 +254,49 @@ public class RegisterView extends JFrame {
         return field;
     }
 
-    private void handleRegister() {
+    private boolean userExists(String email) {
+        List<User> allUsers = userDAO.loadAllUsers();
+        return allUsers.stream().anyMatch(u -> u.getEmail() != null && u.getEmail().trim().equalsIgnoreCase(email));
+    }
+
+    // 2. Generate the next sequential Unassigned ID (U001, U002, etc.)
+    private String generateNewUnassignedID() {
+        List<User> allUsers = userDAO.loadAllUsers();
+        int maxIdNum = 0;
+        final String PREFIX = "U"; // Unassigned/Unclassified
+
+        for (User u : allUsers) {
+            String id = u.getUserID();
+            if (id != null && id.startsWith(PREFIX) && id.length() > 1) {
+                try {
+                    // Extract the numeric part (e.g., "094" from "U094")
+                    int num = Integer.parseInt(id.substring(1));
+                    if (num > maxIdNum) {
+                        maxIdNum = num;
+                    }
+                } catch (NumberFormatException e) {
+                    // Ignore non-standard IDs
+                }
+            }
+        }
+        // Generate the next sequential ID (e.g., U001)
+        return String.format(PREFIX + "%03d", maxIdNum + 1);
+    }
+
+    private void handleRegister(ActionEvent e) {
         String first = firstNameField.getText().trim();
         String last = lastNameField.getText().trim();
         String email = emailField.getText().trim();
         String pass = new String(passwordField.getPassword());
-        String confirm = new String(confirmPasswordField.getPassword());
+        String confirmPass = new String(confirmPasswordField.getPassword());
 
-        if (first.isEmpty() || last.isEmpty() || email.isEmpty() || pass.isEmpty()) {
-            JOptionPane.showMessageDialog(this, "All fields are required.", "Error", JOptionPane.WARNING_MESSAGE);
+        if (first.isEmpty() || last.isEmpty() || email.isEmpty() || pass.isEmpty() || confirmPass.isEmpty()) {
+            JOptionPane.showMessageDialog(this, "All fields are required.", "Input Error", JOptionPane.ERROR_MESSAGE);
             return;
         }
 
-        if (!pass.equals(confirm)) {
-            JOptionPane.showMessageDialog(this, "Passwords do not match.", "Error", JOptionPane.WARNING_MESSAGE);
+        if (!pass.equals(confirmPass)) {
+            JOptionPane.showMessageDialog(this, "Passwords do not match.", "Input Error", JOptionPane.ERROR_MESSAGE);
             return;
         }
 
@@ -268,27 +305,56 @@ public class RegisterView extends JFrame {
             return;
         }
 
-        String newId = "S" + (System.currentTimeMillis() % 100000);
-        SystemRole studentRole = new SystemRole("Student", new ArrayList<>());
+        // 1. EXISTENCE CHECK (By Email)
+        if (userExists(email)) {
+            JOptionPane.showMessageDialog(this, "An account request with this email already exists.", "Registration Failed", JOptionPane.ERROR_MESSAGE);
+            return;
+        }
 
-        Student newStudent = new Student(newId, pass, studentRole, first, last, "General", "Year 1", email);
-        newStudent.setActive(false);
+        // --- ID Generation & Role Assignment ---
+        // FIX: Assign generic 'U' ID and 'Pending' role
+        String newId = generateNewUnassignedID();
+        SystemRole pendingRole = new SystemRole("Pending", new ArrayList<>());
 
-        if (userDAO.saveUserCredentials(newStudent)) {
-            if (studentDAO.saveStudent(newStudent)) {
-                String msg = "Account Request Submitted!\n" +
-                        "Your ID is: " + newId + "\n" +
-                        "Please wait for an Administrator to activate your account.";
-                JOptionPane.showMessageDialog(this, msg, "Registration Successful", JOptionPane.INFORMATION_MESSAGE);
-                dispose();
-                new LoginView().setVisible(true);
-            } else {
-                JOptionPane.showMessageDialog(this, "Error saving student details.", "Error", JOptionPane.ERROR_MESSAGE);
-            }
+        // CRITICAL WORKAROUND: We must use a concrete class (Student) to hold credentials,
+        // but its data represents a generic, unclassified user waiting for approval.
+        Student newUserPlaceholder = new Student(
+                newId,
+                pass,
+                pendingRole,
+                first,
+                last,
+                "UNASSIGNED", // Major placeholder
+                "N/A",        // Year placeholder
+                email
+        );
+        newUserPlaceholder.setActive(false);
+        newUserPlaceholder.setPassword(pass); // Password needs to be stored for hashing later in DAO
+
+        // 2. Save Credentials (UserDAO)
+        // Note: We only save to user_credentials.csv first, as they are not yet a Student.
+        if (userDAO.saveUserCredentials(newUserPlaceholder)) {
+
+            // 3. STAFF NOTIFICATION (Console Alert)
+            System.out.println("=============================================");
+            System.out.println("!!! NEW STAFF ACTION REQUIRED !!!");
+            System.out.println("New account request submitted:");
+            System.out.println("Temporary ID: " + newId + ", Name: " + first + " " + last + ", Email: " + email);
+            System.out.println("Action: Administrator must assign role (S/CA/AO) and activate the account.");
+            System.out.println("=============================================");
+
+            String msg = "Account Request Submitted!\n" +
+                    "Your temporary ID is: " + newId + "\n" +
+                    "Your account status is Pending. An Administrator will assign your role and activate your account shortly.";
+
+            JOptionPane.showMessageDialog(this, msg, "Registration Successful", JOptionPane.INFORMATION_MESSAGE);
+            dispose();
+            new LoginView().setVisible(true);
         } else {
-            JOptionPane.showMessageDialog(this, "Error saving credentials.", "Error", JOptionPane.ERROR_MESSAGE);
+            JOptionPane.showMessageDialog(this, "Error saving credentials. Please contact support.", "Error", JOptionPane.ERROR_MESSAGE);
         }
     }
+
 
     public static void main(String[] args) {
         SwingUtilities.invokeLater(() -> new RegisterView());

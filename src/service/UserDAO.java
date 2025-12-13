@@ -6,10 +6,10 @@ import domain.AcademicOfficer;
 import domain.CourseAdministrator;
 import domain.SystemRole;
 
+import javax.swing.JOptionPane;
 import java.io.*;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Arrays;
 
 public class UserDAO {
     private final String CREDENTIALS_FILE = "data/user_credentials.csv";
@@ -23,7 +23,6 @@ public class UserDAO {
 
     /**
      * Loads all users from the CSV into memory.
-     * This simulates a database connection.
      */
     private void loadUsers() {
         allUsers.clear();
@@ -39,98 +38,136 @@ public class UserDAO {
             br.readLine(); // Skip header: UserID,PasswordHash,Role,Email
 
             while ((line = br.readLine()) != null) {
-                String[] values = line.split(",");
-                // Robust check: ensure we have at least ID, Hash, Role
+                // Use -1 limit to ensure empty trailing fields are included
+                String[] values = line.split(",", -1);
+
                 if (values.length >= 3) {
                     String userId = values[0].trim();
-                    String hash = values[1].trim();
+                    String passwordHash = values[1].trim();
                     String roleName = values[2].trim();
-                    String email = ""; // Default empty
+                    String email = values.length > 3 ? values[3].trim() : "";
 
-                    // Only read email if the column exists (backward compatibility)
-                    if (values.length >= 4) {
-                        email = values[3].trim();
+                    SystemRole role = new SystemRole(roleName, new ArrayList<>());
+                    User user = null;
+
+                    // Use a slightly more descriptive name placeholder for staff
+                    String staffFirstName = roleName.contains("Officer") ? "Academic" : (roleName.contains("Administrator") ? "Course" : "");
+                    String staffLastName = roleName.contains("Officer") ? "Officer" : (roleName.contains("Administrator") ? "Admin" : "");
+
+
+                    // Instantiation logic based on role's expected constructor arguments
+                    try {
+                        switch (roleName) {
+                            case "Student":
+                                // Student needs 8 arguments (ID, Hash, Role, FName, LName, Major, Year, Email)
+                                user = new Student(userId, passwordHash, role, "", "", "", "", email);
+                                user.setActive(true);
+                                break;
+                            case "Academic Officer":
+                            case "AO":
+                                // CA/AO expect 6 arguments: (ID, Hash, Role, FName, LName, ContactOffice/Email)
+                                // We pass the email in the last argument slot as per CSV layout
+                                user = new AcademicOfficer(userId, passwordHash, role, staffFirstName, staffLastName, email);
+                                user.setActive(true);
+                                break;
+                            case "Course Administrator":
+                            case "CA":
+                                // CA/AO expect 6 arguments
+                                user = new CourseAdministrator(userId, passwordHash, role, staffFirstName, staffLastName, email);
+                                user.setActive(true);
+                                break;
+                            case "Pending":
+                                // Pending uses Student placeholder (8 arguments needed)
+                                user = new Student(userId, passwordHash, role, "Pending", "User", "", "", email);
+                                user.setActive(false);
+                                break;
+                            default:
+                                System.err.println("Warning: Unknown role '" + roleName + "'. Skipping instantiation for " + userId);
+                        }
+                    } catch (Exception e) {
+                        System.err.println("CRITICAL ERROR: Failed to instantiate user " + userId + " (" + roleName + "). Constructor mismatch or missing file. Error: " + e.getMessage());
                     }
 
-                    // Create the appropriate User object based on role
-                    User user = createUserInstance(userId, hash, roleName, email);
                     if (user != null) {
+                        // FIX: Ensure the email is set on the base User object (which is needed for login lookup)
+                        user.setEmail(email);
                         allUsers.add(user);
                     }
                 }
             }
         } catch (IOException e) {
-            System.err.println("Error loading credentials: " + e.getMessage());
+            System.err.println("ERROR loading credentials: " + e.getMessage());
         }
     }
 
-    /**
-     * Factory method to create specific User objects.
-     * Note: This creates a 'shell' user with credentials. Full details (Name, etc.)
-     * are loaded by other DAOs (StudentDAO) if needed.
-     */
-    private User createUserInstance(String id, String hash, String roleName, String email) {
-        // Simple role mapping
-        SystemRole role = new SystemRole(roleName, new ArrayList<>());
-        User user = null;
+    // Public getter for all users
+    public List<User> loadAllUsers() {
+        loadUsers();
+        return allUsers;
+    }
 
-        switch (roleName) {
-            case "Student":
-                // Assuming Student constructor matches: ID, Hash, Role, First, Last, Major, Year, Email
-                user = new Student(id, hash, role, "", "", "", "", email);
-                break;
-            case "AcademicOfficer":
-                // Constructor: ID, Hash, Role, First, Last, Office
-                // Does NOT accept email, so we set it manually below
-                user = new AcademicOfficer(id, hash, role, "", "", "");
-                break;
-            case "CourseAdministrator":
-                // Constructor: ID, Hash, Role, First, Last, Dept
-                // Does NOT accept email, so we set it manually below
-                user = new CourseAdministrator(id, hash, role, "", "", "");
-                break;
-            default:
+
+    /**
+     * Attempts to log in using the provided identifier (EMAIL) and password.
+     */
+    public User login(String identifier, String plainPassword) {
+
+        // 1. Find user by EMAIL (Prioritized for security)
+        User foundUser = allUsers.stream()
+                // Defensive filter: Check if email is available and matches identifier
+                .filter(u -> u.getEmail() != null && !u.getEmail().isEmpty() && u.getEmail().equalsIgnoreCase(identifier))
+                .findFirst()
+                .orElse(null);
+
+        // FALLBACK: If email wasn't found, check ID (for backward compatibility if user types ID)
+        if (foundUser == null && !identifier.contains("@")) {
+            System.err.println("Attempting fallback search by UserID...");
+            foundUser = allUsers.stream()
+                    .filter(u -> u.getUserID().equalsIgnoreCase(identifier))
+                    .findFirst()
+                    .orElse(null);
+        }
+
+        if (foundUser != null) {
+
+            // Check if the user is active (crucial for new pending users)
+            if (!foundUser.isActive()) {
+                System.err.println("Login Failed: User " + foundUser.getUserID() + " is inactive/pending approval.");
+                JOptionPane.showMessageDialog(null, "Account is pending activation by an Administrator.", "Login Blocked", JOptionPane.WARNING_MESSAGE);
                 return null;
-        }
-
-        // FIX: Explicitly set the email for ALL user types if the constructor didn't handle it
-        if (user != null && (user.getEmail() == null || user.getEmail().isEmpty())) {
-            user.setEmail(email);
-        }
-
-        return user;
-    }
-
-    // FIX: Added the missing login method required by LoginView
-    /**
-     * Authenticates a user via Email and Password.
-     * @param email The email input.
-     * @param plainPassword The plain text password input.
-     * @return The User object if successful, null otherwise.
-     */
-    public User login(String email, String plainPassword) {
-        for (User user : allUsers) {
-            // Check if email matches (case-insensitive) and is not empty
-            if (user.getEmail() != null && user.getEmail().equalsIgnoreCase(email)) {
-                // Use the User object's own login method to verify the hash
-                if (user.login(plainPassword)) {
-                    return user;
-                }
             }
+
+            // Assume the User object's own login method to verify the hash
+            if (foundUser.login(plainPassword)) {
+                System.err.println("Login Success for User: " + foundUser.getUserID());
+                return foundUser;
+            } else {
+                System.err.println("Login Failed: Invalid password for user " + foundUser.getUserID());
+            }
+        } else {
+            System.err.println("Login Failed: Identifier '" + identifier + "' not found.");
         }
         return null; // Login failed
     }
 
     /**
-     * Updates the user's password and saves the file.
+     * Updates the user's password/details or adds a new user if not found.
      */
     public boolean saveUserCredentials(User userToUpdate) {
+        boolean found = false;
+
         // 1. Update the in-memory list
         for (int i = 0; i < allUsers.size(); i++) {
             if (allUsers.get(i).getUserID().equals(userToUpdate.getUserID())) {
                 allUsers.set(i, userToUpdate);
+                found = true;
                 break;
             }
+        }
+
+        // If it's a NEW user
+        if (!found && userToUpdate != null) {
+            allUsers.add(userToUpdate);
         }
 
         // 2. Rewrite the entire CSV file
@@ -142,13 +179,13 @@ public class UserDAO {
             writer.println("UserID,PasswordHash,Role,Email"); // Header
 
             for (User u : allUsers) {
-                String line = String.join(",",
+                // Ensure the output format remains consistent with the CSV structure
+                writer.printf("%s,%s,%s,%s%n",
                         u.getUserID(),
-                        u.getPassword(), // This must return the HASH string
+                        u.getPassword(),
                         u.getRole().getRoleName(),
                         u.getEmail()
                 );
-                writer.println(line);
             }
             return true;
         } catch (IOException e) {
