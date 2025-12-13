@@ -184,37 +184,41 @@ public class StudentManagementView extends JFrame {
         model.setRowCount(0);
         List<Student> students = studentDAO.loadAllStudents();
 
-        // Load academic records to calculate CGPA
         AcademicRecordDAO recordDAO = new AcademicRecordDAO();
         recordDAO.loadRecords(students);
 
-        // NEW: Collect unique majors for filter
         Set<String> majors = new HashSet<>();
 
         for (Student s : students) {
             s.getAcademicProfile().calculateCGPA();
 
-            // Note: We use s.isActive() directly because StudentDAO now populates it correctly
+            // We must also check the UserDAO status, as StudentDAO might default to Active
+            // if it doesn't cross-reference the credential status properly.
+            // Retrieve User object to check active status from user_credentials.csv
+            User userCreds = userDAO.loadAllUsers().stream()
+                    .filter(u -> u.getUserID().equals(s.getUserID()))
+                    .findFirst().orElse(null);
+
+            boolean isActive = (userCreds != null) ? userCreds.isActive() : s.isActive();
+
+
             model.addRow(new Object[]{
                     s.getUserID(),
                     s.getFullName(),
                     s.getMajor(),
                     s.getEmail(),
-                    String.format("%.2f", s.getAcademicProfile().getCGPA()), // CGPA Column
-                    s.isActive() ? "Active" : "Inactive" // Use status from Student object
+                    String.format("%.2f", s.getAcademicProfile().getCGPA()),
+                    isActive ? "Active" : "Inactive" // Use the resolved active status
             });
 
-            // Add major to set
             if (s.getMajor() != null && !s.getMajor().isEmpty()) {
                 majors.add(s.getMajor());
             }
         }
 
-        // Populate Filter Dropdown
         List<String> sortedMajors = new ArrayList<>(majors);
         Collections.sort(sortedMajors);
 
-        // Avoid duplicate items if reloading
         if (majorFilter.getItemCount() <= 1) {
             for (String m : sortedMajors) {
                 majorFilter.addItem(m);
@@ -222,14 +226,15 @@ public class StudentManagementView extends JFrame {
         }
     }
 
+    // --- PERSISTENCE FIX: Update the status and save via UserDAO ---
     private void updateStatus(boolean isActive) {
-        int selectedRowView = table.getSelectedRow();
-        if (selectedRowView == -1) {
+        int selectedRow = table.getSelectedRow();
+        if (selectedRow == -1) {
             JOptionPane.showMessageDialog(this, "Please select a student first.");
             return;
         }
 
-        int modelRow = table.convertRowIndexToModel(selectedRowView);
+        int modelRow = table.convertRowIndexToModel(selectedRow);
         String studentID = (String) model.getValueAt(modelRow, 0);
         String action = isActive ? "Activate" : "Deactivate";
 
@@ -239,21 +244,26 @@ public class StudentManagementView extends JFrame {
 
         if (confirm == JOptionPane.YES_OPTION) {
 
-            UserDAO freshDAO = new UserDAO();
-            User target = freshDAO.loadAllUsers().stream()
+            // 1. Load the target user object from the DAO cache
+            User target = userDAO.loadAllUsers().stream()
                     .filter(u -> u.getUserID().equals(studentID))
                     .findFirst().orElse(null);
 
             if(target != null) {
+                // 2. Update the status on the User object
                 target.setActive(isActive);
 
-                if(freshDAO.saveUserCredentials(target)) {
+                // 3. Persist the change by rewriting user_credentials.csv
+                if(userDAO.saveUserCredentials(target)) {
                     JOptionPane.showMessageDialog(this, "Success! User " + studentID + " is now " + (isActive ? "Active" : "Inactive") + ". Credentials updated.");
 
-                    // FIX: Manually update the table model row to reflect changes instantly without full reload
-                    // This bypasses potential file read race conditions for the immediate UI feedback.
-                    model.setValueAt(isActive ? "Active" : "Inactive", modelRow, 5); // Status is column 5
+                    // 4. Reload the table data to reflect the persistent change
+                    loadStudentData();
 
+                    // 5. Ensure the table selection remains (if possible)
+                    if (selectedRow < table.getRowCount()) {
+                        table.setRowSelectionInterval(selectedRow, selectedRow);
+                    }
                 } else {
                     JOptionPane.showMessageDialog(this, "Error saving status to credentials file.", "Error", JOptionPane.ERROR_MESSAGE);
                 }
@@ -265,32 +275,36 @@ public class StudentManagementView extends JFrame {
 
     // --- SHOW PROFILE DIALOG ---
     private void showStudentProfile(String studentID) {
+        // Load full details
         StudentDAO sDao = new StudentDAO();
         List<Student> all = sDao.loadAllStudents();
         Student s = all.stream().filter(st -> st.getUserID().equals(studentID)).findFirst().orElse(null);
 
         if (s == null) return;
 
+        // Load Academic Data
         AcademicRecordDAO rDao = new AcademicRecordDAO();
         rDao.loadRecords(all);
 
+        // Fix: Force calculation of CGPA to ensure it's not 0.0
         s.getAcademicProfile().calculateCGPA();
 
+        // Load Enrollment
         EnrollmentDAO eDao = new EnrollmentDAO();
         List<Enrollment> enrollments = eDao.loadEnrollments();
         List<Enrollment> studentEnrollments = enrollments.stream()
                 .filter(e -> e.getStudentId().equals(studentID))
                 .collect(Collectors.toList());
 
-        // FIX: Force reload of UserDAO to get fresh status for the dialog
-        UserDAO freshDAO = new UserDAO();
-        User userCreds = freshDAO.loadAllUsers().stream()
+        // Load active status from user_credentials
+        User userCreds = userDAO.loadAllUsers().stream()
                 .filter(u -> u.getUserID().equals(studentID))
                 .findFirst().orElse(null);
-
         boolean isActive = (userCreds != null) ? userCreds.isActive() : s.isActive();
 
-        JDialog dialog = new JDialog(this, "Student Profile: " + s.getFullName(), true);
+
+        // Build Profile Panel
+        JDialog dialog = new JDialog(this, "Student Profile: " + s.getFullName(), false);
         dialog.setSize(500, 600);
         dialog.setLocationRelativeTo(this);
         dialog.setLayout(new BorderLayout());
@@ -329,11 +343,26 @@ public class StudentManagementView extends JFrame {
             }
         }
 
+        // --- BUTTONS ---
+        JPanel btnPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
+        btnPanel.setBackground(Color.WHITE);
+
+        // NEW BUTTON: Show Academic Records (launches ReportGUI in student view mode)
+        JButton showRecordsBtn = createRoundedButton("Show Academic Records", new Color(0, 102, 204), Color.WHITE);
+
+        showRecordsBtn.addActionListener(e -> {
+            JFrame reportFrame = new ui.ReportGUI(s);
+            reportFrame.setVisible(true);
+            SwingUtilities.invokeLater(() -> {
+                reportFrame.toFront();
+                reportFrame.requestFocus();
+            });
+        });
+
         JButton closeBtn = createRoundedButton("Close", new Color(108, 117, 125), Color.WHITE);
         closeBtn.addActionListener(e -> dialog.dispose());
 
-        JPanel btnPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
-        btnPanel.setBackground(Color.WHITE);
+        btnPanel.add(showRecordsBtn);
         btnPanel.add(closeBtn);
 
         dialog.add(new JScrollPane(content), BorderLayout.CENTER);

@@ -116,7 +116,6 @@ public class EnrollmentGUI extends JFrame {
         mainPanel.add(detailsTextArea, gbc);
 
         // -- Row 4: Action Button --
-        // FIX 2: Use createRoundedButton for Enroll button (green, rounded, animated)
         enrollButton = createRoundedButton("Proceed to Enrollment", SUCCESS_COLOR, Color.WHITE);
         enrollButton.setEnabled(false);
 
@@ -153,7 +152,6 @@ public class EnrollmentGUI extends JFrame {
         return btn;
     }
 
-    // FIX 3: Add the createRoundedButton helper with animation
     private JButton createRoundedButton(String text, Color bgColor, Color fgColor) {
         JButton btn = new JButton(text) {
             @Override

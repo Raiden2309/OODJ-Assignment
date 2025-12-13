@@ -1,6 +1,7 @@
 package ui;
 
 import domain.User;
+import service.NotificationService;
 import service.UserDAO;
 import service.StudentDAO;
 import domain.Student;
@@ -335,6 +336,21 @@ public class RegisterView extends JFrame {
             if (!studentDAO.saveStudent(newUserPlaceholder)) {
                 System.err.println("Warning: Failed to save full student profile details to student_information.csv.");
             }
+
+            new Thread(() -> {
+                try {
+                    NotificationService notify = new NotificationService(first, last, email);
+                    // Using sendEmail for custom pending message
+                    notify.sendEmail(email, "CRS Account Request Submitted",
+                            "Dear " + first + " " + last + ",\n\nYour account request has been successfully submitted " +
+                                    "with temporary ID: " + newId + ".\n\n" +
+                                    "It is now awaiting review and approval by a Course Administrator or Academic Officer.\n\n" +
+                                    "Regards,\nCRS Team");
+                    System.out.println("Registration notification sent to " + email);
+                } catch (Exception ex) {
+                    System.err.println("Failed to send registration email: " + ex.getMessage());
+                }
+            }).start();
 
             // 3. STAFF NOTIFICATION (Console Alert)
             System.out.println("=============================================");

@@ -4,6 +4,7 @@ import domain.User;
 import domain.Student;
 import service.UserDAO;
 import service.StudentDAO;
+import service.NotificationService;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
@@ -160,12 +161,21 @@ public class ManageAccountView extends JFrame {
 
         // Student Specific Actions
         if (currentUser instanceof Student) {
+            // Cast Student here to ensure 'student' object is available inside ActionListener
+            final Student student = (Student) currentUser;
+
             gbc.gridy = 1;
-            // View Records Button - Rounded
-            JButton viewRecordsBtn = createRoundedButton("View Academic Records (PDF)", new Color(40, 167, 69), Color.WHITE);
+            // Changed button text to reflect the preview/export flow
+            JButton viewRecordsBtn = createRoundedButton("View Academic Records", new Color(40, 167, 69), Color.WHITE);
 
             viewRecordsBtn.addActionListener(e -> {
-                new ReportGUI(currentUser).setVisible(true);
+                // Launch ReportGUI, passing the target student object.
+                JFrame reportFrame = new ui.ReportGUI(student);
+                reportFrame.setVisible(true);
+                SwingUtilities.invokeLater(() -> {
+                    reportFrame.toFront();
+                    reportFrame.requestFocus();
+                });
             });
 
             actionPanel.add(viewRecordsBtn, gbc);
@@ -220,6 +230,10 @@ public class ManageAccountView extends JFrame {
             String newP = new String(newPass.getPassword());
             String confP = new String(confirmPass.getPassword());
 
+            // Resolve name for notification service (safe for staff/student)
+            String fName = (currentUser instanceof Student) ? ((Student)currentUser).getFirstName() : currentUser.getRole().getRoleName();
+            String lName = (currentUser instanceof Student) ? ((Student)currentUser).getLastName() : currentUser.getUserID();
+
             if (currentUser.login(oldP)) {
                 if (newP.equals(confP)) {
                     if (newP.length() >= 4) {
@@ -227,11 +241,28 @@ public class ManageAccountView extends JFrame {
 
                         if (userDAO.saveUserCredentials(currentUser)) {
                             JOptionPane.showMessageDialog(this, "Password updated successfully!");
+
+                            // --- NEW: Trigger Password Change Notification (Asynchronous) ---
+                            final String finalEmail = currentUser.getEmail();
+                            final String finalFName = fName;
+                            final String finalLName = lName;
+
+                            new Thread(() -> {
+                                try {
+                                    NotificationService notify = new NotificationService(finalFName, finalLName, finalEmail);
+                                    notify.sendPasswordChangedEmail();
+                                    System.out.println("Password changed notification sent to " + finalEmail);
+                                } catch (Exception ex) {
+                                    System.err.println("Failed to send password change email: " + ex.getMessage());
+                                }
+                            }).start();
+                            // -------------------------------------------------------------
+
                         } else {
                             JOptionPane.showMessageDialog(this, "Error saving password to file.", "Error", JOptionPane.ERROR_MESSAGE);
                         }
                     } else {
-                        JOptionPane.showMessageDialog(this, "New password is too short.");
+                        JOptionPane.showMessageDialog(this, "New password must be at least 4 characters long.");
                     }
                 } else {
                     JOptionPane.showMessageDialog(this, "New passwords do not match.");
