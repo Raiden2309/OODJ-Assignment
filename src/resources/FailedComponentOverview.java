@@ -34,7 +34,7 @@ public class FailedComponentOverview extends JFrame {
         // Window Setup
         setTitle("Failed Components Overview");
         setSize(1000, 700);
-        setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
         setLocationRelativeTo(null);
 
         JPanel mainPanel = new JPanel(new BorderLayout());
@@ -85,7 +85,6 @@ public class FailedComponentOverview extends JFrame {
 
         btnBack = createRoundedButton("Back to Dashboard", RED_COLOR, TEXT_COLOR);
         btnBack.addActionListener(e -> {
-            new Dashboard(loggedInUser).setVisible(true);
             dispose();
         });
 

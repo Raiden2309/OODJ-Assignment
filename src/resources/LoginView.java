@@ -36,7 +36,7 @@ public class LoginView extends JFrame {
 
         setTitle("CRS Login");
         setSize(1000, 600);
-        setDefaultCloseOperation(EXIT_ON_CLOSE);
+        setDefaultCloseOperation(DISPOSE_ON_CLOSE);
         setLocationRelativeTo(null);
         setResizable(false);
 

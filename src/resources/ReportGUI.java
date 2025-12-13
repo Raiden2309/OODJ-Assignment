@@ -139,15 +139,8 @@ public class ReportGUI extends JFrame {
     }
 
     private void loadStudentPreview(Student student) {
-        // Ensure data is loaded
         AcademicRecordDAO recordDAO = new AcademicRecordDAO();
-        // Just in case the passed student object doesn't have records loaded yet
-        // In a real flow, it might already be loaded, but safe to reload/ensure
-        // If your DAO architecture supports reloading a single student, do that.
-        // Otherwise, rely on what's passed or trigger a full load if empty.
         if (student.getAcademicProfile().getCourseResults().isEmpty()) {
-            // Create a dummy list to use existing DAO method or assume caller handled it
-            // For now, assume caller (Dashboard) loaded it, or just show what's there.
         }
 
         StringBuilder sb = new StringBuilder();

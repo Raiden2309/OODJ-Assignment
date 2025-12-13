@@ -14,9 +14,13 @@ public class Enrollment
     private String examScore;
     private String assignmentScore;
 
+    // NEW: Fields/Logic from your version (optional but recommended for your module)
     private CourseRecoveryPlan plan;
     private Date enrollmentDate;
+    private String status; // FIX: Added status field
 
+    // CONSTRUCTOR 1: The String-based one (Required for DataAccess.java)
+    // DO NOT CHANGE THE SIGNATURE or DataAccess will break!
     public Enrollment(String enrollmentId, String studentId, String courseId, String year, String semester, String examScore, String assignmentScore)
     {
         this.enrollmentId = enrollmentId;
@@ -27,10 +31,13 @@ public class Enrollment
         this.examScore = examScore;
         this.assignmentScore = assignmentScore;
 
-
+        // Default init for fields not in CSV
         this.enrollmentDate = new Date();
+        this.status = "Active"; // Default status if not read from file
     }
 
+    // CONSTRUCTOR 2: The Object-based one (Required for Student.enrol())
+    // Your Student class calls: new Enrollment(this.getUserID(), plan);
     public Enrollment(String studentId, CourseRecoveryPlan plan) {
         this.enrollmentId = "ENR-" + studentId + "-" + System.currentTimeMillis();
         this.studentId = studentId;
@@ -38,19 +45,27 @@ public class Enrollment
         this.courseId = plan.getCourseID(); // Assuming plan has this method
         this.enrollmentDate = new Date();
 
-        this.year = "2025"; // Placeholder or Current Year
+        // Set defaults for CSV fields not yet known
+        this.year = "2023"; // Placeholder or Current Year
         this.semester = "Unknown";
         this.examScore = "0";
         this.assignmentScore = "0";
+        this.status = "Pending Approval"; // Default enrollment status
     }
 
+    // --- Getters from Friend's Code ---
 
     public String getEnrollmentId() {
         return enrollmentId;
     }
 
+    // FIX: Added the missing setter to resolve the DAO compilation error.
+    public void setEnrollmentId(String enrollmentId) {
+        this.enrollmentId = enrollmentId;
+    }
 
-    public String getEnrolmentID() {
+    // Alias for getEnrolmentID() if your code uses that spelling
+    public String getEnrollmentID() {
         return enrollmentId;
     }
 
@@ -58,7 +73,7 @@ public class Enrollment
         return studentId;
     }
 
-
+    // Alias for getStudentID() if your code uses that capitalization
     public String getStudentID() {
         return studentId;
     }
@@ -83,6 +98,7 @@ public class Enrollment
         return assignmentScore;
     }
 
+    // --- Getters from Your Code ---
 
     public CourseRecoveryPlan getPlan() {
         return plan;
@@ -92,7 +108,17 @@ public class Enrollment
         return enrollmentDate;
     }
 
+    // Alias to match your code's expectation
     public Date getEnrolmentDate() {
         return enrollmentDate;
+    }
+
+    // FIX: Added getStatus() method to resolve the Dashboard error
+    public String getStatus() {
+        return status;
+    }
+
+    public void setStatus(String status) {
+        this.status = status;
     }
 }

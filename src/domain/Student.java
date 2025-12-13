@@ -12,10 +12,10 @@ import java.util.List;
 public class Student extends User {
     private String firstName;
     private String lastName;
-    private String major;         // Replaced 'programId' with 'major' to match your DataAccess/CSV logic
-    private String academicYear;  // Added back to match standard student data
+    private String major;
+    private String academicYear;
     private String email;
-    private String recoveryEligibility; // Kept this as you added it
+    private String recoveryEligibility;
     private AcademicProfile academicProfile;
 
     // Updated Constructor to match the 8 arguments passed by DataAccess.java
@@ -58,9 +58,7 @@ public class Student extends User {
         return check;
     }
 
-    // Using 'Enrolment' (Single L) as requested
-    // Ensure Enrolment class is in 'domain' package or imported
-    public Enrollment enrol(CourseRecoveryPlan plan) {
+    public Enrollment enroll(CourseRecoveryPlan plan) {
         if (checkEligibility().isEligible()) {
             Enrollment enrollment = new Enrollment(this.getUserID(), plan);
 

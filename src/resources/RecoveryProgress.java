@@ -51,7 +51,7 @@ public class RecoveryProgress extends JFrame {
         // Window Setup
         setTitle("Recovery Progress Monitor");
         setSize(1000, 700);
-        setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
         setLocationRelativeTo(null);
 
         // Main Container
@@ -159,7 +159,6 @@ public class RecoveryProgress extends JFrame {
         btnSave.addActionListener(e -> saveStatusUpdate());
 
         btnBack.addActionListener(e -> {
-            new Dashboard(loggedInUser).setVisible(true);
             dispose();
         });
 
