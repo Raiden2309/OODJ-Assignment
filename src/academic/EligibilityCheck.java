@@ -6,7 +6,7 @@ public class EligibilityCheck {
     private boolean isEligible;
 
     // Constants for business rules
-    private static final double MIN_CGPA = 2.0;
+    private static final double MIN_CGPA = 2.00;
     private static final int MAX_FAILED_COURSES = 3;
 
     /**
@@ -19,17 +19,19 @@ public class EligibilityCheck {
         return studentCGPA >= MIN_CGPA;
     }
 
-    /**
-     * Checks if the student's number of failed courses is within the allowed limit.
-     * @param profile The student's academic profile.
-     * @return true if Total Failed Courses <= MAX_FAILED_COURSES, false otherwise.
-     */
     public boolean checkFailedCourseLimit(AcademicProfile profile) {
         int failedCourses = profile.getTotalFailedCourse();
         return failedCourses <= MAX_FAILED_COURSES;
     }
 
-    // --- Getters and Setters ---
+    public double getMinCgpa() {
+        return MIN_CGPA;
+    }
+
+    public int getMaxFailedCourses()
+    {
+        return MAX_FAILED_COURSES;
+    }
 
     public boolean isEligible() {
         return isEligible;

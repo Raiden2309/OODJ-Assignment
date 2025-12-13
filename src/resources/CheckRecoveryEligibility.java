@@ -1,83 +1,65 @@
 package resources;
 
+import academic.AcademicProfile;
+import academic.EligibilityCheck;
+import domain.Student;
 import org.jdesktop.swingx.autocomplete.AutoCompleteDecorator;
 import service.EnrolledCourseDAO;
 import service.StudentDAO;
-import academic.EligibilityCheck;
-import domain.Student;
 
 import javax.swing.*;
+import javax.swing.event.ListSelectionEvent;
+import javax.swing.event.ListSelectionListener;
+import javax.swing.table.DefaultTableModel;
 import java.awt.*;
 import java.awt.event.*;
+import java.util.HashMap;
 import java.util.List;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Comparator;
+import java.util.Map;
 
 public class CheckRecoveryEligibility extends JFrame
 {
     private JComboBox<String> idCombobox;
-    private JButton checkEligibilityButton;
 
-    private JLabel labelTitle;
-    private JLabel label1;
-    private JLabel label2;
-    private JLabel label3;
-    private JLabel label4;
-    private JLabel label5;
-    private JLabel label6;
-
+    private JLabel titleLabel;
     private JLabel idLabel;
     private JLabel nameLabel;
-    private JLabel majorLabel;
-    private JLabel yearLabel;
+    private JLabel cgpaLabel;
+    private JLabel totalFailedLabel;
+    private JLabel resultLabel;
 
-    private JLabel eligibilityLabel;
+    private ButtonGroup radioButtons = new ButtonGroup();
+    private JRadioButton filterAllRb;
+    private JRadioButton filterEligibleRb;
+    private JRadioButton filterIneligibleRb;
+    private JRadioButton filterAlmostRb;
 
-    final Font txtFont = new Font("Arial", Font.PLAIN, 14);
-    final Font categoryFont = new Font("Arial", Font.BOLD, 14);
-    final Color eligibleColour = new Color(0, 188, 0);
-    final Color ineligibleColour = Color.RED;
-    final String defaultChar = "-";
+    private JTable studentsTable;
+    private DefaultTableModel tableModel;
 
-    StudentDAO studentDAO = new StudentDAO();
+    private StudentDAO studentDAO = new StudentDAO();
     List<Student> students = studentDAO.loadAllStudents();
+    private EnrolledCourseDAO enrolledCourseDAO = new EnrolledCourseDAO();
 
-    public CheckRecoveryEligibility() {
-        JPanel inputPanel = new JPanel(new GridLayout(7, 2, 10, 10));
-        inputPanel.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
+    final String defaultChar = "-";
+    private Map<Student, Integer> studentEligibilityResults = new HashMap<>();
+
+    public CheckRecoveryEligibility()
+    {
+        enrolledCourseDAO.loadRecords(students);
+        getStudentEligibility();
+
+        setTitle("CRS - Student Recovery Eligibility Checking");
+        setSize(1000, 700);
+        setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        setLayout(new BorderLayout());
+        setResizable(false);
+
+        JPanel inputPanel = new JPanel(new GridLayout(6, 2));
+        JPanel buttonPanel = new JPanel(new GridLayout(2, 4));
 
         idCombobox = new JComboBox<>();
-        checkEligibilityButton = new JButton("Check Eligibility");
-
-        label1 = new JLabel("Select Student:");
-        label2 = new JLabel("Student ID:");
-        label3 = new JLabel("Name:");
-        label4 = new JLabel("Major:");
-        label5 = new JLabel("Year:");
-        label6 = new JLabel("Eligibility Result:");
-
-        label1.setFont(categoryFont);
-        label2.setFont(categoryFont);
-        label3.setFont(categoryFont);
-        label4.setFont(categoryFont);
-        label5.setFont(categoryFont);
-        label6.setFont(categoryFont);
-
-        idLabel = new JLabel(defaultChar);
-        nameLabel = new JLabel(defaultChar);
-        majorLabel = new JLabel(defaultChar);
-        yearLabel = new JLabel(defaultChar);
-        eligibilityLabel = new JLabel("Unknown");
-
-        idLabel.setFont(txtFont);
-        nameLabel.setFont(txtFont);
-        majorLabel.setFont(txtFont);
-        yearLabel.setFont(txtFont);
-        eligibilityLabel.setFont(txtFont);
-
         idCombobox.addItem("-- Select student --");
-
         for (Student student : students)
         {
             String s = String.format("%s - %s", student.getStudentId(), student.getFullName());
@@ -85,60 +67,65 @@ public class CheckRecoveryEligibility extends JFrame
         }
         AutoCompleteDecorator.decorate(idCombobox);
 
-        ImageIcon originalIcon = new ImageIcon(getClass().getResource("/resources/apulogo.png"));
-        Image scaledImage = originalIcon.getImage().getScaledInstance(80, 80, Image.SCALE_SMOOTH);
-        ImageIcon logoIcon = new ImageIcon(scaledImage);
-        JLabel logoLabel = new JLabel(logoIcon);
-
-        labelTitle = new JLabel("Check Student CRP Eligibility", SwingConstants.CENTER);
-        labelTitle.setFont(new Font("Arial", Font.BOLD, 22));
-
-        JPanel logoTitlePanel = new JPanel(new BorderLayout());
-        logoTitlePanel.setBackground(new Color(229, 215, 139));
-        logoTitlePanel.setBorder(BorderFactory.createEmptyBorder(10,10,10,10));
-        logoTitlePanel.add(logoLabel, BorderLayout.WEST);
-        logoTitlePanel.add(labelTitle, BorderLayout.CENTER);
-
-        JPanel topPanel = new JPanel(new BorderLayout());
-        topPanel.setBackground(new Color(229, 215, 139));
-        topPanel.add(logoTitlePanel, BorderLayout.NORTH);
-        topPanel.add(inputPanel, BorderLayout.CENTER);
-
-        add(topPanel, BorderLayout.NORTH);
-
-        inputPanel.add(label1);
+        inputPanel.add(new JLabel("Select Student:"));
         inputPanel.add(idCombobox);
 
-        inputPanel.add(label2);
+        inputPanel.add(new JLabel("Student ID:"));
+        idLabel = new JLabel("-");
         inputPanel.add(idLabel);
 
-        inputPanel.add(label3);
+        inputPanel.add(new JLabel("Student Name:"));
+        nameLabel = new JLabel("-");
         inputPanel.add(nameLabel);
 
-        inputPanel.add(label4);
-        inputPanel.add(majorLabel);
+        inputPanel.add(new JLabel("CGPA Requirement Met?:"));
+        cgpaLabel = new JLabel("-");
+        inputPanel.add(cgpaLabel);
 
-        inputPanel.add(label5);
-        inputPanel.add(yearLabel);
+        inputPanel.add(new JLabel("Total Failed Courses Within Maximum Allowed?:"));
+        totalFailedLabel = new JLabel("-");
+        inputPanel.add(totalFailedLabel);
 
-        inputPanel.add(label6);
-        inputPanel.add(eligibilityLabel);
+        inputPanel.add(new JLabel("Eligibility Result:"));
+        resultLabel = new JLabel("-");
+        inputPanel.add(resultLabel);
 
-        inputPanel.add(new JLabel(""));
+        buttonPanel.add(new JLabel("FILTER BY:"));
+        buttonPanel.add(new JLabel(""));
+        buttonPanel.add(new JLabel(""));
+        buttonPanel.add(new JLabel(""));
 
-        add(inputPanel, BorderLayout.CENTER);
+        filterAllRb = new JRadioButton("All");
+        radioButtons.add(filterAllRb);
+        buttonPanel.add(filterAllRb);
 
-        checkEligibilityButton.setBorder(BorderFactory.createEmptyBorder(20,10,10,10));
-        add(checkEligibilityButton,BorderLayout.SOUTH);
+        filterEligibleRb = new JRadioButton("Eligible");
+        radioButtons.add(filterEligibleRb);
+        buttonPanel.add(filterEligibleRb);
 
-        getContentPane().setBackground(new Color(229, 215, 139));
-        inputPanel.setBackground(new Color(229, 215, 139));
-        setDefaultCloseOperation(EXIT_ON_CLOSE);
-        setTitle("CRS - Student Recovery Eligibility Checking");
-        setSize(1000, 700);
-        setLocationRelativeTo(null);
-        setResizable(false);
-        setVisible(true);
+        filterIneligibleRb = new JRadioButton("Not Eligible");
+        radioButtons.add(filterIneligibleRb);
+        buttonPanel.add(filterIneligibleRb);
+
+        filterAlmostRb = new JRadioButton("Almost Eligible");
+        radioButtons.add(filterAlmostRb);
+        buttonPanel.add(filterAlmostRb);
+
+        add(inputPanel, BorderLayout.NORTH);
+        add(buttonPanel, BorderLayout.SOUTH);
+
+        tableModel = new DefaultTableModel(new String[]{
+                "Student ID", "Student Name", "Major", "Year", "Email"}, 0)
+        {
+            @Override
+            public boolean isCellEditable(int row, int column)
+            {
+                return false;
+            }
+        };
+
+        studentsTable = new JTable(tableModel);
+        add(new JScrollPane(studentsTable), BorderLayout.CENTER);
 
         idCombobox.addItemListener(new ItemListener()
         {
@@ -160,81 +147,261 @@ public class CheckRecoveryEligibility extends JFrame
                             {
                                 idLabel.setText(student.getStudentId());
                                 nameLabel.setText(student.getFullName());
-                                majorLabel.setText(student.getMajor());
-                                yearLabel.setText(student.getAcademicYear());
                             }
                         }
+                        selectStudentFromTable();
+                        displayEligibilityResults();
                     }
                     else
                     {
                         nameLabel.setText(defaultChar);
                         idLabel.setText(defaultChar);
-                        majorLabel.setText(defaultChar);
-                        yearLabel.setText(defaultChar);
-                        eligibilityLabel.setText("Unknown");
-                        eligibilityLabel.setForeground(Color.BLACK);
+                        cgpaLabel.setText(defaultChar);
+                        totalFailedLabel.setText(defaultChar);
+                        resultLabel.setText(defaultChar);
+                        resultLabel.setForeground(Color.BLACK);
                     }
                 }
             }
         });
 
-        checkEligibilityButton.addActionListener(new ActionListener() {
+        studentsTable.getSelectionModel().addListSelectionListener(new ListSelectionListener()
+        {
             @Override
-            public void actionPerformed(ActionEvent e) {
-                if (idCombobox.getSelectedIndex() != 0)
+            public void valueChanged(ListSelectionEvent e)
+            {
+                if (!e.getValueIsAdjusting())
                 {
-                    performEligibilityCheck();
-                }
-                else
-                {
-                    JOptionPane.showMessageDialog(null, "Please select a student first.", "Error", JOptionPane.WARNING_MESSAGE);
+                    int selectedRow = studentsTable.getSelectedRow();
+                    if (selectedRow != -1)
+                    {
+                        idLabel.setText((String) tableModel.getValueAt(selectedRow, 0));
+                        nameLabel.setText((String) tableModel.getValueAt(selectedRow, 1));
+                        idCombobox.setSelectedItem(
+                                String.format("%s - %s", idLabel.getText(), nameLabel.getText())
+                        );
+
+                        displayEligibilityResults();
+                    }
                 }
             }
         });
+
+        ActionListener radioButtonSelected = new ActionListener()
+        {
+            @Override
+            public void actionPerformed(ActionEvent e)
+            {
+                idCombobox.setSelectedIndex(0);
+
+                nameLabel.setText(defaultChar);
+                idLabel.setText(defaultChar);
+                cgpaLabel.setText(defaultChar);
+                totalFailedLabel.setText(defaultChar);
+                resultLabel.setText(defaultChar);
+                resultLabel.setForeground(Color.BLACK);
+
+                JRadioButton selectedButton = (JRadioButton) e.getSource();
+
+                if (selectedButton == filterAllRb) listStudents(filterAllRb.getText());
+                else if (selectedButton == filterEligibleRb) listStudents(filterEligibleRb.getText());
+                else if (selectedButton == filterIneligibleRb) listStudents(filterIneligibleRb.getText());
+                else if (selectedButton == filterAlmostRb) listStudents(filterAlmostRb.getText());
+            }
+        };
+
+        filterAllRb.addActionListener(radioButtonSelected);
+        filterEligibleRb.addActionListener(radioButtonSelected);
+        filterIneligibleRb.addActionListener(radioButtonSelected);
+        filterAlmostRb.addActionListener(radioButtonSelected);
+
+        getContentPane().setBackground(new Color(229, 215, 139));
+        inputPanel.setBackground(new Color(229, 215, 139));
+        inputPanel.setBorder(BorderFactory.createEmptyBorder(10,10,20,10));
+        buttonPanel.setBackground(new Color(229, 215, 139));
+        buttonPanel.setBorder(BorderFactory.createEmptyBorder(10,10,20,10));
+
+        titleLabel = new JLabel("Check Student CRP Eligibility", SwingConstants.CENTER);
+        titleLabel.setFont(new Font("Arial", Font.BOLD, 22));
+
+        ImageIcon originalIcon = new ImageIcon(getClass().getResource("/resources/apulogo.png"));
+        Image scaledImage = originalIcon.getImage().getScaledInstance(80, 80, Image.SCALE_SMOOTH);
+        ImageIcon logoIcon = new ImageIcon(scaledImage);
+        JLabel lblLogo = new JLabel(logoIcon);
+
+        JPanel logoTitlePanel = new JPanel(new BorderLayout());
+        logoTitlePanel.setBackground(new Color(229, 215, 139));
+        logoTitlePanel.setBorder(BorderFactory.createEmptyBorder(10,10,10,10));
+        logoTitlePanel.add(lblLogo, BorderLayout.WEST);
+        logoTitlePanel.add(titleLabel, BorderLayout.CENTER);
+
+        JPanel topPanel = new JPanel(new BorderLayout());
+        topPanel.setBackground(new Color(229, 215, 139));
+        topPanel.add(logoTitlePanel, BorderLayout.NORTH);
+        topPanel.add(inputPanel, BorderLayout.CENTER);
+
+        add(topPanel, BorderLayout.NORTH);
+
+        JScrollPane tableScroll = new JScrollPane(studentsTable);
+        add(tableScroll, BorderLayout.CENTER);
+
+        filterAllRb.setSelected(true);
+        listStudents("All");
     }
 
-    private void performEligibilityCheck () {
-        String selectedItem = idCombobox.getSelectedItem().toString();
-        String studentID = selectedItem.split(" - ")[0].trim();
-
-        StudentDAO studentDAO = new StudentDAO();
-        EnrolledCourseDAO enrolledCourseDAO = new EnrolledCourseDAO();
-
-        List<Student> allStudents = studentDAO.loadAllStudents();
-        enrolledCourseDAO.loadRecords(allStudents);
-
-        Student targetStudent = null;
-        for (Student s : allStudents)
+    private void listStudents(String filterCondition)
+    {
+        try
         {
-            if (s.getUserID().equals(studentID))
+            tableModel.setRowCount(0);
+
+            for (Student s : students)
+            {
+                Object[] row = {
+                        s.getStudentId(),
+                        s.getFullName(),
+                        s.getMajor(),
+                        s.getAcademicYear(),
+                        s.getEmail()
+                };
+                int code = studentEligibilityResults.get(s);
+
+                if (filterCondition.equals(filterAllRb.getText()))
+                {
+                    tableModel.addRow(row);
+                }
+                else if (filterCondition.equals(filterEligibleRb.getText()))
+                {
+                    if (code == 2) tableModel.addRow(row);
+                }
+                else if (filterCondition.equals(filterAlmostRb.getText()))
+                {
+                    if (code == 1) tableModel.addRow(row);
+                }
+                else if (filterCondition.equals(filterIneligibleRb.getText()))
+                {
+                    if (code == 0) tableModel.addRow(row);
+                }
+            }
+            studentsTable.setModel(tableModel);
+        }
+        catch (Exception e)
+        {
+            JOptionPane.showMessageDialog(this, "Error: " + e);
+        }
+    }
+
+    private void selectStudentFromTable()
+    {
+        int rowIndex = -1;
+
+        for (int i = 0; i < tableModel.getRowCount(); i++)
+        {
+            Object studentId = tableModel.getValueAt(i, 0);
+
+            if (studentId != null && studentId.equals(idLabel.getText()))
+            {
+                rowIndex = i;
+                break;
+            }
+        }
+
+        if (rowIndex != -1)
+        {
+            studentsTable.setRowSelectionInterval(rowIndex, rowIndex);
+            studentsTable.scrollRectToVisible(studentsTable.getCellRect(rowIndex, 0, true));
+        }
+    }
+
+    private void getStudentEligibility()
+    {
+        for (Student student : students)
+        {
+            AcademicProfile ap = student.getAcademicProfile();
+            EligibilityCheck ec = student.checkEligibility();
+            final double NEAR_FAIL_THRESHOLD = ec.getMinCgpa() + 0.1;
+            int result;
+
+            if (ec.checkCGPA(ap) && ec.checkFailedCourseLimit(ap)) result = 0;
+
+            else if (ec.getMinCgpa() < ap.getCGPA() && ap.getCGPA() <= NEAR_FAIL_THRESHOLD
+                    || ap.getTotalFailedCourse() == ec.getMaxFailedCourses()) result = 1;
+
+            else result = 2;
+
+            studentEligibilityResults.put(student, result);
+        }
+    }
+
+    private void displayEligibilityResults()
+    {
+        Student targetStudent = null;
+
+        for (Student s : students)
+        {
+            if (s.getUserID().equals(idLabel.getText()))
             {
                 targetStudent = s;
                 break;
             }
         }
 
-        EligibilityCheck ec = targetStudent.checkEligibility();
+        if (targetStudent != null)
+        {
+            String cgpaResult;
+            String totalFailedCoursesResult;
+            EligibilityCheck ec = targetStudent.checkEligibility();
 
-        if (ec.isEligible())
-        {
-            eligibilityLabel.setText("ELIGIBLE FOR RECOVERY");
-            eligibilityLabel.setForeground(eligibleColour);
+            if (ec.checkCGPA(targetStudent.getAcademicProfile()))
+            {
+                cgpaResult = String.format("YES   [ CGPA: %.2f >= Minimum Requirement: %.2f ]",
+                        targetStudent.getAcademicProfile().getCGPA(),
+                        ec.getMinCgpa()
+                );
+            }
+            else
+            {
+                cgpaResult = String.format("NO   [ CGPA: %.2f < Minimum Requirement: %.2f ]",
+                        targetStudent.getAcademicProfile().getCGPA(),
+                        ec.getMinCgpa()
+                );
+            }
+            cgpaLabel.setText(cgpaResult);
+
+            if (ec.checkFailedCourseLimit(targetStudent.getAcademicProfile()))
+            {
+                totalFailedCoursesResult = String.format("YES   [ Total Failed Courses: %d <= Maximum Allowed: %d ]",
+                        targetStudent.getAcademicProfile().getTotalFailedCourse(),
+                        ec.getMaxFailedCourses()
+                );
+            }
+            else
+            {
+                totalFailedCoursesResult = String.format("NO   [ Total Failed Courses: %d > Maximum Allowed: %d ]",
+                        targetStudent.getAcademicProfile().getTotalFailedCourse(),
+                        ec.getMaxFailedCourses()
+                );
+            }
+            totalFailedLabel.setText(totalFailedCoursesResult);
+
+            final Color eligibleColour = new Color(0, 188, 0);
+            final Color ineligibleColour = Color.RED;
+
+            if (cgpaLabel.getText().contains("NO") || totalFailedLabel.getText().contains("NO"))
+            {
+                resultLabel.setText("ELIGIBLE FOR COURSE RECOVERY PROGRAM");
+                resultLabel.setForeground(eligibleColour);
+            }
+            else
+            {
+                resultLabel.setText("NOT ELIGIBLE FOR COURSE RECOVERY PROGRAM");
+                resultLabel.setForeground(ineligibleColour);
+            }
         }
-        else
-        {
-            eligibilityLabel.setText("NOT ELIGIBLE FOR RECOVERY");
-            eligibilityLabel.setForeground(ineligibleColour);
-        }
-        String msg = String.format("Student: %s\nCGPA: %.2f\nFailed Courses: %d",
-                targetStudent.getFullName(),
-                targetStudent.getAcademicProfile().getCGPA(),
-                targetStudent.getAcademicProfile().getTotalFailedCourse()
-        );
-        JOptionPane.showMessageDialog(null, msg, "Eligibility Result", JOptionPane.INFORMATION_MESSAGE);
     }
 
-    public static void main (String[] args)
+    public static void main(String[] args)
     {
-        new CheckRecoveryEligibility();
+        new CheckRecoveryEligibility().setVisible(true);
     }
 }

@@ -152,7 +152,9 @@ public class RequestEnrollCRP extends JFrame
     {
         for (Recommendation rec : recommendationDAO.loadRecommendations())
         {
-            if (rec.getStudentID().trim().equals("S003") && rec.getCourseID().trim().equals(courseIdLabel.getText()))
+            if (rec.getStudentID().trim().equals("S003")
+                    && rec.getCourseID().trim().equals(courseIdLabel.getText())
+                    && !rec.getStatus().equals("Completed"))
             {
                 JOptionPane.showMessageDialog(null, "Already submitted recovery request for this course", "Duplicate Submission", JOptionPane.WARNING_MESSAGE);
                 return false;
@@ -195,7 +197,7 @@ public class RequestEnrollCRP extends JFrame
                             status
                     };
                     
-                    if (!status.equals("Approved") && !status.equals("Completed"))
+                    if (!status.equals("Completed"))
                     {
                         tableModel.addRow(row);
                     }
