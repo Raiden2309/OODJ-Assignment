@@ -148,7 +148,7 @@ public class MilestoneActionPlan extends JFrame {
         btnList = createRoundedButton("List All", ACCENT_COLOR, TEXT_COLOR);
         btnBack = createRoundedButton("Back", RED_COLOR, TEXT_COLOR);
 
-        if (!(loggedInUser instanceof Student)) {
+        if (loggedInUser != null && ("AcademicOfficer".equalsIgnoreCase(loggedInUser.getRole().getRoleName()) || "CourseAdministrator".equalsIgnoreCase(loggedInUser.getRole().getRoleName()))) {
             buttonPanel.add(btnAdd);
             buttonPanel.add(btnUpdate);
             buttonPanel.add(btnRemove);
@@ -327,6 +327,15 @@ public class MilestoneActionPlan extends JFrame {
         if (!validateStudentID()) return;
         if (!validateCourseID()) return;
 
+        if (isDuplicateMilestoneID(txtMilestoneID.getText())) {
+            JOptionPane.showMessageDialog(this, "Error: Milestone ID already exists. Please use a unique ID.");
+            return;
+        }
+
+
+        int confirm = JOptionPane.showConfirmDialog(this, "Are you sure you want to add this milestone?", "Confirm Add", JOptionPane.OK_CANCEL_OPTION);
+        if (confirm != JOptionPane.OK_OPTION) return;
+
         try {
             Date deadline = dateFormat.parse(txtDeadline.getText());
             RecoveryMilestone milestone = new RecoveryMilestone(
@@ -352,6 +361,9 @@ public class MilestoneActionPlan extends JFrame {
         }
 
         if (!validateDate(txtDeadline.getText())) return;
+
+        int confirm = JOptionPane.showConfirmDialog(this, "Are you sure you want to update this milestone?", "Confirm Update", JOptionPane.OK_CANCEL_OPTION);
+        if (confirm != JOptionPane.OK_OPTION) return;
 
         try {
             Date deadline = dateFormat.parse(txtDeadline.getText());
@@ -402,11 +414,34 @@ public class MilestoneActionPlan extends JFrame {
         }
     }
 
+    private boolean isDuplicateMilestoneID(String milestoneID) {
+        return milestoneDAO.loadMilestones().stream().anyMatch(m -> m.getMilestoneID().equals(milestoneID));
+    }
+
     private void clearFields() {
-        txtStudentID.setText(""); txtCourseID.setText("");
-        txtStudyWeek.setText(""); txtTaskDes.setText(""); txtDeadline.setText("");
-        cmbStatus.setSelectedIndex(0);
-        tblMilestone.clearSelection();
+        int result = JOptionPane.showConfirmDialog(
+                this,
+                "Clear all fields?",
+                "Confirm Clear",
+                JOptionPane.OK_CANCEL_OPTION
+        );
+
+        if (result == JOptionPane.OK_OPTION) {
+            txtStudentID.setText(""); txtCourseID.setText("");
+            txtStudyWeek.setText(""); txtTaskDes.setText(""); txtDeadline.setText("");
+            cmbStatus.setSelectedIndex(0);
+            tblMilestone.clearSelection();
+        }
+    }
+
+    private boolean validateEmptyFields() {
+        if (txtMilestoneID.getText().trim().isEmpty() || txtStudentID.getText().trim().isEmpty() ||
+                txtCourseID.getText().trim().isEmpty() || txtStudyWeek.getText().trim().isEmpty() ||
+                txtTaskDes.getText().trim().isEmpty() || txtDeadline.getText().trim().isEmpty()) {
+            JOptionPane.showMessageDialog(this, "Error: All fields must be filled. Cannot leave any field empty.");
+            return false;
+        }
+        return true;
     }
 
     private boolean validateDate(String dateStr) {

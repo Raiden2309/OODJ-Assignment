@@ -310,6 +310,9 @@ public class RecommendationEntry extends JFrame{
         if (!validateStudentID()) return;
         if (!validateCourseID()) return;
 
+        int confirm = JOptionPane.showConfirmDialog(this, "Are you sure you want to add this recommendation?", "Confirm Add", JOptionPane.OK_CANCEL_OPTION);
+        if (confirm != JOptionPane.OK_OPTION) return;
+
         try {
             String timeline = txtTimeLine.getText();
             Date deadline = dateFormat.parse(txtDeadline.getText());
@@ -333,6 +336,10 @@ public class RecommendationEntry extends JFrame{
             return;
         }
         if (!validateDateLine()) return;
+
+        int confirm = JOptionPane.showConfirmDialog(this, "Are you sure you want to update this recommendation?", "Confirm Update", JOptionPane.OK_CANCEL_OPTION);
+        if (confirm != JOptionPane.OK_OPTION) return;
+
         try {
             String timeline = txtTimeLine.getText();
             Date deadline = dateFormat.parse(txtDeadline.getText());
@@ -357,7 +364,7 @@ public class RecommendationEntry extends JFrame{
             JOptionPane.showMessageDialog(this, "Error: Please select a recommendation to remove.");
             return;
         }
-        int confirm = JOptionPane.showConfirmDialog(this, "Remove this recommendation?", "Confirm Removal", JOptionPane.YES_NO_OPTION);
+        int confirm = JOptionPane.showConfirmDialog(this, "Are you sure you want to remove this recommendation?", "Confirm Removal", JOptionPane.YES_NO_OPTION);
         if (confirm == JOptionPane.YES_OPTION) {
             recommendationDAO.removeRecommendation(txtRecID.getText(), txtStudentID.getText(), txtCourseID.getText());
             JOptionPane.showMessageDialog(this, "Recommendation removed successfully!");
@@ -383,10 +390,18 @@ public class RecommendationEntry extends JFrame{
     }
 
     private void clearFields() {
-        txtRecID.setText(""); txtStudentID.setText(""); txtCourseID.setText("");
-        txtTimeLine.setText(""); txtDeadline.setText("");
-        cmbDescription.setSelectedIndex(0);
-        cmbStatus.setSelectedIndex(0);
+        int result = JOptionPane.showConfirmDialog(
+                this,
+                "Clear all fields?",
+                "Confirm Clear",
+                JOptionPane.OK_CANCEL_OPTION
+        );
+        if (result == JOptionPane.OK_OPTION) {
+            txtRecID.setText(""); txtStudentID.setText(""); txtCourseID.setText("");
+            txtTimeLine.setText(""); txtDeadline.setText("");
+            cmbDescription.setSelectedIndex(0);
+            cmbStatus.setSelectedIndex(0);
+        }
     }
 
     private boolean validateDateLine() {
