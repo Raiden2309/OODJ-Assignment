@@ -7,6 +7,7 @@ import service.UserDAO;
 import service.AcademicRecordDAO;
 import service.EnrollmentDAO;
 import domain.Enrollment;
+import academic.AcademicProfile; // Required for loadStudentData
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
@@ -23,6 +24,7 @@ import java.util.stream.Collectors;
 import java.util.Set;
 import java.util.HashSet;
 import java.util.Collections;
+import java.util.Optional;
 
 public class StudentManagementView extends JFrame {
 
@@ -32,7 +34,7 @@ public class StudentManagementView extends JFrame {
     private JTable table;
     private DefaultTableModel model;
     private JTextField searchField;
-    private JComboBox<String> majorFilter; // NEW: Filter Dropdown
+    private JComboBox<String> majorFilter;
     private TableRowSorter<DefaultTableModel> sorter;
 
     public StudentManagementView(User user) {
@@ -58,7 +60,6 @@ public class StudentManagementView extends JFrame {
         JPanel searchPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 15, 0));
         searchPanel.setOpaque(false);
 
-        // Search Input
         JLabel searchLbl = new JLabel("Search:");
         searchLbl.setFont(new Font("Segoe UI", Font.BOLD, 14));
 
@@ -67,24 +68,26 @@ public class StudentManagementView extends JFrame {
         searchField.addKeyListener(new KeyAdapter() {
             @Override
             public void keyReleased(KeyEvent e) {
-                updateFilters(); // Call combined filter
+                updateFilters();
             }
         });
 
-        // NEW: Major Filter
         JLabel filterLbl = new JLabel("Filter by Major:");
         filterLbl.setFont(new Font("Segoe UI", Font.BOLD, 14));
 
         majorFilter = new JComboBox<>();
         majorFilter.setFont(new Font("Segoe UI", Font.PLAIN, 14));
         majorFilter.setPreferredSize(new Dimension(180, 30));
-        majorFilter.addItem("All Majors"); // Default
-        majorFilter.addActionListener(e -> updateFilters()); // Trigger filter on selection
+        majorFilter.addItem("All Majors");
+        majorFilter.addActionListener(e -> updateFilters());
 
         searchPanel.add(searchLbl);
         searchPanel.add(searchField);
         searchPanel.add(filterLbl);
         searchPanel.add(majorFilter);
+
+        // Back Button (Removed as per previous request)
+        // Note: Staff should use the X or the Dashboard link in the menu to navigate.
 
         headerPanel.add(title, BorderLayout.WEST);
         headerPanel.add(searchPanel, BorderLayout.CENTER);
@@ -92,7 +95,6 @@ public class StudentManagementView extends JFrame {
         add(headerPanel, BorderLayout.NORTH);
 
         // --- TABLE ---
-        // Added "CGPA" to the columns list
         String[] columns = {"ID", "Name", "Major", "Email", "CGPA", "Status"};
         model = new DefaultTableModel(columns, 0) {
             @Override
@@ -104,17 +106,15 @@ public class StudentManagementView extends JFrame {
         table.getTableHeader().setFont(new Font("Segoe UI", Font.BOLD, 12));
         table.setFont(new Font("Segoe UI", Font.PLAIN, 14));
 
-        // Setup Sorter
         sorter = new TableRowSorter<>(model);
         table.setRowSorter(sorter);
 
-        // Add Mouse Listener for Profile View
         table.addMouseListener(new MouseAdapter() {
             public void mouseClicked(MouseEvent e) {
                 if (e.getClickCount() == 2) {
                     int row = table.getSelectedRow();
                     if (row != -1) {
-                        String studentID = (String) table.getValueAt(row, 0);
+                        String studentID = (String) table.getValueAt(table.convertRowIndexToModel(row), 0);
                         showStudentProfile(studentID);
                     }
                 }
@@ -147,7 +147,7 @@ public class StudentManagementView extends JFrame {
         viewProfileBtn.addActionListener(e -> {
             int row = table.getSelectedRow();
             if (row != -1) {
-                String id = (String) table.getValueAt(row, 0);
+                String id = (String) model.getValueAt(table.convertRowIndexToModel(row), 0);
                 showStudentProfile(id);
             } else {
                 JOptionPane.showMessageDialog(this, "Please select a student.");
@@ -157,22 +157,18 @@ public class StudentManagementView extends JFrame {
         setVisible(true);
     }
 
-    // NEW: Combined Filter Logic (Search Text AND Dropdown)
     private void updateFilters() {
         List<RowFilter<Object, Object>> filters = new ArrayList<>();
 
         // 1. Text Search Filter (ID or Name)
         String text = searchField.getText().trim();
         if (text.length() > 0) {
-            // Check Col 0 (ID) or Col 1 (Name)
-            // Note: indices must be specific integers, not regex on all columns to be precise
             filters.add(RowFilter.regexFilter("(?i)" + text, 0, 1));
         }
 
         // 2. Major Filter
         String selectedMajor = (String) majorFilter.getSelectedItem();
         if (selectedMajor != null && !selectedMajor.equals("All Majors")) {
-            // Check Col 2 (Major) for exact match (or contains)
             filters.add(RowFilter.regexFilter("^" + selectedMajor + "$", 2));
         }
 
@@ -196,13 +192,16 @@ public class StudentManagementView extends JFrame {
         Set<String> majors = new HashSet<>();
 
         for (Student s : students) {
+            s.getAcademicProfile().calculateCGPA();
+
+            // Note: We use s.isActive() directly because StudentDAO now populates it correctly
             model.addRow(new Object[]{
                     s.getUserID(),
                     s.getFullName(),
                     s.getMajor(),
                     s.getEmail(),
                     String.format("%.2f", s.getAcademicProfile().getCGPA()), // CGPA Column
-                    s.isActive() ? "Active" : "Inactive"
+                    s.isActive() ? "Active" : "Inactive" // Use status from Student object
             });
 
             // Add major to set
@@ -223,27 +222,74 @@ public class StudentManagementView extends JFrame {
         }
     }
 
+    private void updateStatus(boolean isActive) {
+        int selectedRowView = table.getSelectedRow();
+        if (selectedRowView == -1) {
+            JOptionPane.showMessageDialog(this, "Please select a student first.");
+            return;
+        }
+
+        int modelRow = table.convertRowIndexToModel(selectedRowView);
+        String studentID = (String) model.getValueAt(modelRow, 0);
+        String action = isActive ? "Activate" : "Deactivate";
+
+        int confirm = JOptionPane.showConfirmDialog(this,
+                "Are you sure you want to " + action.toLowerCase() + " user " + studentID + "? This affects login access.",
+                "Confirm " + action, JOptionPane.YES_NO_OPTION);
+
+        if (confirm == JOptionPane.YES_OPTION) {
+
+            UserDAO freshDAO = new UserDAO();
+            User target = freshDAO.loadAllUsers().stream()
+                    .filter(u -> u.getUserID().equals(studentID))
+                    .findFirst().orElse(null);
+
+            if(target != null) {
+                target.setActive(isActive);
+
+                if(freshDAO.saveUserCredentials(target)) {
+                    JOptionPane.showMessageDialog(this, "Success! User " + studentID + " is now " + (isActive ? "Active" : "Inactive") + ". Credentials updated.");
+
+                    // FIX: Manually update the table model row to reflect changes instantly without full reload
+                    // This bypasses potential file read race conditions for the immediate UI feedback.
+                    model.setValueAt(isActive ? "Active" : "Inactive", modelRow, 5); // Status is column 5
+
+                } else {
+                    JOptionPane.showMessageDialog(this, "Error saving status to credentials file.", "Error", JOptionPane.ERROR_MESSAGE);
+                }
+            } else {
+                JOptionPane.showMessageDialog(this, "Error: User ID not found in system credentials.", "Error", JOptionPane.ERROR_MESSAGE);
+            }
+        }
+    }
+
     // --- SHOW PROFILE DIALOG ---
     private void showStudentProfile(String studentID) {
-        // Load full details
         StudentDAO sDao = new StudentDAO();
         List<Student> all = sDao.loadAllStudents();
         Student s = all.stream().filter(st -> st.getUserID().equals(studentID)).findFirst().orElse(null);
 
         if (s == null) return;
 
-        // Load Academic Data
         AcademicRecordDAO rDao = new AcademicRecordDAO();
         rDao.loadRecords(all);
 
-        // Load Enrollment
+        s.getAcademicProfile().calculateCGPA();
+
         EnrollmentDAO eDao = new EnrollmentDAO();
         List<Enrollment> enrollments = eDao.loadEnrollments();
         List<Enrollment> studentEnrollments = enrollments.stream()
                 .filter(e -> e.getStudentId().equals(studentID))
                 .collect(Collectors.toList());
 
-        // Build Profile Panel
+        // FIX: Force reload of UserDAO to get fresh status for the dialog
+        UserDAO freshDAO = new UserDAO();
+        User userCreds = freshDAO.loadAllUsers().stream()
+                .filter(u -> u.getUserID().equals(studentID))
+                .findFirst().orElse(null);
+
+        boolean isActive = (userCreds != null) ? userCreds.isActive() : s.isActive();
+
         JDialog dialog = new JDialog(this, "Student Profile: " + s.getFullName(), true);
         dialog.setSize(500, 600);
         dialog.setLocationRelativeTo(this);
@@ -259,7 +305,7 @@ public class StudentManagementView extends JFrame {
         addProfileRow(content, "Email:", s.getEmail());
         addProfileRow(content, "Major:", s.getMajor());
         addProfileRow(content, "Year:", s.getAcademicYear());
-        addProfileRow(content, "Status:", s.isActive() ? "Active" : "Inactive");
+        addProfileRow(content, "Status:", isActive ? "Active" : "Inactive");
 
         content.add(Box.createVerticalStrut(20));
         JLabel acadHeader = new JLabel("Academic Info");
@@ -307,43 +353,6 @@ public class StudentManagementView extends JFrame {
         row.add(v, BorderLayout.EAST);
         p.add(row);
         p.add(Box.createVerticalStrut(5));
-    }
-
-    private void updateStatus(boolean isActive) {
-        int selectedRow = table.getSelectedRow();
-        if (selectedRow == -1) {
-            JOptionPane.showMessageDialog(this, "Please select a student first.");
-            return;
-        }
-
-        int modelRow = table.convertRowIndexToModel(selectedRow);
-        String studentID = (String) model.getValueAt(modelRow, 0);
-        String action = isActive ? "Activate" : "Deactivate";
-
-        int confirm = JOptionPane.showConfirmDialog(this,
-                "Are you sure you want to " + action.toLowerCase() + " user " + studentID + "?",
-                "Confirm " + action, JOptionPane.YES_NO_OPTION);
-
-        if (confirm == JOptionPane.YES_OPTION) {
-            List<Student> all = studentDAO.loadAllStudents();
-            Student target = null;
-            for(Student s : all) {
-                if(s.getUserID().equals(studentID)) {
-                    target = s;
-                    break;
-                }
-            }
-
-            if(target != null) {
-                target.setActive(isActive);
-                if(userDAO.saveUserCredentials(target)) {
-                    JOptionPane.showMessageDialog(this, "Success! User " + studentID + " is now " + (isActive ? "Active" : "Inactive"));
-                    loadStudentData();
-                } else {
-                    JOptionPane.showMessageDialog(this, "Error saving status.", "Error", JOptionPane.ERROR_MESSAGE);
-                }
-            }
-        }
     }
 
     private JButton createRoundedButton(String text, Color bgColor, Color fgColor) {

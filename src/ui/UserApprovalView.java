@@ -6,8 +6,8 @@ import domain.SystemRole;
 import domain.AcademicOfficer;
 import domain.CourseAdministrator;
 import service.UserDAO;
-import service.StudentDAO; // Needed for saving new student profile if role is 'Student'
-import data_access.DataAccess; // Needed to potentially load major list
+import service.StudentDAO;
+import data_access.DataAccess;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
@@ -21,8 +21,8 @@ import java.util.stream.Collectors;
 import java.util.Collections;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
-import java.awt.event.KeyAdapter; // NEW
-import java.awt.event.KeyEvent; // NEW
+import java.awt.event.KeyAdapter;
+import java.awt.event.KeyEvent;
 
 public class UserApprovalView extends JFrame {
 
@@ -32,9 +32,9 @@ public class UserApprovalView extends JFrame {
     private JTable table;
     private DefaultTableModel model;
     private Dashboard dashboard;
-    private JComboBox<String> majorDropdown; // Editable Major Dropdown
-    private List<String> allMajors; // List to store all unique majors
-    private List<String> originalMajorItems; // Store the original full list for filtering
+    private JComboBox<String> majorDropdown;
+    private List<String> allMajors;
+    private List<String> originalMajorItems;
 
     // Status constants
     private final String ROLE_PENDING = "Pending";
@@ -48,8 +48,7 @@ public class UserApprovalView extends JFrame {
         this.userDAO = new UserDAO();
         this.studentDAO = new StudentDAO();
         this.originalMajorItems = loadUniqueMajors();
-        this.allMajors = new ArrayList<>(originalMajorItems); // Working copy for initial dropdown
-
+        this.allMajors = new ArrayList<>(originalMajorItems);
 
         setTitle("User Account Approval Queue (" + ROLE_PENDING + ")");
         setSize(800, 600);
@@ -68,7 +67,7 @@ public class UserApprovalView extends JFrame {
         add(headerPanel, BorderLayout.NORTH);
 
         // Table
-        String[] columns = {"Temp ID", "Name (First)", "Email", "Status"};
+        String[] columns = {"Temp ID", "Name", "Email", "Role"};
         model = new DefaultTableModel(columns, 0) {
             @Override
             public boolean isCellEditable(int row, int column) { return false; }
@@ -85,7 +84,7 @@ public class UserApprovalView extends JFrame {
 
         JButton viewDetailsBtn = createRoundedButton("View Details / Assign Role", ACCENT_COLOR, Color.WHITE);
         JButton rejectBtn = createRoundedButton("Reject Request", ERROR_COLOR, Color.WHITE);
-        JButton refreshBtn = createRoundedButton("Refresh", new Color(108, 117, 125), Color.WHITE);
+        JButton refreshBtn = createRoundedButton("Refresh", ACCENT_COLOR, Color.WHITE);
 
         actionPanel.add(viewDetailsBtn);
         actionPanel.add(rejectBtn);
@@ -109,17 +108,12 @@ public class UserApprovalView extends JFrame {
         setVisible(true);
     }
 
-    // Load unique majors from student records for the dropdown
     private List<String> loadUniqueMajors() {
-        // We rely on DataAccess to have the most comprehensive student list structure
         DataAccess da = new DataAccess();
-        // Assuming DataAccess.getStudents() returns List<String[]> where Major is index 3
         List<String[]> students = da.getStudents();
         Set<String> majorSet = new HashSet<>();
 
-        // The major is at index 3 in the String[] array returned by getStudents()
         for (String[] s : students) {
-            // Index 3 is Major (StudentID, FirstName, LastName, Major, Year, Email)
             if (s.length > 3 && s[3] != null && !s[3].trim().isEmpty()) {
                 majorSet.add(s[3].trim());
             }
@@ -133,14 +127,32 @@ public class UserApprovalView extends JFrame {
 
     private void loadPendingUsers() {
         model.setRowCount(0);
-        // Load all users and filter by Role="Pending"
-        List<User> pending = userDAO.loadAllUsers().stream()
+
+        UserDAO freshUserDAO = new UserDAO();
+        List<User> pendingUsers = freshUserDAO.loadAllUsers().stream()
                 .filter(u -> u.getRole() != null && ROLE_PENDING.equalsIgnoreCase(u.getRole().getRoleName()))
                 .collect(Collectors.toList());
 
-        for (User u : pending) {
-            // Note: Since RegisterView uses Student as a placeholder, we cast for name/email.
-            String name = (u instanceof Student) ? ((Student) u).getFirstName() : "N/A";
+        StudentDAO freshStudentDAO = new StudentDAO();
+        List<Student> allStudents = freshStudentDAO.loadAllStudents();
+
+        for (User u : pendingUsers) {
+            String name = "Unknown";
+
+            Student matchedStudent = allStudents.stream()
+                    .filter(s -> s.getUserID().equals(u.getUserID()))
+                    .findFirst()
+                    .orElse(null);
+
+            if (matchedStudent != null) {
+                name = matchedStudent.getFullName();
+            } else {
+                if (u instanceof Student) {
+                    String f = ((Student)u).getFirstName();
+                    String l = ((Student)u).getLastName();
+                    if (!"Pending".equals(f) || !"User".equals(l)) name = f + " " + l;
+                }
+            }
 
             model.addRow(new Object[]{
                     u.getUserID(),
@@ -148,10 +160,6 @@ public class UserApprovalView extends JFrame {
                     u.getEmail(),
                     u.getRole().getRoleName()
             });
-        }
-
-        if (pending.isEmpty()) {
-            System.out.println("User Approval Queue is empty.");
         }
     }
 
@@ -163,33 +171,38 @@ public class UserApprovalView extends JFrame {
         }
 
         String tempId = (String) model.getValueAt(selectedRow, 0);
+        String currentName = (String) model.getValueAt(selectedRow, 1);
 
-        User pendingUser = userDAO.loadAllUsers().stream()
+        UserDAO freshUserDAO = new UserDAO();
+        User pendingUser = freshUserDAO.loadAllUsers().stream()
                 .filter(u -> u.getUserID().equals(tempId))
                 .findFirst().orElse(null);
 
         if (pendingUser == null) return;
 
-        // --- Major Dropdown Setup (Searchable/Editable) ---
+        StudentDAO freshStudentDAO = new StudentDAO();
+        Student pendingStudentDetail = freshStudentDAO.loadAllStudents().stream()
+                .filter(s -> s.getUserID().equals(tempId))
+                .findFirst().orElse(null);
+
+        // --- Major Dropdown Setup ---
         majorDropdown = new JComboBox<>(this.originalMajorItems.toArray(new String[0]));
         majorDropdown.setEditable(true);
         majorDropdown.setFont(new Font("Segoe UI", Font.PLAIN, 14));
 
-        // Add KeyListener to the editor component for filtering
         JTextField editor = (JTextField) majorDropdown.getEditor().getEditorComponent();
         editor.addKeyListener(new KeyAdapter() {
             @Override
             public void keyReleased(KeyEvent e) {
-                // Perform dynamic filtering based on typed text
                 filterMajorDropdown(editor.getText());
             }
         });
 
-        // --- Existing UI Components ---
+        // --- UI Components ---
         JTextField newIdField = new JTextField(tempId);
         JComboBox<String> roleDropdown = new JComboBox<>(new String[]{"Student", "Academic Officer", "Course Administrator"});
 
-        String initialMajor = ((Student) pendingUser).getMajor().equals("UNASSIGNED") ? "" : ((Student) pendingUser).getMajor();
+        String initialMajor = (pendingStudentDetail != null && !pendingStudentDetail.getMajor().equals("UNASSIGNED")) ? pendingStudentDetail.getMajor() : "";
         if (!initialMajor.isEmpty()) {
             majorDropdown.setSelectedItem(initialMajor);
         } else {
@@ -197,14 +210,14 @@ public class UserApprovalView extends JFrame {
         }
 
         // UI Panel
-        JPanel panel = new JPanel(new GridLayout(5, 2, 5, 5));
-        panel.add(new JLabel("Current Email:")); panel.add(new JLabel(pendingUser.getEmail()));
+        JPanel panel = new JPanel(new GridLayout(6, 2, 5, 5));
+        panel.add(new JLabel("Name:")); panel.add(new JLabel(currentName)); // Show Name
+        panel.add(new JLabel("Email:")); panel.add(new JLabel(pendingUser.getEmail()));
         panel.add(new JLabel("New User ID:")); panel.add(newIdField);
         panel.add(new JLabel("Assign Role:")); panel.add(roleDropdown);
         panel.add(new JLabel("Major (Students Only):")); panel.add(majorDropdown);
 
-        // Setup initial state and listeners
-        majorDropdown.setEnabled(false); // Disable by default
+        majorDropdown.setEnabled(false);
 
         roleDropdown.addActionListener(e -> {
             String selectedRole = (String) roleDropdown.getSelectedItem();
@@ -215,7 +228,6 @@ public class UserApprovalView extends JFrame {
             } else {
                 newIdField.setEnabled(false);
             }
-            // Enable major dropdown ONLY for Students
             majorDropdown.setEnabled(selectedRole.equals("Student"));
         });
 
@@ -232,12 +244,10 @@ public class UserApprovalView extends JFrame {
             String newRoleName = (String) roleDropdown.getSelectedItem();
             String finalId = newIdField.getText().trim();
 
-            // Get selected/typed major from the dropdown editor
             String major = majorDropdown.isEditable() ?
                     (String) majorDropdown.getEditor().getItem() :
                     (String) majorDropdown.getSelectedItem();
 
-            // Clean up major if not a student
             if (!"Student".equals(newRoleName)) {
                 major = "";
             } else if (major == null || major.trim().isEmpty()) {
@@ -245,18 +255,16 @@ public class UserApprovalView extends JFrame {
                 return;
             }
 
-
             if (finalId.isEmpty() || !finalId.startsWith(getPrefixForRole(newRoleName))) {
                 JOptionPane.showMessageDialog(this, "New ID must start with the correct prefix: " + getPrefixForRole(newRoleName));
                 return;
             }
 
-            // Perform Role Assignment and Activation
-            assignRoleAndActivate(pendingUser, finalId, newRoleName, major);
+            User userToActivate = (pendingStudentDetail != null) ? pendingStudentDetail : pendingUser;
+            assignRoleAndActivate(userToActivate, finalId, newRoleName, major);
         }
     }
 
-    // NEW: Filtering logic for the Major JComboBox
     private void filterMajorDropdown(String text) {
         String filterText = text.toLowerCase().trim();
         List<String> filteredList = new ArrayList<>();
@@ -271,15 +279,11 @@ public class UserApprovalView extends JFrame {
             }
         }
 
-        // Update the combobox model
         DefaultComboBoxModel<String> model = new DefaultComboBoxModel<>(filteredList.toArray(new String[0]));
         majorDropdown.setModel(model);
-
-        // Set the editor text back to what the user typed (crucial for maintaining search state)
         JTextField editor = (JTextField) majorDropdown.getEditor().getEditorComponent();
         editor.setText(text);
 
-        // Show the dropdown popup if results exist
         if (!filteredList.isEmpty()) {
             majorDropdown.setPopupVisible(true);
         } else {
@@ -296,7 +300,8 @@ public class UserApprovalView extends JFrame {
     }
 
     private String generateNextSequentialId(String prefix) {
-        List<User> all = userDAO.loadAllUsers();
+        UserDAO freshDAO = new UserDAO();
+        List<User> all = freshDAO.loadAllUsers();
         int maxNum = 0;
 
         for (User u : all) {
@@ -308,40 +313,39 @@ public class UserApprovalView extends JFrame {
                 } catch (NumberFormatException e) {}
             }
         }
-        return String.format("%03d", maxNum + 1);
+        // NOTE: PREFIX is missing here, assuming it's a constant defined elsewhere
+        // Using prefix variable for robustness
+        return String.format(prefix + "%03d", maxNum + 1);
     }
 
     private void assignRoleAndActivate(User oldUser, String newId, String newRoleName, String major) {
-        // 1. Determine new concrete class based on newRoleName
         SystemRole newRole = new SystemRole(newRoleName, new ArrayList<>());
 
-        // Get generic data saved on the placeholder user
         String passHash = oldUser.getPassword();
         String email = oldUser.getEmail();
-        String firstName = ((Student)oldUser).getFirstName();
-        String lastName = ((Student)oldUser).getLastName();
+
+        String firstName = "";
+        String lastName = "";
+        if (oldUser instanceof Student) {
+            firstName = ((Student)oldUser).getFirstName();
+            lastName = ((Student)oldUser).getLastName();
+        }
 
         User finalUser;
 
         try {
-            // Instantiate the correct CONCRETE class
             if ("Student".equals(newRoleName)) {
-                // Student constructor requires 8 arguments
                 finalUser = new Student(newId, passHash, newRole, firstName, lastName, major, "Year 1", email);
-                // Save profile details to student_information.csv
                 studentDAO.saveStudent((Student) finalUser);
 
             } else if ("Academic Officer".equals(newRoleName)) {
-                // AO/CA constructor requires 6 arguments
                 finalUser = new AcademicOfficer(newId, passHash, newRole, firstName, lastName, email);
             } else if ("Course Administrator".equals(newRoleName)) {
-                // AO/CA constructor requires 6 arguments
                 finalUser = new CourseAdministrator(newId, passHash, newRole, firstName, lastName, email);
             } else {
                 throw new IllegalArgumentException("Invalid final role.");
             }
 
-            // Manually ensure email is set for login consistency (Safety against concrete constructor issues)
             finalUser.setEmail(email);
 
         } catch (Exception e) {
@@ -349,22 +353,24 @@ public class UserApprovalView extends JFrame {
             return;
         }
 
-        // 2. Activate and Save Credentials
         finalUser.setActive(true);
 
-        // CRITICAL STEP: Manually remove old placeholder entry from DAO cache
-        List<User> allUsersCache = userDAO.loadAllUsers();
-        allUsersCache.removeIf(u -> u.getUserID().equals(oldUser.getUserID()));
+        UserDAO freshDAO = new UserDAO();
 
-        // Save the new, active user with the correct ID/Role.
-        if (userDAO.saveUserCredentials(finalUser)) {
-            JOptionPane.showMessageDialog(this, "User " + newId + " approved and activated successfully as " + newRoleName + ".");
-            loadPendingUsers(); // Refresh the list
-            if (dashboard != null) {
-                dashboard.refreshStaffContent();
+        // FIX 1: Use the explicit delete method
+        if (freshDAO.deleteUser(oldUser.getUserID())) {
+            // FIX 2: Manually add the new user back, as deleteUser only removes the old one
+            if (freshDAO.saveUserCredentials(finalUser)) {
+                JOptionPane.showMessageDialog(this, "User " + newId + " approved and activated successfully as " + newRoleName + ".");
+                loadPendingUsers();
+                if (dashboard != null) {
+                    dashboard.refreshStaffContent();
+                }
+            } else {
+                JOptionPane.showMessageDialog(this, "Error: Approved user failed to save to credentials.", "Error", JOptionPane.ERROR_MESSAGE);
             }
         } else {
-            JOptionPane.showMessageDialog(this, "Error saving final credentials.", "Error", JOptionPane.ERROR_MESSAGE);
+            JOptionPane.showMessageDialog(this, "Error: Could not remove old pending credentials.", "Error", JOptionPane.ERROR_MESSAGE);
         }
     }
 
@@ -377,26 +383,33 @@ public class UserApprovalView extends JFrame {
 
         String tempId = (String) model.getValueAt(selectedRow, 0);
         int confirm = JOptionPane.showConfirmDialog(this,
-                "Are you sure you want to REJECT and permanently remove request " + tempId + "?",
+                "Are you sure you want to REJECT and permanently remove request " + tempId + "? This action is irreversible.",
                 "Confirm Rejection", JOptionPane.YES_NO_OPTION);
 
         if (confirm == JOptionPane.YES_OPTION) {
-            // Find and remove the user from the DAO cache
-            List<User> all = userDAO.loadAllUsers();
-            boolean removed = all.removeIf(u -> u.getUserID().equals(tempId));
+            UserDAO freshUserDAO = new UserDAO();
 
-            if (removed) {
-                // Rewrite the credentials file without the rejected user
-                if (userDAO.saveUserCredentials(null)) {
-                    JOptionPane.showMessageDialog(this, "Request " + tempId + " rejected and removed.");
+            // --- 1. REMOVE CREDENTIALS (user_credentials.csv) ---
+            // FIX 3: Use the explicit delete method
+            if (freshUserDAO.deleteUser(tempId)) {
+
+                // --- 2. REMOVE STUDENT DETAILS (student_information.csv) ---
+                StudentDAO freshStudentDAO = new StudentDAO();
+                boolean studentRemoved = freshStudentDAO.removeStudent(tempId);
+
+                if (studentRemoved) {
+                    JOptionPane.showMessageDialog(this, "Request " + tempId + " rejected and fully removed.", "Removal Successful", JOptionPane.INFORMATION_MESSAGE);
                     loadPendingUsers();
                     if (dashboard != null) {
                         dashboard.refreshStaffContent();
                     }
-                    return;
+                } else {
+                    JOptionPane.showMessageDialog(this, "Warning: Credentials removed, but student details (name/major) cleanup failed.", "Partial Removal", JOptionPane.WARNING_MESSAGE);
+                    loadPendingUsers();
                 }
+                return;
             }
-            JOptionPane.showMessageDialog(this, "Error removing user from system.", "Error", JOptionPane.ERROR_MESSAGE);
+            JOptionPane.showMessageDialog(this, "Error removing user from system credentials.", "Error", JOptionPane.ERROR_MESSAGE);
         }
     }
 

@@ -30,7 +30,6 @@ public class MilestoneActionPlan extends JFrame {
     private JButton btnList;
     private JButton btnBack;
 
-    // Labels
     private JLabel lblMilestoneID, lblStudentID, lblCourseID, lblStudyWeek, lblTaskDes, lblDeadline, lblStatus;
     private JLabel statusMessageLabel;
 
@@ -39,7 +38,6 @@ public class MilestoneActionPlan extends JFrame {
     private User loggedInUser;
     private SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
 
-    // Colors
     private final Color ACCENT_COLOR = new Color(0, 102, 204);
     private final Color RED_COLOR = new Color(220, 53, 69);
     private final Color TEXT_COLOR = Color.WHITE;
@@ -48,7 +46,6 @@ public class MilestoneActionPlan extends JFrame {
         this.loggedInUser = loggedInUser;
         this.milestoneDAO = new MilestoneDAO();
 
-        // Background Setup
         JPanel backgroundPanel = new JPanel() {
             private Image backgroundImage;
             {
@@ -75,14 +72,38 @@ public class MilestoneActionPlan extends JFrame {
         setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
         setLocationRelativeTo(null);
 
-        // --- INPUT PANEL ---
         JPanel inputPanel = new JPanel(new GridLayout(8, 2));
         inputPanel.setOpaque(false);
         inputPanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
 
+        JPanel headerPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
+        headerPanel.setOpaque(false);
+        headerPanel.setBorder(BorderFactory.createEmptyBorder(20, 20, 10, 20));
+
+        ImageIcon logoIcon = null;
+        try {
+            Image logoImage = new ImageIcon(getClass().getResource("/resources/apulogo.png")).getImage();
+            Image scaledLogo = logoImage.getScaledInstance(50, 50, Image.SCALE_SMOOTH);
+            logoIcon = new ImageIcon(scaledLogo);
+        } catch (Exception e) {
+            System.out.println("Logo image not found at /resources/apulogo.png");
+        }
+        JLabel logoLabel = new JLabel(logoIcon);
+        headerPanel.add(logoLabel);
+
+        JLabel titleLabel = new JLabel("MILESTONE ACTION PLAN");
+        titleLabel.setFont(new Font("Comic Sans MS", Font.BOLD, 35));
+        titleLabel.setForeground(new Color(50, 50, 50));
+        headerPanel.add(titleLabel);
+
+        JPanel topPanel = new JPanel(new BorderLayout());
+        topPanel.setOpaque(false);
+        topPanel.add(headerPanel, BorderLayout.NORTH);
+
+
         inputPanel.add(lblMilestoneID = new JLabel("Milestone ID:"));
         txtMilestoneID = new JTextField();
-        txtMilestoneID.setEditable(false); // Auto-generated
+        txtMilestoneID.setEditable(false);
         inputPanel.add(txtMilestoneID);
 
         inputPanel.add(lblStudentID = new JLabel("Student ID:"));
@@ -111,9 +132,15 @@ public class MilestoneActionPlan extends JFrame {
 
         add(inputPanel, BorderLayout.NORTH);
 
-        // --- BUTTON PANEL ---
+        topPanel.add(inputPanel, BorderLayout.CENTER);
+
+        backgroundPanel.add(topPanel, BorderLayout.NORTH);
+
         JPanel buttonPanel = new JPanel();
         buttonPanel.setOpaque(false);
+
+        backgroundPanel.add(buttonPanel, BorderLayout.SOUTH);
+
 
         btnAdd = createRoundedButton("Add", ACCENT_COLOR, TEXT_COLOR);
         btnUpdate = createRoundedButton("Update", ACCENT_COLOR, TEXT_COLOR);
@@ -121,7 +148,7 @@ public class MilestoneActionPlan extends JFrame {
         btnList = createRoundedButton("List All", ACCENT_COLOR, TEXT_COLOR);
         btnBack = createRoundedButton("Back", RED_COLOR, TEXT_COLOR);
 
-        if (!(loggedInUser instanceof Student)) {
+        if (loggedInUser != null && ("AcademicOfficer".equalsIgnoreCase(loggedInUser.getRole().getRoleName()) || "CourseAdministrator".equalsIgnoreCase(loggedInUser.getRole().getRoleName()))) {
             buttonPanel.add(btnAdd);
             buttonPanel.add(btnUpdate);
             buttonPanel.add(btnRemove);
@@ -131,9 +158,10 @@ public class MilestoneActionPlan extends JFrame {
         buttonPanel.add(btnBack);
         add(buttonPanel, BorderLayout.SOUTH);
 
-        // --- CENTER TABLE / MESSAGE ---
         JPanel centerPanel = new JPanel(new CardLayout());
         centerPanel.setOpaque(false);
+
+        backgroundPanel.add(centerPanel, BorderLayout.CENTER);
 
         tableModel = new DefaultTableModel(new String[]{"MilestoneID", "StudentID", "CourseID", "StudyWeek", "TaskDescription", "Deadline", "Status"}, 0) {
             @Override
@@ -150,7 +178,6 @@ public class MilestoneActionPlan extends JFrame {
 
         add(centerPanel, BorderLayout.CENTER);
 
-        // --- LISTENERS ---
         tblMilestone.getSelectionModel().addListSelectionListener(e -> {
             if (!e.getValueIsAdjusting()) {
                 int selectedRow = tblMilestone.getSelectedRow();
@@ -169,19 +196,17 @@ public class MilestoneActionPlan extends JFrame {
             dispose();
         });
 
-        // --- LOGIC: CHECK USER ROLE ---
         if (loggedInUser instanceof Student) {
             setupStudentView();
         } else {
             listMilestones();
-            generateNewMilestoneID(); // Generate ID for new entry
+            generateNewMilestoneID();
             ((CardLayout) centerPanel.getLayout()).show(centerPanel, "TABLE");
         }
 
         setVisible(true);
     }
 
-    // --- Helper for Rounded Button with Shadow & Hover ---
     private JButton createRoundedButton(String text, Color bgColor, Color fgColor) {
         JButton btn = new JButton(text) {
             @Override
@@ -218,7 +243,7 @@ public class MilestoneActionPlan extends JFrame {
             }
         };
 
-        btn.setPreferredSize(new Dimension(120, 45)); // Smaller size for action buttons
+        btn.setPreferredSize(new Dimension(120, 45));
         btn.setFont(new Font("Segoe UI", Font.BOLD, 14));
         btn.setForeground(fgColor);
         btn.setFocusPainted(false);
@@ -229,9 +254,7 @@ public class MilestoneActionPlan extends JFrame {
         return btn;
     }
 
-    // --- STUDENT VIEW LOGIC ---
     private void setupStudentView() {
-        // Disable inputs (Read-Only)
         txtMilestoneID.setEditable(false);
         txtStudentID.setEditable(false);
         txtCourseID.setEditable(false);
@@ -248,8 +271,7 @@ public class MilestoneActionPlan extends JFrame {
                 .collect(Collectors.toList());
 
         if (myMilestones.isEmpty()) {
-            JPanel center = (JPanel) getContentPane().getComponent(1); // Careful with index, relying on CardLayout logic
-            // Safer way to access center panel if indices change:
+            JPanel center = (JPanel) getContentPane().getComponent(1);
             Component[] comps = getContentPane().getComponents();
             for (Component c : comps) {
                 if (c instanceof JPanel && ((JPanel)c).getLayout() instanceof CardLayout) {
@@ -272,7 +294,6 @@ public class MilestoneActionPlan extends JFrame {
         cmbStatus.setSelectedItem((String) tableModel.getValueAt(row, 6));
     }
 
-    // --- AUTO INCREMENT ID ---
     private void generateNewMilestoneID() {
         List<RecoveryMilestone> all = milestoneDAO.loadMilestones();
         if (all.isEmpty()) {
@@ -283,20 +304,18 @@ public class MilestoneActionPlan extends JFrame {
         int maxId = 0;
         for (RecoveryMilestone m : all) {
             try {
-                // Assuming format "Mxxx"
                 String idPart = m.getMilestoneID().substring(1);
                 int idVal = Integer.parseInt(idPart);
                 if (idVal > maxId) maxId = idVal;
             } catch (Exception e) {
-                // Ignore weird IDs
+                //ignore weird IDs
             }
         }
 
-        // Generate next
+        //generate next
         txtMilestoneID.setText(String.format("M%03d", maxId + 1));
     }
 
-    // --- CRUD OPERATIONS (For Staff) ---
 
     private void addMilestone() {
         if (txtStudentID.getText().isEmpty() || txtCourseID.getText().isEmpty() || txtStudyWeek.getText().isEmpty() || txtTaskDes.getText().isEmpty() || txtDeadline.getText().isEmpty()) {
@@ -304,11 +323,18 @@ public class MilestoneActionPlan extends JFrame {
             return;
         }
 
-        // Removed duplicate check since we auto-generate ID
-
         if (!validateDate(txtDeadline.getText())) return;
         if (!validateStudentID()) return;
         if (!validateCourseID()) return;
+
+        if (isDuplicateMilestoneID(txtMilestoneID.getText())) {
+            JOptionPane.showMessageDialog(this, "Error: Milestone ID already exists. Please use a unique ID.");
+            return;
+        }
+
+
+        int confirm = JOptionPane.showConfirmDialog(this, "Are you sure you want to add this milestone?", "Confirm Add", JOptionPane.OK_CANCEL_OPTION);
+        if (confirm != JOptionPane.OK_OPTION) return;
 
         try {
             Date deadline = dateFormat.parse(txtDeadline.getText());
@@ -317,12 +343,11 @@ public class MilestoneActionPlan extends JFrame {
                     txtStudyWeek.getText(), txtTaskDes.getText(), deadline,
                     (String) cmbStatus.getSelectedItem()
             );
-            // Pass loggedInUser as the second argument
             milestoneDAO.addMilestone(milestone, loggedInUser);
             JOptionPane.showMessageDialog(this, "Milestone added successfully!");
             listMilestones();
             clearFields();
-            generateNewMilestoneID(); // Prep for next add
+            generateNewMilestoneID();
         } catch (Exception e) {
             e.printStackTrace();
             JOptionPane.showMessageDialog(this, "Error adding milestone: " + e.getMessage());
@@ -336,6 +361,9 @@ public class MilestoneActionPlan extends JFrame {
         }
 
         if (!validateDate(txtDeadline.getText())) return;
+
+        int confirm = JOptionPane.showConfirmDialog(this, "Are you sure you want to update this milestone?", "Confirm Update", JOptionPane.OK_CANCEL_OPTION);
+        if (confirm != JOptionPane.OK_OPTION) return;
 
         try {
             Date deadline = dateFormat.parse(txtDeadline.getText());
@@ -381,17 +409,39 @@ public class MilestoneActionPlan extends JFrame {
             tableModel.addRow(new Object[]{
                     m.getMilestoneID(), m.getStudentID(), m.getCourseID(),
                     m.getStudyWeek(), m.getTaskDescription(),
-                    dateFormat.format(m.getDeadline()), m.getStatus()
+                    dateFormat.format(m.getDeadline()), m.getStatusString()
             });
         }
     }
 
+    private boolean isDuplicateMilestoneID(String milestoneID) {
+        return milestoneDAO.loadMilestones().stream().anyMatch(m -> m.getMilestoneID().equals(milestoneID));
+    }
+
     private void clearFields() {
-        // Don't clear ID, regenerate it
-        txtStudentID.setText(""); txtCourseID.setText("");
-        txtStudyWeek.setText(""); txtTaskDes.setText(""); txtDeadline.setText("");
-        cmbStatus.setSelectedIndex(0);
-        tblMilestone.clearSelection();
+        int result = JOptionPane.showConfirmDialog(
+                this,
+                "Clear all fields?",
+                "Confirm Clear",
+                JOptionPane.OK_CANCEL_OPTION
+        );
+
+        if (result == JOptionPane.OK_OPTION) {
+            txtStudentID.setText(""); txtCourseID.setText("");
+            txtStudyWeek.setText(""); txtTaskDes.setText(""); txtDeadline.setText("");
+            cmbStatus.setSelectedIndex(0);
+            tblMilestone.clearSelection();
+        }
+    }
+
+    private boolean validateEmptyFields() {
+        if (txtMilestoneID.getText().trim().isEmpty() || txtStudentID.getText().trim().isEmpty() ||
+                txtCourseID.getText().trim().isEmpty() || txtStudyWeek.getText().trim().isEmpty() ||
+                txtTaskDes.getText().trim().isEmpty() || txtDeadline.getText().trim().isEmpty()) {
+            JOptionPane.showMessageDialog(this, "Error: All fields must be filled. Cannot leave any field empty.");
+            return false;
+        }
+        return true;
     }
 
     private boolean validateDate(String dateStr) {

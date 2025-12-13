@@ -6,7 +6,6 @@ import domain.User;
 import domain.Student;
 import service.RecoveryDAO;
 import service.CourseCatalog;
-// Import Dashboard
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
@@ -24,17 +23,14 @@ public class RecoveryProgress extends JFrame {
     private JButton btnSave;
     private JButton btnBack;
 
-    // Labels
     private JLabel statusMessageLabel;
 
     private DefaultTableModel tableModel;
     private RecoveryDAO recoveryDAO;
     private User loggedInUser;
 
-    // Panel reference
     private JPanel inputPanel;
 
-    // Colors
     private final Color ACCENT_COLOR = new Color(0, 102, 204);
     private final Color RED_COLOR = new Color(220, 53, 69);
     private final Color TEXT_COLOR = Color.WHITE;
@@ -45,35 +41,62 @@ public class RecoveryProgress extends JFrame {
         this.loggedInUser = loggedInUser;
         this.recoveryDAO = new RecoveryDAO();
 
-        // Window Setup
+        JPanel backgroundPanel = new JPanel() {
+            private Image backgroundImage;
+            {
+                try {
+                    backgroundImage = new ImageIcon(getClass().getResource("/resources/bg3.png")).getImage();
+                } catch (Exception e) {
+                    setBackground(Color.WHITE);
+                }
+                setOpaque(false);
+            }
+            @Override
+            protected void paintComponent(Graphics g) {
+                super.paintComponent(g);
+                if (backgroundImage != null) {
+                    g.drawImage(backgroundImage, 0, 0, getWidth(), getHeight(), this);
+                }
+            }
+        };
+        backgroundPanel.setLayout(new BorderLayout());
+        setContentPane(backgroundPanel);
+
         setTitle("Recovery Progress Monitor");
         setSize(1000, 700);
         setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
         setLocationRelativeTo(null);
 
-        // Main Container
-        JPanel mainPanel = new JPanel(new BorderLayout());
-        mainPanel.setBackground(Color.WHITE);
-        setContentPane(mainPanel);
-
-        // --- HEADER ---
         JPanel headerPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
-        headerPanel.setBackground(Color.WHITE);
+        headerPanel.setOpaque(false);
         headerPanel.setBorder(new EmptyBorder(20, 20, 10, 20));
-        JLabel titleLabel = new JLabel("Recovery Progress");
+
+        ImageIcon logoIcon = null;
+        try {
+            Image logoImage = new ImageIcon(getClass().getResource("/resources/apulogo.png")).getImage();
+            Image scaledLogo = logoImage.getScaledInstance(50, 50, Image.SCALE_SMOOTH);
+            logoIcon = new ImageIcon(scaledLogo);
+        } catch (Exception e) {
+            System.out.println("Logo image not found at /resources/apulogo.png");
+        }
+
+        JLabel logoLabel = new JLabel(logoIcon);
+        headerPanel.add(logoLabel);
+
+        JLabel titleLabel = new JLabel("RECOVERY PROGRESS");
         titleLabel.setFont(HEADER_FONT);
+        titleLabel.setFont(new Font("Comic Sans MS", Font.BOLD, 35));
         titleLabel.setForeground(new Color(50, 50, 50));
         headerPanel.add(titleLabel);
-        mainPanel.add(headerPanel, BorderLayout.NORTH);
 
-        // --- CENTER CONTENT ---
+        backgroundPanel.add(headerPanel, BorderLayout.NORTH);
+
         JPanel centerContainer = new JPanel(new BorderLayout(10, 10));
-        centerContainer.setBackground(Color.WHITE);
+        centerContainer.setOpaque(false);
         centerContainer.setBorder(new EmptyBorder(10, 20, 10, 20));
 
-        // 1. Input Panel (Top of Center)
         inputPanel = new JPanel(new GridBagLayout());
-        inputPanel.setBackground(new Color(245, 247, 250)); // Light grey bg
+        inputPanel.setOpaque(false);
         inputPanel.setBorder(BorderFactory.createCompoundBorder(
                 BorderFactory.createLineBorder(new Color(220, 220, 220), 1),
                 new EmptyBorder(15, 15, 15, 15)
@@ -83,7 +106,6 @@ public class RecoveryProgress extends JFrame {
         gbc.insets = new Insets(5, 5, 5, 5);
         gbc.fill = GridBagConstraints.HORIZONTAL;
 
-        // Row 1
         gbc.gridx = 0; gbc.gridy = 0;
         lblAttemptID = new JLabel("Attempt ID:");
         lblAttemptID.setFont(LABEL_FONT);
@@ -93,21 +115,19 @@ public class RecoveryProgress extends JFrame {
         txtAttemptID = new JTextField(15);
         inputPanel.add(txtAttemptID, gbc);
 
-        // Row 2
         gbc.gridx = 0; gbc.gridy = 1;
         lblStatus = new JLabel("Update Status:");
         lblStatus.setFont(LABEL_FONT);
         inputPanel.add(lblStatus, gbc);
 
         gbc.gridx = 1;
-        cmbStatus = new JComboBox<>(new String[]{"Not Started", "In Progress", "Completed", "Passed", "Failed - Retry", "Failed - No Attempts Left"});
+        cmbStatus = new JComboBox<>(new String[]{"Not Started", "In Progress", "Completed", "Passed", "Failed - Process to 2nd Attempt", "Failed - Process to 3rd Attempt", "Failed - No more Attempt"});
         inputPanel.add(cmbStatus, gbc);
 
         centerContainer.add(inputPanel, BorderLayout.NORTH);
 
-        // 2. Table / Message (Center of Center)
         JPanel tablePanel = new JPanel(new CardLayout());
-        tablePanel.setBackground(Color.WHITE);
+        tablePanel.setOpaque(false);
 
         tableModel = new DefaultTableModel(new String[] {
                 "AttemptID", "StudentID", "CourseID", "FailedComponent", "ExamScore", "AssignmentScore", "Status"
@@ -128,26 +148,26 @@ public class RecoveryProgress extends JFrame {
         tablePanel.add(statusMessageLabel, "EMPTY");
 
         centerContainer.add(tablePanel, BorderLayout.CENTER);
-        mainPanel.add(centerContainer, BorderLayout.CENTER);
+        backgroundPanel.add(centerContainer, BorderLayout.CENTER);
 
-        // --- BOTTOM BUTTONS ---
         JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT, 15, 15));
-        buttonPanel.setBackground(Color.WHITE);
+        buttonPanel.setOpaque(false);
 
         btnSave = createRoundedButton("Save Changes", ACCENT_COLOR, TEXT_COLOR);
         btnBack = createRoundedButton("Back to Dashboard", RED_COLOR, TEXT_COLOR);
 
         buttonPanel.add(btnBack);
         buttonPanel.add(btnSave);
-        mainPanel.add(buttonPanel, BorderLayout.SOUTH);
+        backgroundPanel.add(buttonPanel, BorderLayout.SOUTH);
 
-        // --- LISTENERS ---
         tblAttempt.getSelectionModel().addListSelectionListener(e -> {
             if (!e.getValueIsAdjusting()) {
                 int selectedRow = tblAttempt.getSelectedRow();
                 if (selectedRow != -1) {
                     if (!(loggedInUser instanceof Student)) {
                         txtAttemptID.setText((String) tableModel.getValueAt(selectedRow, 0));
+                        String statusFromTable = (String) tableModel.getValueAt(selectedRow, 6);
+                        cmbStatus.setSelectedItem(statusFromTable);
                     }
                 }
             }
@@ -159,10 +179,8 @@ public class RecoveryProgress extends JFrame {
             dispose();
         });
 
-        // --- VIEW LOGIC ---
         if (loggedInUser instanceof Student) {
             setupStudentView();
-            // Check emptiness
             if (tableModel.getRowCount() == 0) {
                 ((CardLayout) tablePanel.getLayout()).show(tablePanel, "EMPTY");
             }
@@ -174,7 +192,6 @@ public class RecoveryProgress extends JFrame {
         setVisible(true);
     }
 
-    // --- Helper for Rounded Button ---
     private JButton createRoundedButton(String text, Color bgColor, Color fgColor) {
         JButton btn = new JButton(text) {
             @Override
@@ -214,7 +231,6 @@ public class RecoveryProgress extends JFrame {
         return btn;
     }
 
-    // --- STUDENT VIEW LOGIC ---
     private void setupStudentView() {
         inputPanel.setVisible(false);
         btnSave.setVisible(false);
@@ -232,6 +248,8 @@ public class RecoveryProgress extends JFrame {
         }
 
         for (RecoveryResult result : results) {
+            String status = result.getRecoveryStatus();
+            System.out.println("Loaded status: '" + status + "'");
             tableModel.addRow(new Object[]{
                     result.getAttemptID(),
                     result.getStudentID(),

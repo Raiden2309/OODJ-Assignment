@@ -1,4 +1,4 @@
-StudentID,FirstName,LastName,Major,Year,Email
+StudentID,FirstName,LastName,Major,AcademicYear,Email
 S001,Fiona,Smith,Computer Science,Senior,fiona.smith@university.edu
 S002,George,Wilson,Literature,Sophomore,george.wilson@university.edu
 S003,Ivan,Wilson,Mathematics,Senior,ivan.wilson@university.edu
@@ -99,3 +99,4 @@ S097,Charlie,Chen,History,Sophomore,charlie.chen@university.edu
 S098,Quinn,Johnson,Literature,Freshman,quinn.johnson@university.edu
 S099,Julia,Lee,Mathematics,Sophomore,julia.lee@university.edu
 S100,Hannah,Taylor,Statistics,Sophomore,hannah.taylor@university.edu
+U001,John,Doe,UNASSIGNED,N/A,janedoe@university.edu

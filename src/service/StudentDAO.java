@@ -2,7 +2,7 @@ package service;
 
 import domain.Student;
 import domain.SystemRole;
-import domain.User; // Import User for isActive access
+import domain.User;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -15,15 +15,13 @@ import java.util.List;
 
 public class StudentDAO {
     private final String STUDENT_FILE_PATH = "data/student_information.csv";
-    // NOTE: This default password is only used when loading the list initially,
-    // it's overridden by UserDAO when logging in.
     private final String DEFAULT_STUDENT_PASSWORD = "password";
     private final SystemRole STUDENT_ROLE = new SystemRole("Student", List.of("View Profile", "Check Eligibility", "Enroll"));
 
     public List<Student> loadAllStudents() {
         List<Student> students = new ArrayList<>();
 
-        // Load User information (Active status)
+        // 1. Force a fresh load of credentials to get the latest status
         UserDAO userDAO = new UserDAO();
         List<User> allUsers = userDAO.loadAllUsers();
 
@@ -42,18 +40,19 @@ public class StudentDAO {
                     String academicYear = values[4].trim();
                     String email = values[5].trim();
 
-                    // Find corresponding User to get actual credentials/status
+                    // 2. Synchronization: Match student to credential record
                     User userCreds = allUsers.stream()
-                            .filter(u -> u.getUserID().equals(studentID))
+                            .filter(u -> u.getUserID().equalsIgnoreCase(studentID))
                             .findFirst()
                             .orElse(null);
 
                     String passwordHash = (userCreds != null) ? userCreds.getPassword() : DEFAULT_STUDENT_PASSWORD;
-                    boolean isActive = (userCreds != null) ? userCreds.isActive() : true; // Default to active if creds missing
+
+                    boolean isActive = (userCreds != null) ? userCreds.isActive() : true;
 
                     Student student = new Student(
                             studentID,
-                            passwordHash, // Use hash from UserDAO
+                            passwordHash,
                             STUDENT_ROLE,
                             firstName,
                             lastName,
@@ -61,11 +60,11 @@ public class StudentDAO {
                             academicYear,
                             email
                     );
+
                     student.setActive(isActive);
                     students.add(student);
                 }
             }
-            System.err.println("Successfully loaded " + students.size() + " students.");
         } catch (IOException e) {
             System.err.println("ERROR: Failed to load student data. Check file path: " + e.getMessage());
         }
@@ -74,7 +73,6 @@ public class StudentDAO {
 
     /**
      * Appends a new student record to student_information.csv.
-     * This is used during registration.
      */
     public boolean saveStudent(Student student) {
         System.err.println("Saving student " + student.getUserID() + " to student_information.csv.");
@@ -97,6 +95,49 @@ public class StudentDAO {
 
         } catch (IOException e) {
             System.err.println("FATAL ERROR: Failed to save student information: " + e.getMessage());
+            return false;
+        }
+    }
+
+    /**
+     * Removes a student record by ID and rewrites the file.
+     */
+    public boolean removeStudent(String studentID) {
+        List<Student> students = loadAllStudents();
+
+        // Remove the target student by comparing trimmed IDs
+        boolean removed = students.removeIf(s -> s.getUserID().trim().equalsIgnoreCase(studentID.trim()));
+
+        if (removed) {
+            return rewriteStudentFile(students);
+        } else {
+            return false;
+        }
+    }
+
+    /**
+     * Rewrites the entire student_information.csv file based on the provided list.
+     */
+    private boolean rewriteStudentFile(List<Student> students) {
+        try (PrintWriter writer = new PrintWriter(new FileWriter(STUDENT_FILE_PATH, false))) { // Overwrite (false)
+            // Header
+            writer.println("StudentID,FirstName,LastName,Major,AcademicYear,Email");
+
+            for (Student s : students) {
+                String record = String.join(",",
+                        s.getUserID(),
+                        s.getFirstName(),
+                        s.getLastName(),
+                        s.getMajor(),
+                        s.getAcademicYear(),
+                        s.getEmail()
+                );
+                writer.println(record);
+            }
+            System.err.println("DAO: Student information file rewritten.");
+            return true;
+        } catch (IOException e) {
+            System.err.println("FATAL ERROR: Failed to rewrite student information file: " + e.getMessage());
             return false;
         }
     }

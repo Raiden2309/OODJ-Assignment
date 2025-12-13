@@ -312,28 +312,29 @@ public class RegisterView extends JFrame {
         }
 
         // --- ID Generation & Role Assignment ---
-        // FIX: Assign generic 'U' ID and 'Pending' role
+
         String newId = generateNewUnassignedID();
         SystemRole pendingRole = new SystemRole("Pending", new ArrayList<>());
 
-        // CRITICAL WORKAROUND: We must use a concrete class (Student) to hold credentials,
-        // but its data represents a generic, unclassified user waiting for approval.
         Student newUserPlaceholder = new Student(
                 newId,
                 pass,
                 pendingRole,
-                first,
-                last,
-                "UNASSIGNED", // Major placeholder
-                "N/A",        // Year placeholder
+                first,           // Use actual First Name
+                last,            // Use actual Last Name
+                "UNASSIGNED",
+                "N/A",
                 email
         );
         newUserPlaceholder.setActive(false);
         newUserPlaceholder.setPassword(pass); // Password needs to be stored for hashing later in DAO
 
         // 2. Save Credentials (UserDAO)
-        // Note: We only save to user_credentials.csv first, as they are not yet a Student.
         if (userDAO.saveUserCredentials(newUserPlaceholder)) {
+
+            if (!studentDAO.saveStudent(newUserPlaceholder)) {
+                System.err.println("Warning: Failed to save full student profile details to student_information.csv.");
+            }
 
             // 3. STAFF NOTIFICATION (Console Alert)
             System.out.println("=============================================");
