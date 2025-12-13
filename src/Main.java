@@ -1,4 +1,4 @@
-import resources.LoginView;
+import ui.LoginView;
 import javax.swing.SwingUtilities;
 
 public class Main {
