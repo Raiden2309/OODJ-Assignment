@@ -2,7 +2,7 @@ package ui;
 
 import academic.Recommendation;
 import domain.User;
-import domain.Student; // Import Student
+import domain.Student;
 import service.CourseCatalog;
 import service.RecommendationDAO;
 import service.StudentDAO;
@@ -41,7 +41,6 @@ public class RecommendationEntry extends JFrame{
     private JButton btnFailed;
     private JButton btnRecovery;
 
-    // New label for empty state
     private JLabel statusMessageLabel;
 
     private DefaultTableModel tableModel;
@@ -49,7 +48,6 @@ public class RecommendationEntry extends JFrame{
     private User loggedInUser;
     private SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
 
-    // Colors
     private final Color ACCENT_COLOR = new Color(0, 102, 204);
     private final Color RED_COLOR = new Color(220, 53, 69);
     private final Color TEXT_COLOR = Color.WHITE;
@@ -84,7 +82,31 @@ public class RecommendationEntry extends JFrame{
         setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
         setLocationRelativeTo(null);
 
-        // --- INPUT PANEL ---
+        JPanel headerPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
+        headerPanel.setOpaque(false);
+        headerPanel.setBorder(BorderFactory.createEmptyBorder(20, 20, 10, 20));
+
+        ImageIcon logoIcon = null;
+        try {
+            Image logoImage = new ImageIcon(getClass().getResource("/resources/apulogo.png")).getImage();
+            Image scaledLogo = logoImage.getScaledInstance(50, 50, Image.SCALE_SMOOTH);
+            logoIcon = new ImageIcon(scaledLogo);
+        } catch (Exception e) {
+            System.out.println("Logo image not found at /resources/apulogo.png");
+        }
+
+        JLabel logoLabel = new JLabel(logoIcon);
+        headerPanel.add(logoLabel);
+
+        JLabel titleLabel = new JLabel("RECOMMENDATION ENTRY");
+        titleLabel.setFont(new Font("Comic Sans MS", Font.BOLD, 35));
+        titleLabel.setForeground(new Color(50, 50, 50));
+        headerPanel.add(titleLabel);
+
+        JPanel topPanel = new JPanel(new BorderLayout());
+        topPanel.setOpaque(false);
+        topPanel.add(headerPanel, BorderLayout.NORTH);
+
         JPanel inputPanel = new JPanel(new GridLayout(7, 2));
         inputPanel.setOpaque(false);
         inputPanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
@@ -117,20 +139,20 @@ public class RecommendationEntry extends JFrame{
         cmbStatus = new JComboBox<>(new String[]{"Pending", "Completed", "In Progress"});
         inputPanel.add(cmbStatus);
 
-        add(inputPanel, BorderLayout.NORTH);
+        topPanel.add(inputPanel, BorderLayout.CENTER);
 
-        // --- BUTTON PANEL ---
+        backgroundPanel.add(topPanel, BorderLayout.NORTH);
+
+
         JPanel buttonPanel = new JPanel();
-        buttonPanel.setOpaque(false); // Transparent bg
+        buttonPanel.setOpaque(false);
 
-        // Initialize Buttons using helper
         btnAdd = createRoundedButton("Add", ACCENT_COLOR, TEXT_COLOR);
         btnUpdate = createRoundedButton("Update", ACCENT_COLOR, TEXT_COLOR);
         btnRemove = createRoundedButton("Remove", ACCENT_COLOR, TEXT_COLOR);
         btnList = createRoundedButton("List All", ACCENT_COLOR, TEXT_COLOR);
         btnBack = createRoundedButton("Back", RED_COLOR, TEXT_COLOR);
 
-        // Only show management buttons for Non-Students
         if (!(loggedInUser instanceof Student)) {
             buttonPanel.add(btnAdd);
             buttonPanel.add(btnUpdate);
@@ -141,11 +163,9 @@ public class RecommendationEntry extends JFrame{
         buttonPanel.add(btnBack);
         add(buttonPanel, BorderLayout.SOUTH);
 
-        // --- CENTER TABLE / MESSAGE ---
         JPanel centerPanel = new JPanel(new CardLayout());
         centerPanel.setOpaque(false);
 
-        // 1. Table View
         tableModel = new DefaultTableModel(new String[]{"RecID", "StudentID", "CourseID", "Timeline", "Deadline", "Description", "Status"}, 0) {
             @Override
             public boolean isCellEditable(int row, int column) { return false; }
@@ -154,15 +174,13 @@ public class RecommendationEntry extends JFrame{
         JScrollPane tableScroll = new JScrollPane(tblRecommendation);
         centerPanel.add(tableScroll, "TABLE");
 
-        // 2. Empty Message View
         statusMessageLabel = new JLabel("No recommendations found for you.", SwingConstants.CENTER);
         statusMessageLabel.setFont(new Font("Segoe UI", Font.BOLD, 24));
         statusMessageLabel.setForeground(Color.DARK_GRAY);
         centerPanel.add(statusMessageLabel, "EMPTY");
 
-        add(centerPanel, BorderLayout.CENTER);
+        backgroundPanel.add(centerPanel, BorderLayout.CENTER);
 
-        // --- LISTENERS ---
         tblRecommendation.getSelectionModel().addListSelectionListener(e -> {
             if (!e.getValueIsAdjusting()) {
                 int selectedRow = tblRecommendation.getSelectedRow();
@@ -181,21 +199,14 @@ public class RecommendationEntry extends JFrame{
             dispose();
         });
 
-        // --- SIDEBAR (Optional - kept for layout consistency if needed, but usually redundant with Dashboard) ---
-        // Assuming you want to keep the left panel layout from your original file:
-        btnFailed = new JButton("Failed Component"); // Placeholder buttons if you want them
+        btnFailed = new JButton("Failed Component");
         btnMilestone = new JButton("Milestone");
         btnRecovery = new JButton("Recovery");
 
         JPanel leftButtonPanel = new JPanel();
         leftButtonPanel.setLayout(new BoxLayout(leftButtonPanel, BoxLayout.Y_AXIS));
         leftButtonPanel.setBackground(new Color(229, 205, 103)); // Yellowish
-        // ... (Adding buttons to left panel logic from original file omitted for brevity unless requested)
-        // Since we have Dashboard, usually we don't need side nav inside child windows,
-        // but adding simple spacer if you want to keep layout:
-        // add(leftButtonPanel, BorderLayout.WEST);
 
-        // --- LOGIC: CHECK USER ROLE ---
         if (loggedInUser instanceof Student) {
             setupStudentView();
         } else {
@@ -206,7 +217,6 @@ public class RecommendationEntry extends JFrame{
         setVisible(true);
     }
 
-    // --- Helper for Rounded Button ---
     private JButton createRoundedButton(String text, Color bgColor, Color fgColor) {
         JButton btn = new JButton(text) {
             @Override
@@ -246,9 +256,7 @@ public class RecommendationEntry extends JFrame{
         return btn;
     }
 
-    // --- STUDENT VIEW LOGIC ---
     private void setupStudentView() {
-        // Read-only inputs
         txtRecID.setEditable(false);
         txtStudentID.setEditable(false);
         txtCourseID.setEditable(false);
@@ -286,8 +294,6 @@ public class RecommendationEntry extends JFrame{
         cmbDescription.setSelectedItem((String) tableModel.getValueAt(row, 5));
         cmbStatus.setSelectedItem((String) tableModel.getValueAt(row, 6));
     }
-
-    // --- CRUD OPERATIONS ---
 
     private void addRecommendation() {
         if (txtRecID.getText().isEmpty() || txtStudentID.getText().isEmpty() || txtCourseID.getText().isEmpty() || txtTimeLine.getText().isEmpty() || txtDeadline.getText().isEmpty()) {

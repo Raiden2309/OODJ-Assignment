@@ -20,7 +20,6 @@ public class FailedComponentOverview extends JFrame {
     private EnrolledCourseDAO enrolledCoursesDAO;
     private User loggedInUser;
 
-    // Modern UI Colors/Fonts
     private final Color ACCENT_COLOR = new Color(0, 102, 204);
     private final Color RED_COLOR = new Color(220, 53, 69);
     private final Color TEXT_COLOR = Color.WHITE;
@@ -30,37 +29,64 @@ public class FailedComponentOverview extends JFrame {
         this.loggedInUser = user;
         this.enrolledCoursesDAO = new EnrolledCourseDAO();
 
-        // Window Setup
+        JPanel backgroundPanel = new JPanel() {
+            private Image backgroundImage;
+            {
+                try {
+                    backgroundImage = new ImageIcon(getClass().getResource("/resources/bg3.png")).getImage();
+                } catch (Exception e) {
+                    setBackground(Color.WHITE);
+                }
+                setOpaque(false);
+            }
+            @Override
+            protected void paintComponent(Graphics g) {
+                super.paintComponent(g);
+                if (backgroundImage != null) {
+                    g.drawImage(backgroundImage, 0, 0, getWidth(), getHeight(), this);
+                }
+            }
+        };
+        backgroundPanel.setLayout(new BorderLayout());
+        setContentPane(backgroundPanel);
+
         setTitle("Failed Components Overview");
         setSize(1000, 700);
         setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
         setLocationRelativeTo(null);
 
-        JPanel mainPanel = new JPanel(new BorderLayout());
-        mainPanel.setBackground(Color.WHITE);
-        setContentPane(mainPanel);
-
-        // --- HEADER ---
         JPanel headerPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
-        headerPanel.setBackground(Color.WHITE);
+        headerPanel.setOpaque(false);
         headerPanel.setBorder(new EmptyBorder(20, 20, 10, 20));
 
-        JLabel titleLabel = new JLabel("Failed Components List");
+        ImageIcon logoIcon = null;
+        try {
+            Image logoImage = new ImageIcon(getClass().getResource("/resources/apulogo.png")).getImage();
+            Image scaledLogo = logoImage.getScaledInstance(50, 50, Image.SCALE_SMOOTH);
+            logoIcon = new ImageIcon(scaledLogo);
+        } catch (Exception e) {
+            System.out.println("Logo image not found.");
+        }
+
+        JLabel logoLabel = new JLabel(logoIcon);
+        headerPanel.add(logoLabel);
+
+        JLabel titleLabel = new JLabel("FAILED COMPONENTS LIST");
         titleLabel.setFont(HEADER_FONT);
+        titleLabel.setFont(new Font("Comic Sans MS", Font.BOLD, 35));
         titleLabel.setForeground(new Color(50, 50, 50));
         headerPanel.add(titleLabel);
 
-        mainPanel.add(headerPanel, BorderLayout.NORTH);
+        backgroundPanel.add(headerPanel, BorderLayout.NORTH);
 
-        // --- TABLE ---
         JPanel centerPanel = new JPanel(new CardLayout());
         centerPanel.setBorder(new EmptyBorder(10, 20, 10, 20));
-        centerPanel.setBackground(Color.WHITE);
+        centerPanel.setBackground(new Color(255, 255, 255, 150));
 
         String[] columns = {"StudentID", "CourseID", "ExamScore", "AssignmentScore", "ExamWeight", "AssignmentWeight", "FailedComponent"};
         tableModel = new DefaultTableModel(columns, 0) {
             @Override
-            public boolean isCellEditable(int row, int column) { return false; } // Read-only
+            public boolean isCellEditable(int row, int column) { return false; }
         };
 
         tblFailed = new JTable(tableModel);
@@ -68,7 +94,6 @@ public class FailedComponentOverview extends JFrame {
         tblFailed.getTableHeader().setFont(new Font("Segoe UI", Font.BOLD, 12));
         JScrollPane scrollPane = new JScrollPane(tblFailed);
 
-        // Empty State Message
         JLabel emptyLabel = new JLabel("No failed components found.", SwingConstants.CENTER);
         emptyLabel.setFont(new Font("Segoe UI", Font.BOLD, 18));
         emptyLabel.setForeground(Color.GRAY);
@@ -76,11 +101,10 @@ public class FailedComponentOverview extends JFrame {
         centerPanel.add(scrollPane, "TABLE");
         centerPanel.add(emptyLabel, "EMPTY");
 
-        mainPanel.add(centerPanel, BorderLayout.CENTER);
+        backgroundPanel.add(centerPanel, BorderLayout.CENTER);
 
-        // --- BUTTONS ---
         JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT, 20, 20));
-        buttonPanel.setBackground(Color.WHITE);
+        buttonPanel.setBackground(new Color(255, 255, 255, 150));
 
         btnBack = createRoundedButton("Back to Dashboard", RED_COLOR, TEXT_COLOR);
         btnBack.addActionListener(e -> {
@@ -88,9 +112,8 @@ public class FailedComponentOverview extends JFrame {
         });
 
         buttonPanel.add(btnBack);
-        mainPanel.add(buttonPanel, BorderLayout.SOUTH);
+        backgroundPanel.add(buttonPanel, BorderLayout.SOUTH);
 
-        // --- LOAD DATA ---
         loadData(centerPanel);
 
         setVisible(true);
@@ -101,21 +124,17 @@ public class FailedComponentOverview extends JFrame {
             List<EnrolledCourse> allCourses = enrolledCoursesDAO.loadAllEnrolledCourses();
             List<EnrolledCourse> failedCourses;
 
-            // Filter logic
             if (loggedInUser instanceof Student) {
-                // Students only see their own failures
                 failedCourses = allCourses.stream()
                         .filter(ec -> ec.getStudentID().equalsIgnoreCase(loggedInUser.getUserID()))
                         .filter(ec -> !ec.getFailedComponent().equalsIgnoreCase("None"))
                         .collect(Collectors.toList());
             } else {
-                // Staff see all failures
                 failedCourses = allCourses.stream()
                         .filter(ec -> !ec.getFailedComponent().equalsIgnoreCase("None"))
                         .collect(Collectors.toList());
             }
 
-            // Populate Table
             tableModel.setRowCount(0);
             for (EnrolledCourse ec : failedCourses) {
                 tableModel.addRow(new Object[]{
@@ -129,7 +148,6 @@ public class FailedComponentOverview extends JFrame {
                 });
             }
 
-            // Show correct view
             CardLayout cl = (CardLayout) centerPanel.getLayout();
             if (failedCourses.isEmpty()) {
                 cl.show(centerPanel, "EMPTY");
@@ -142,7 +160,6 @@ public class FailedComponentOverview extends JFrame {
         }
     }
 
-    // --- Helper for Rounded Button ---
     private JButton createRoundedButton(String text, Color bgColor, Color fgColor) {
         JButton btn = new JButton(text) {
             @Override
@@ -182,7 +199,6 @@ public class FailedComponentOverview extends JFrame {
         return btn;
     }
 
-    // Default constructor for compatibility if needed
     public FailedComponentOverview() {
         this(null);
     }

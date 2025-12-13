@@ -22,7 +22,7 @@ public class MilestoneDAO {
 
         try (BufferedReader br = new BufferedReader(new FileReader(file))) {
             String line;
-            br.readLine(); // Skip header
+            br.readLine();
 
             while ((line = br.readLine()) != null) {
                 String[] values = line.split(",");
@@ -69,12 +69,11 @@ public class MilestoneDAO {
         boolean found = false;
 
         for (int i = 0; i < milestones.size(); i++) {
-            // FIX: Use trim() and equalsIgnoreCase() for robust matching
             String currentID = milestones.get(i).getMilestoneID().trim();
             String targetID = updatedMilestone.getMilestoneID().trim();
 
             if (currentID.equalsIgnoreCase(targetID)) {
-                milestones.set(i, updatedMilestone); // Replace object with new one (containing new status)
+                milestones.set(i, updatedMilestone);
                 found = true;
                 break;
             }
@@ -90,7 +89,6 @@ public class MilestoneDAO {
 
     public void removeMilestone(String milestoneID) {
         List<RecoveryMilestone> milestones = loadMilestones();
-        // FIX: Use trim() and equalsIgnoreCase()
         boolean removed = milestones.removeIf(m -> m.getMilestoneID().trim().equalsIgnoreCase(milestoneID.trim()));
 
         if (removed) {
@@ -118,7 +116,7 @@ public class MilestoneDAO {
             bw.write("MilestoneID,StudentID,CourseID,StudyWeek,TaskDescription,Deadline,Status");
             bw.newLine();
             for (RecoveryMilestone m : milestones) {
-                bw.write(m.toString()); // Ensure toString() outputs CSV format correctly
+                bw.write(m.toString());
                 bw.newLine();
             }
         } catch (IOException e) {
