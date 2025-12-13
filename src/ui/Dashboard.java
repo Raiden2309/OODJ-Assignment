@@ -8,9 +8,7 @@ import domain.CourseAdministrator;
 import service.StudentDAO;
 import service.AcademicRecordDAO;
 import academic.Course;
-// import service.MilestoneDAO;
 import service.EnrollmentDAO; // Used for pending reviews/approvals
-// import academic.RecoveryMilestone;
 import ui.UserApprovalView;
 
 
@@ -321,10 +319,6 @@ public class Dashboard extends JFrame {
                 .filter(e -> "Pending Approval".equalsIgnoreCase(e.getStatus()))
                 .count();
 
-        // Removed submitted milestones calculation
-        // final long submittedMilestones = 0;
-
-
         // --- 1. OVERVIEW CARDS (Row 0) ---
         gbc.gridy = 0; gbc.gridwidth = 1; gbc.weighty = 0.0;
 
@@ -389,7 +383,6 @@ public class Dashboard extends JFrame {
     // STAFF HELPER METHODS
     // ====================================================================
 
-    // Removed milestones argument
     private String generateActivityFeed(List<Student> students) {
         StringBuilder sb = new StringBuilder();
 
