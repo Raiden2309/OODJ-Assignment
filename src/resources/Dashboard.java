@@ -566,15 +566,16 @@ public class Dashboard extends JFrame {
         trendArea.setEditable(false);
         trendArea.setFont(new Font("Monospaced", Font.PLAIN, 12));
 
-        // FIX 3: Display full list of Passed/Failed courses (Academic Record)
+
         StringBuilder recordText = new StringBuilder();
         recordText.append("--- COURSE HISTORY ---\n");
         if (allResults.isEmpty()) {
             recordText.append("No academic results recorded.\n");
         } else {
             // Adjust formatting to ensure columns fit in the limited JTextArea width
-            recordText.append(String.format("%-8s %-20s %-5s\n", "Code", "Name", "Grade"));
-            recordText.append("-----------------------------------\n");
+            // FIX: Added Instructor column
+            recordText.append(String.format("%-8s %-18s %-5s %-15s\n", "Code", "Name", "Grade", "Instructor"));
+            recordText.append("----------------------------------------------------\n");
 
             // Sort results by grade (F first, then others)
             allResults.stream()
@@ -582,14 +583,18 @@ public class Dashboard extends JFrame {
                     .forEach(r -> {
                         // Truncate course name for display if necessary
                         String courseName = r.getCourse().getName();
-                        if (courseName.length() > 20) {
-                            courseName = courseName.substring(0, 17) + "...";
+                        if (courseName.length() > 18) { // Reduced from 20 for better fit
+                            courseName = courseName.substring(0, 15) + "...";
                         }
+                        // Get instructor
+                        String instr = r.getCourse().getInstructor();
+                        if (instr != null && instr.length() > 15) instr = instr.substring(0, 12) + "...";
 
-                        recordText.append(String.format("%-8s %-20s %-5s\n",
+                        recordText.append(String.format("%-8s %-18s %-5s %-15s\n",
                                 r.getCourse().getCourseId(),
                                 courseName,
-                                r.getGrade()));
+                                r.getGrade(),
+                                instr));
                     });
         }
 
