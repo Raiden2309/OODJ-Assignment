@@ -121,7 +121,7 @@ public class RecoveryProgress extends JFrame {
         inputPanel.add(lblStatus, gbc);
 
         gbc.gridx = 1;
-        cmbStatus = new JComboBox<>(new String[]{"Not Started", "In Progress", "Completed", "Passed", "Failed - Retry", "Failed - No Attempts Left"});
+        cmbStatus = new JComboBox<>(new String[]{"Not Started", "In Progress", "Completed", "Passed", "Failed - Process to 2nd Attempt", "Failed - Process to 3rd Attempt", "Failed - No more Attempt"});
         inputPanel.add(cmbStatus, gbc);
 
         centerContainer.add(inputPanel, BorderLayout.NORTH);
@@ -166,6 +166,8 @@ public class RecoveryProgress extends JFrame {
                 if (selectedRow != -1) {
                     if (!(loggedInUser instanceof Student)) {
                         txtAttemptID.setText((String) tableModel.getValueAt(selectedRow, 0));
+                        String statusFromTable = (String) tableModel.getValueAt(selectedRow, 6);
+                        cmbStatus.setSelectedItem(statusFromTable);
                     }
                 }
             }
@@ -246,6 +248,8 @@ public class RecoveryProgress extends JFrame {
         }
 
         for (RecoveryResult result : results) {
+            String status = result.getRecoveryStatus();
+            System.out.println("Loaded status: '" + status + "'");
             tableModel.addRow(new Object[]{
                     result.getAttemptID(),
                     result.getStudentID(),

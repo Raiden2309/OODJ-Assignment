@@ -132,11 +132,11 @@ public class RecommendationEntry extends JFrame{
         inputPanel.add(txtDeadline);
 
         inputPanel.add(lblDescription = new JLabel("Description:"));
-        cmbDescription = new JComboBox<>(new String[]{"Retake Exam", "Attend Tutorial", "Submit Assignment", "Review Materials"});
+        cmbDescription = new JComboBox<>(new String[]{"Exam", "Assignment", "Project", "Overall Fail"});
         inputPanel.add(cmbDescription);
 
         inputPanel.add(lblStatus = new JLabel("Status:"));
-        cmbStatus = new JComboBox<>(new String[]{"Pending", "Completed", "In Progress"});
+        cmbStatus = new JComboBox<>(new String[]{"Pending", "Approved", "Rejected", "Completed", "Cancelled"});
         inputPanel.add(cmbStatus);
 
         topPanel.add(inputPanel, BorderLayout.CENTER);
