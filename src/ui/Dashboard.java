@@ -11,6 +11,8 @@ import academic.Course;
 // import service.MilestoneDAO;
 import service.EnrollmentDAO; // Used for pending reviews/approvals
 // import academic.RecoveryMilestone;
+import ui.UserApprovalView;
+
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
@@ -129,6 +131,15 @@ public class Dashboard extends JFrame {
             });
             menuPanel.add(Box.createVerticalStrut(15));
             menuPanel.add(btnApproval);
+
+            JButton btnUserApproval = createMenuButton("User Approval", "person_add.png");
+            btnUserApproval.addActionListener(e -> {
+                setActiveButton(btnUserApproval);
+                // CRITICAL: Calling with only 1 argument (currentUser)
+                new ui.UserApprovalView(currentUser, this).setVisible(true);
+            });
+            menuPanel.add(Box.createVerticalStrut(15));
+            menuPanel.add(btnUserApproval);
 
             JButton btnManageUsers = createMenuButton("Manage Students", "user.png");
             btnManageUsers.addActionListener(e -> {
