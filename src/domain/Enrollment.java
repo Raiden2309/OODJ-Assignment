@@ -1,6 +1,6 @@
 package domain;
 
-import academic.CourseRecoveryPlan; // Import your plan class
+import academic.CourseRecoveryPlan;
 import java.util.Date;
 
 public class Enrollment
@@ -14,13 +14,11 @@ public class Enrollment
     private String examScore;
     private String assignmentScore;
 
-    // NEW: Fields/Logic from your version (optional but recommended for your module)
     private CourseRecoveryPlan plan;
     private Date enrollmentDate;
-    private String status; // FIX: Added status field
+    private String status;
 
     // CONSTRUCTOR 1: The String-based one (Required for DataAccess.java)
-    // DO NOT CHANGE THE SIGNATURE or DataAccess will break!
     public Enrollment(String enrollmentId, String studentId, String courseId, String year, String semester, String examScore, String assignmentScore)
     {
         this.enrollmentId = enrollmentId;
@@ -42,11 +40,11 @@ public class Enrollment
         this.enrollmentId = "ENR-" + studentId + "-" + System.currentTimeMillis();
         this.studentId = studentId;
         this.plan = plan;
-        this.courseId = plan.getCourseID(); // Assuming plan has this method
+        this.courseId = plan.getCourseID();
         this.enrollmentDate = new Date();
 
         // Set defaults for CSV fields not yet known
-        this.year = "2023"; // Placeholder or Current Year
+        this.year = "2023";
         this.semester = "Unknown";
         this.examScore = "0";
         this.assignmentScore = "0";
@@ -59,7 +57,6 @@ public class Enrollment
         return enrollmentId;
     }
 
-    // FIX: Added the missing setter to resolve the DAO compilation error.
     public void setEnrollmentId(String enrollmentId) {
         this.enrollmentId = enrollmentId;
     }
@@ -108,12 +105,10 @@ public class Enrollment
         return enrollmentDate;
     }
 
-    // Alias to match your code's expectation
     public Date getEnrolmentDate() {
         return enrollmentDate;
     }
 
-    // FIX: Added getStatus() method to resolve the Dashboard error
     public String getStatus() {
         return status;
     }

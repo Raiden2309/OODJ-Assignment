@@ -69,7 +69,6 @@ public class MilestoneDAO {
         boolean found = false;
 
         for (int i = 0; i < milestones.size(); i++) {
-            // FIX: Use trim() and equalsIgnoreCase() for robust matching
             String currentID = milestones.get(i).getMilestoneID().trim();
             String targetID = updatedMilestone.getMilestoneID().trim();
 
@@ -90,7 +89,6 @@ public class MilestoneDAO {
 
     public void removeMilestone(String milestoneID) {
         List<RecoveryMilestone> milestones = loadMilestones();
-        // FIX: Use trim() and equalsIgnoreCase()
         boolean removed = milestones.removeIf(m -> m.getMilestoneID().trim().equalsIgnoreCase(milestoneID.trim()));
 
         if (removed) {

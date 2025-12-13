@@ -29,8 +29,6 @@ public class AcademicProfile{
                 double credits = Double.parseDouble(result.getCourse().getCredits());
                 double gradePoint = result.calculateGradePoint();
 
-                // Only include if grade point > 0 or if it's a valid attempted course (F counts as 0)
-                // Assuming F (0.0) counts towards CGPA
                 totalGP += gradePoint * credits;
                 totalCredits += credits;
             } catch (NumberFormatException e) {
@@ -57,7 +55,6 @@ public class AcademicProfile{
         return studentID;
     }
 
-    // FIX: Ensure CGPA is calculated before returning
     public double getCGPA() {
         if (this.CGPA == 0.0 && !courseResults.isEmpty()) {
             return calculateCGPA();

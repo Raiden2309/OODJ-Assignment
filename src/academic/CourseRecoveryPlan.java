@@ -43,7 +43,6 @@ public class CourseRecoveryPlan {
         return planID;
     }
 
-    // FIX ADDED: Public getter for the 'recommendation' field
     public String getRecommendation() {
         return recommendation;
     }

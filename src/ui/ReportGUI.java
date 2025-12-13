@@ -8,7 +8,7 @@ import service.AcademicRecordDAO;
 import academic.CourseResult;
 import academic.Course;
 import service.StudentDAO;
-import service.UserDAO; // Added for completeness
+import service.UserDAO;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
@@ -27,7 +27,7 @@ public class ReportGUI extends JFrame {
     private JTextArea previewArea;
 
     private ReportGenerator reportGen;
-    private Student targetStudent; // Renamed from loggedInUser to targetStudent for clarity
+    private Student targetStudent;
 
     // Constructor now expects the specific Student whose report needs generating
     public ReportGUI(Student student) {

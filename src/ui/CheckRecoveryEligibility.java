@@ -216,7 +216,6 @@ public class CheckRecoveryEligibility extends JFrame {
         return btn;
     }
 
-    // FIX: Filtering logic now applies to the actual Combobox model
     private void filterCombobox(String text) {
         // Get the current list of items in the combobox model
         DefaultComboBoxModel<String> model = (DefaultComboBoxModel<String>) idCombobox.getModel();
@@ -331,7 +330,7 @@ public class CheckRecoveryEligibility extends JFrame {
 
     private void addComboboxItems() {
         allStudentItems = new ArrayList<>();
-        allStudentItems.add(""); // Placeholder for initial state
+        allStudentItems.add("");
 
         Collections.sort(students, (s1, s2) -> s1[0].compareToIgnoreCase(s2[0]));
 

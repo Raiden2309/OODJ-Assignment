@@ -55,11 +55,7 @@ public class EnrollmentView extends JFrame {
     private void loadEligiblePlans() {
         CourseRecoveryPlanDAO planDAO = new CourseRecoveryPlanDAO();
         List<CourseRecoveryPlan> allPlans = planDAO.loadAllPlans();
-
-        // --- FIX: Remove Filtering Logic ---
-        // We bypass the check against failed courses and load ALL available plans.
         eligiblePlans = allPlans;
-        // --- END FIX ---
     }
 
     private void createTopPanel() {
@@ -169,7 +165,6 @@ public class EnrollmentView extends JFrame {
         }
     }
 
-    // Placeholder method to get course name (Assuming CourseResult holds the name)
     private String getCourseNameFromID(String courseID) {
         return currentStudent.getAcademicProfile().getCourseResults().stream()
                 .filter(cr -> cr.getCourse().getCourseId().equals(courseID))

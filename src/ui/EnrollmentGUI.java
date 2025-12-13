@@ -33,7 +33,6 @@ public class EnrollmentGUI extends JFrame {
 
     // Modern Colors/Fonts
     private final Color ACCENT_COLOR = new Color(0, 102, 204); // System blue (used for Check)
-    // FIX 1: Change SUCCESS_COLOR back to green
     private final Color SUCCESS_COLOR = new Color(40, 167, 69);
     private final Color CONTENT_BG = new Color(245, 247, 250);
     private final Font HEADER_FONT = new Font("Segoe UI", Font.BOLD, 28);

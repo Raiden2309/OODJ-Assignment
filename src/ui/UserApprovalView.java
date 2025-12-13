@@ -313,8 +313,6 @@ public class UserApprovalView extends JFrame {
                 } catch (NumberFormatException e) {}
             }
         }
-        // NOTE: PREFIX is missing here, assuming it's a constant defined elsewhere
-        // Using prefix variable for robustness
         return String.format(prefix + "%03d", maxNum + 1);
     }
 
@@ -357,9 +355,7 @@ public class UserApprovalView extends JFrame {
 
         UserDAO freshDAO = new UserDAO();
 
-        // FIX 1: Use the explicit delete method
         if (freshDAO.deleteUser(oldUser.getUserID())) {
-            // FIX 2: Manually add the new user back, as deleteUser only removes the old one
             if (freshDAO.saveUserCredentials(finalUser)) {
                 JOptionPane.showMessageDialog(this, "User " + newId + " approved and activated successfully as " + newRoleName + ".");
                 loadPendingUsers();
@@ -390,7 +386,6 @@ public class UserApprovalView extends JFrame {
             UserDAO freshUserDAO = new UserDAO();
 
             // --- 1. REMOVE CREDENTIALS (user_credentials.csv) ---
-            // FIX 3: Use the explicit delete method
             if (freshUserDAO.deleteUser(tempId)) {
 
                 // --- 2. REMOVE STUDENT DETAILS (student_information.csv) ---

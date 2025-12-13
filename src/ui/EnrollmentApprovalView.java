@@ -17,7 +17,7 @@ public class EnrollmentApprovalView extends JFrame {
     private EnrollmentDAO enrollmentDAO;
     private JTable tblEnrollments;
     private DefaultTableModel model;
-    private Dashboard dashboard; // FIX 1: Added Dashboard reference field
+    private Dashboard dashboard;
 
     // Status constants
     private final String STATUS_PENDING = "Pending Approval";
@@ -29,7 +29,6 @@ public class EnrollmentApprovalView extends JFrame {
     private final Color ERROR_COLOR = new Color(220, 53, 69);
 
 
-    // FIX 2: Updated constructor to accept both User and Dashboard
     public EnrollmentApprovalView(User user, Dashboard dashboard) {
         this.loggedInUser = user;
         this.dashboard = dashboard;
@@ -133,7 +132,6 @@ public class EnrollmentApprovalView extends JFrame {
                 JOptionPane.showMessageDialog(this, "Enrollment " + enrollmentId + " has been " + newStatus + ".", "Success", JOptionPane.INFORMATION_MESSAGE);
                 loadPendingEnrollments(); // Refresh view
 
-                // FIX 3: Call Dashboard refresh method
                 if (dashboard != null) {
                     dashboard.refreshStaffContent();
                 }

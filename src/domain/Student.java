@@ -41,7 +41,6 @@ public class Student extends User {
         return academicProfile;
     }
 
-    // Explicit getter for AcademicProfile to fix "Cannot resolve method" errors
     public AcademicProfile getAcademicProfile() {
         return academicProfile;
     }

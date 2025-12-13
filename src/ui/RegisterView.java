@@ -88,7 +88,7 @@ public class RegisterView extends JFrame {
         // Name Row
         JPanel nameRow = new JPanel(new GridLayout(1, 2, 10, 0));
         nameRow.setBackground(Color.WHITE);
-        nameRow.setMaximumSize(new Dimension(350, 80)); // Matching width of single inputs
+        nameRow.setMaximumSize(new Dimension(350, 80));
 
         firstNameField = createStyledTextField();
         lastNameField = createStyledTextField();
@@ -125,7 +125,6 @@ public class RegisterView extends JFrame {
             }
         });
 
-        // Assembly - Adjusted spacing for cleaner look with more fields
         formPanel.add(Box.createVerticalStrut(10));
         formPanel.add(titleLabel);
         formPanel.add(subTitleLabel);
@@ -264,7 +263,7 @@ public class RegisterView extends JFrame {
     private String generateNewUnassignedID() {
         List<User> allUsers = userDAO.loadAllUsers();
         int maxIdNum = 0;
-        final String PREFIX = "U"; // Unassigned/Unclassified
+        final String PREFIX = "U";
 
         for (User u : allUsers) {
             String id = u.getUserID();

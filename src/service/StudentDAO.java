@@ -105,7 +105,6 @@ public class StudentDAO {
     public boolean removeStudent(String studentID) {
         List<Student> students = loadAllStudents();
 
-        // Remove the target student by comparing trimmed IDs
         boolean removed = students.removeIf(s -> s.getUserID().trim().equalsIgnoreCase(studentID.trim()));
 
         if (removed) {

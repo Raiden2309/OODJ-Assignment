@@ -66,7 +66,6 @@ public class NotificationService {
     // Method (Email Transmission)
     //====================
 
-    // FIX: Made public to allow generic notifications from other classes like Student.java
     public void sendMail(String recipientEmail, String subject, String body) {
         // Validation to prevent crashing if email is missing
         if (recipientEmail == null || recipientEmail.isEmpty() || recipientEmail.contains("unknown")) {

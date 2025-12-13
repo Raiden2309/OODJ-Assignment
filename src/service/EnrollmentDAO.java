@@ -44,10 +44,8 @@ public class EnrollmentDAO {
         }
     }
 
-    // FIX 1: loadEnrollments method (using domain.Enrollment context provided)
     public List<Enrollment> loadEnrollments() {
         List<Enrollment> enrollments = new ArrayList<>();
-        // Assuming we need to load students first for the enrollments to link correctly
         StudentDAO studentDAO = new StudentDAO();
         List<Student> allStudents = studentDAO.loadAllStudents();
 
@@ -63,7 +61,6 @@ public class EnrollmentDAO {
                     String enrollmentId = values[0].trim();
                     String studentId = values[1].trim();
                     String planID = values[2].trim();
-                    // String dateString = values[3].trim(); // Date reading omitted for simplicity
                     String status = values[4].trim();
 
                     CourseRecoveryPlan plan = planDAO.getPlanByID(planID);
@@ -87,7 +84,6 @@ public class EnrollmentDAO {
         return enrollments;
     }
 
-    // FIX 2: Added method to update enrollment status
     public boolean updateEnrollmentStatus(String enrollmentId, String newStatus) {
         try {
             List<Enrollment> enrollments = loadEnrollments();

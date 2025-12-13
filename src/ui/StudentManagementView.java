@@ -7,7 +7,7 @@ import service.UserDAO;
 import service.AcademicRecordDAO;
 import service.EnrollmentDAO;
 import domain.Enrollment;
-import academic.AcademicProfile; // Required for loadStudentData
+import academic.AcademicProfile;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
@@ -226,7 +226,6 @@ public class StudentManagementView extends JFrame {
         }
     }
 
-    // --- PERSISTENCE FIX: Update the status and save via UserDAO ---
     private void updateStatus(boolean isActive) {
         int selectedRow = table.getSelectedRow();
         if (selectedRow == -1) {
@@ -286,7 +285,6 @@ public class StudentManagementView extends JFrame {
         AcademicRecordDAO rDao = new AcademicRecordDAO();
         rDao.loadRecords(all);
 
-        // Fix: Force calculation of CGPA to ensure it's not 0.0
         s.getAcademicProfile().calculateCGPA();
 
         // Load Enrollment
