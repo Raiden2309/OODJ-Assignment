@@ -8,7 +8,7 @@ import service.AcademicRecordDAO;
 import academic.CourseResult;
 import academic.Course;
 import service.StudentDAO;
-import service.UserDAO;
+import service.UserDAO; // Added for completeness
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
@@ -27,7 +27,7 @@ public class ReportGUI extends JFrame {
     private JTextArea previewArea;
 
     private ReportGenerator reportGen;
-    private Student targetStudent;
+    private Student targetStudent; // Renamed from loggedInUser to targetStudent for clarity
 
     // Constructor now expects the specific Student whose report needs generating
     public ReportGUI(Student student) {
@@ -148,43 +148,79 @@ public class ReportGUI extends JFrame {
         previewArea.setCaretPosition(0);
     }
 
-
     private void generateReport() {
+
+        if (targetStudent == null) {
+            statusLabel.setText("Status: Error (No student selected).");
+            JOptionPane.showMessageDialog(this,
+                    "Error: Student data is missing.",
+                    "Error", JOptionPane.ERROR_MESSAGE);
+            return;
+        }
+
         String targetID = targetStudent.getUserID();
 
         try {
             statusLabel.setText("Status: Generating report for " + targetID + "...");
 
-            ReportGenerator reportGen = new ReportGenerator(); // Initialize report gen locally if needed
+
             reportGen.generatePDF(targetID);
+
+
+            String pdfPath = "data" + File.separator + "report" + File.separator + targetID + "_Report.pdf";
+            File pdfFile = new File(pdfPath);
+
+
+            if (!pdfFile.exists()) {
+                statusLabel.setText("Status: Report generated but file not found!");
+                JOptionPane.showMessageDialog(this,
+                        "PDF was generated, but the file was not found:\n" + pdfPath,
+                        "File Not Found", JOptionPane.ERROR_MESSAGE);
+                return;
+            }
+
             statusLabel.setText("Status: Report generated successfully!");
 
             JOptionPane.showMessageDialog(this,
-                    "PDF Report saved to: data/report/" + targetID + "_Report.pdf",
+                    "PDF Report saved to:\n" + pdfPath,
                     "Success!", JOptionPane.INFORMATION_MESSAGE);
 
-            // Notification Logic (Assuming targetStudent is valid)
+
             final String fName = targetStudent.getFirstName();
             final String lName = targetStudent.getLastName();
             final String email = targetStudent.getEmail();
             final double cgpa = targetStudent.getAcademicProfile().getCGPA();
+            final int semester = 1;
 
             new Thread(() -> {
                 try {
                     NotificationService notify = new NotificationService(fName, lName, email);
-                    notify.sendAcademicReportEmail(1, cgpa);
-                    System.out.println("Report notification sent.");
+
+
+                    notify.sendAcademicReportEmail(semester, cgpa, pdfPath);
+
+                    System.out.println("Report notification (with PDF) sent to " + email);
                 } catch (Exception ex) {
                     System.err.println("Notification failed: " + ex.getMessage());
+
+
+                    SwingUtilities.invokeLater(() -> {
+                        JOptionPane.showMessageDialog(this,
+                                "PDF was generated, but email failed:\n" + ex.getMessage(),
+                                "Email Error", JOptionPane.WARNING_MESSAGE);
+                    });
                 }
             }).start();
 
         } catch (Exception e) {
             statusLabel.setText("Status: Error generating report!");
             e.printStackTrace();
-            JOptionPane.showMessageDialog(this, "Error: " + e.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
+            JOptionPane.showMessageDialog(this,
+                    "Error: " + e.getMessage(),
+                    "Error", JOptionPane.ERROR_MESSAGE);
         }
     }
+
 
     public static void main(String[] args) {
         SwingUtilities.invokeLater(() -> {

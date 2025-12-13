@@ -15,6 +15,8 @@ import java.io.*;
 import java.util.Date;
 import java.text.SimpleDateFormat;
 
+import service.NotificationService;
+
 public class LoginView extends JFrame {
 
     private JTextField emailField;
@@ -263,6 +265,10 @@ public class LoginView extends JFrame {
         User user = userDAO.login(email, password);
 
         if (user != null) {
+
+            NotificationService notificationService = new NotificationService("taichi", "sasaki", email );
+            notificationService.sendLoginNotificationEmail();
+
             // Track activity log
             trackUserActivity(user, "LOGIN");
 

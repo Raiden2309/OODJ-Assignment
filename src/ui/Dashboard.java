@@ -8,7 +8,9 @@ import domain.CourseAdministrator;
 import service.StudentDAO;
 import service.AcademicRecordDAO;
 import academic.Course;
-import service.EnrollmentDAO;
+// import service.MilestoneDAO;
+import service.EnrollmentDAO; // Used for pending reviews/approvals
+// import academic.RecoveryMilestone;
 import ui.UserApprovalView;
 
 
@@ -21,6 +23,8 @@ import java.net.URL;
 import java.util.*;
 import java.util.List;
 import java.util.stream.Collectors;
+
+import service.NotificationService;
 
 public class Dashboard extends JFrame {
 
@@ -120,9 +124,11 @@ public class Dashboard extends JFrame {
         // Staff Only: Management View
         if (currentUser instanceof AcademicOfficer || currentUser instanceof CourseAdministrator) {
 
+            // FIX: Add Enrollment Approval Button
             JButton btnApproval = createMenuButton("Enrollment Approval", "review.png");
             btnApproval.addActionListener(e -> {
                 setActiveButton(btnApproval);
+                // PASSING THIS (the Dashboard instance) to the Approval View
                 new EnrollmentApprovalView(currentUser, this).setVisible(true);
             });
             menuPanel.add(Box.createVerticalStrut(15));
@@ -131,6 +137,7 @@ public class Dashboard extends JFrame {
             JButton btnUserApproval = createMenuButton("User Approval", "person_add.png");
             btnUserApproval.addActionListener(e -> {
                 setActiveButton(btnUserApproval);
+                // CRITICAL: Calling with only 1 argument (currentUser)
                 new ui.UserApprovalView(currentUser, this).setVisible(true);
             });
             menuPanel.add(Box.createVerticalStrut(15));
@@ -139,6 +146,7 @@ public class Dashboard extends JFrame {
             JButton btnManageUsers = createMenuButton("Manage Students", "user.png");
             btnManageUsers.addActionListener(e -> {
                 setActiveButton(btnManageUsers);
+                // Assume StudentManagementView exists in resources
                 new StudentManagementView(currentUser).setVisible(true);
             });
             menuPanel.add(Box.createVerticalStrut(5));
@@ -185,6 +193,7 @@ public class Dashboard extends JFrame {
         mainContentPanel = new JPanel(new CardLayout());
         mainContentPanel.setBackground(CONTENT_BG);
 
+        // FIX: Display Staff Overview if user is Academic Officer or Course Admin
         if (currentUser instanceof AcademicOfficer || currentUser instanceof CourseAdministrator) {
             mainContentPanel.add(new JScrollPane(createStaffOverviewPanel()), "HOME");
         } else {
@@ -200,6 +209,7 @@ public class Dashboard extends JFrame {
             switchView("HOME", "Dashboard Overview", pageTitle);
         });
 
+        // Assuming all navigation targets are now in 'resources' package
         btnCheck.addActionListener(e -> {
             setActiveButton(btnCheck);
             new CheckRecoveryEligibility(currentUser).setVisible(true);
@@ -233,7 +243,21 @@ public class Dashboard extends JFrame {
         btnLogout.addActionListener(e -> {
             int choice = JOptionPane.showConfirmDialog(this, "Logout?", "Confirm", JOptionPane.YES_NO_OPTION);
             if (choice == JOptionPane.YES_OPTION) {
+                new Thread(() -> {
+                    try {
+                        // ここはUserから取れるなら取るのがベスト
+                        // 例: currentUser.getFirstName(), getLastName(), getEmail()
+                        NotificationService ns = new NotificationService(
+                                "taichi", "sasaki", currentUser.getEmail()
+                        );
+                        ns.sendLogoutNotificationEmail();
+                    } catch (Exception ex) {
+                        ex.printStackTrace();
+                    }
+                }).start();
+
                 dispose();
+                // Assuming LoginView is in 'resources' or 'ui'
                 new LoginView().setVisible(true);
             }
         });
@@ -241,8 +265,10 @@ public class Dashboard extends JFrame {
         setActiveButton(btnHome);
     }
 
+    // FIX: Public method to refresh dashboard content
     public void refreshStaffContent() {
         if (currentUser instanceof AcademicOfficer || currentUser instanceof CourseAdministrator) {
+            // Remove old panel
             mainContentPanel.removeAll();
             // Add new panel
             mainContentPanel.add(new JScrollPane(createStaffOverviewPanel()), "HOME");
@@ -274,6 +300,7 @@ public class Dashboard extends JFrame {
         AcademicRecordDAO rDao = new AcademicRecordDAO();
         rDao.loadRecords(allStudents);
 
+        // Assuming EnrollmentDAO loads Enrollments (needed for pending status)
         EnrollmentDAO eDao = new EnrollmentDAO();
         List<domain.Enrollment> allEnrollments = eDao.loadEnrollments();
 
@@ -289,9 +316,14 @@ public class Dashboard extends JFrame {
                     return (cgpa < 2.5 && cgpa >= 2.0) || failed >= 1;
                 }).count();
 
+        // Assuming Enrollment class has a Status field
         final long pendingApprovals = allEnrollments.stream()
                 .filter(e -> "Pending Approval".equalsIgnoreCase(e.getStatus()))
                 .count();
+
+        // Removed submitted milestones calculation
+        // final long submittedMilestones = 0;
+
 
         // --- 1. OVERVIEW CARDS (Row 0) ---
         gbc.gridy = 0; gbc.gridwidth = 1; gbc.weighty = 0.0;
@@ -357,12 +389,14 @@ public class Dashboard extends JFrame {
     // STAFF HELPER METHODS
     // ====================================================================
 
+    // Removed milestones argument
     private String generateActivityFeed(List<Student> students) {
         StringBuilder sb = new StringBuilder();
 
         // Activity 1: New Enrollments (using pending approval count)
         long newEnrollments = 0;
         try {
+            // Assume EnrollmentDAO has a loadEnrollments method
             newEnrollments = new EnrollmentDAO().loadEnrollments().stream()
                     .filter(e -> "Pending Approval".equalsIgnoreCase(e.getStatus()))
                     .count();
@@ -504,6 +538,7 @@ public class Dashboard extends JFrame {
             URL imgUrl = getClass().getResource("/resources/apulogo.png");
             if (imgUrl != null) {
                 ImageIcon icon = new ImageIcon(imgUrl);
+                // FIX 1: Enlarge logo to 100x100
                 Image img = icon.getImage().getScaledInstance(150, 150,  java.awt.Image.SCALE_SMOOTH);
                 logoLabel.setIcon(new ImageIcon(img));
             }
@@ -529,6 +564,7 @@ public class Dashboard extends JFrame {
         if (failed >= 3) { standing = "At Risk"; standingColor = INELIGIBLE_COLOR; }
 
         JPanel standingCard = createInfoCard("Academic Standing", standing, standingColor);
+        // FIX 2: Reduce top/bottom insets to 5 for Row 1 elements
         gbc.insets = new Insets(2, 10, 2, 10);
         gbc.gridx = 0; gbc.gridy = 1; gbc.gridwidth = 1; gbc.weightx = 0.33;
         panel.add(standingCard, gbc);
@@ -543,10 +579,12 @@ public class Dashboard extends JFrame {
         String predictor = (cgpa < 2.0) ? "Needs +0.20 CGPA to clear Probation" : "On track for next semester.";
         if (failed > 0) predictor = "Retake failed courses to improve standing.";
         JPanel predictCard = createInfoCard("Eligibility Forecast", predictor, new Color(100, 100, 100));
+        // FIX 2: Reduce top/bottom insets to 5 for Row 1 elements
         gbc.insets = new Insets(5, 10, 5, 10);
         gbc.gridx = 2; gbc.gridy = 1; // Row 1, Col 2
         panel.add(predictCard, gbc);
 
+        // --- 5. Academic Record List (Replaced CGPA Trend) ---
         JPanel trendPanel = createWidgetPanel("Academic Record Overview");
         JTextArea trendArea = new JTextArea();
         trendArea.setEditable(false);
@@ -559,6 +597,7 @@ public class Dashboard extends JFrame {
             recordText.append("No academic results recorded.\n");
         } else {
             // Adjust formatting to ensure columns fit in the limited JTextArea width
+            // FIX: Added Instructor column
             recordText.append(String.format("%-8s %-18s %-5s %-15s\n", "Code", "Name", "Grade", "Instructor"));
             recordText.append("----------------------------------------------------\n");
 

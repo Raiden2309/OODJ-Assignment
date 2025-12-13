@@ -9,6 +9,15 @@ import javax.mail.Transport;
 import javax.mail.internet.InternetAddress;
 import javax.mail.internet.MimeMessage;
 
+import javax.mail.Multipart;
+import javax.mail.internet.MimeBodyPart;
+import javax.mail.internet.MimeMultipart;
+
+import javax.activation.DataHandler;
+import javax.activation.DataSource;
+import javax.activation.FileDataSource;
+import java.io.File;
+
 public class NotificationService {
 
     //====================
@@ -22,7 +31,7 @@ public class NotificationService {
     final String smtpPassword = "hlptamkihphoubmg";
     final boolean useTls = true;
     //Sender information
-    final String fromAddress = "crs_noreply@university.edu";
+    final String fromAddress = smtpUsername;
     final String fromName = "Email-Notification";
 
     // JavaMail
@@ -49,6 +58,10 @@ public class NotificationService {
         mailProperties.put("mail.smtp.auth", "true");
         mailProperties.put("mail.smtp.starttls.enable", String.valueOf(useTls));
 
+        mailProperties.put("mail.smtp.ssl.protocols", "TLSv1.2");
+        mailProperties.put("mail.smtp.ssl.trust", smtpHost);
+
+
         this.mailSession = Session.getInstance(mailProperties, new Authenticator() {
             @Override
             protected PasswordAuthentication getPasswordAuthentication() {
@@ -66,6 +79,7 @@ public class NotificationService {
     // Method (Email Transmission)
     //====================
 
+    // FIX: Made public to allow generic notifications from other classes like Student.java
     public void sendMail(String recipientEmail, String subject, String body) {
         // Validation to prevent crashing if email is missing
         if (recipientEmail == null || recipientEmail.isEmpty() || recipientEmail.contains("unknown")) {
@@ -85,7 +99,7 @@ public class NotificationService {
 
         } catch (Exception e) {
             System.err.println("Error sending email: " + e.getMessage());
-            // e.printStackTrace(); // Optional: uncomment for deep debugging
+            e.printStackTrace(); // Optional: uncomment for deep debugging
         }
     }
 
@@ -107,19 +121,11 @@ public class NotificationService {
         sendMail(currentEmail, subject, body);
     }
 
-    public void sendAccountCreatedEmail() {
-        String subject = "Welcome to CRS - Account Created";
+    public void sendLogoutNotificationEmail() {
+        String subject = "Logout Notification";
         String body = "Dear " + currentFirstName + " " + currentLastName + ",\n\n"
-                + "Your CRS account has been successfully created.\n"
-                + "You may now log in.\n\nRegards,\nCRS Team";
-
-        sendMail(currentEmail, subject, body);
-    }
-
-    public void sendAccountUpdatedEmail() {
-        String subject = "Your CRS Account Has Been Updated";
-        String body = "Dear " + currentFirstName + " " + currentLastName + ",\n\n"
-                + "Your account information has been updated.\n\nRegards,\nCRS Team";
+                + "A logout from your CRS account was detected.\n"
+                + "If this was not you, please contact support immediately.\n\nRegards,\nCRS Team";
 
         sendMail(currentEmail, subject, body);
     }
@@ -132,13 +138,59 @@ public class NotificationService {
         sendMail(currentEmail, subject, body);
     }
 
-    public void sendAcademicReportEmail(int semester, double cgpa) {
+
+    public void sendAcademicReportEmail(int semester, double cgpa, String pdfPath) {
         String subject = "Academic Report Available";
         String body = "Dear " + currentFirstName + " " + currentLastName + ",\n\n"
-                + "Your academic report for semester " + semester
-                + " is now available.\n"
-                + "CGPA: " + cgpa + "\n\nRegards,\nCRS Team";
+                + "Your academic report for semester " + semester + " is now available.\n"
+                + "CGPA: " + cgpa + "\n\n"
+                + "Please find the report attached.\n\nRegards,\nCRS Team";
 
-        sendMail(currentEmail, subject, body);
+        sendMailWithAttachment(currentEmail, subject, body, pdfPath);
     }
+
+    public void sendMailWithAttachment(String recipientEmail, String subject, String body, String attachmentPath) {
+
+        if (recipientEmail == null || recipientEmail.isEmpty()) {
+            System.err.println("Notification Skipped: Invalid recipient email.");
+            return;
+        }
+
+        File file = new File(attachmentPath);
+        if (!file.exists()) {
+            System.err.println("Attachment not found: " + attachmentPath);
+            return;
+        }
+
+        try {
+            MimeMessage message = new MimeMessage(mailSession);
+            message.setFrom(new InternetAddress(fromAddress, fromName));
+            message.setRecipients(Message.RecipientType.TO, InternetAddress.parse(recipientEmail));
+            message.setSubject(subject);
+
+            // 1) Text part
+            MimeBodyPart textPart = new MimeBodyPart();
+            textPart.setText(body);
+
+            // 2) Attachment part
+            MimeBodyPart attachmentPart = new MimeBodyPart();
+            DataSource source = new FileDataSource(file);
+            attachmentPart.setDataHandler(new DataHandler(source));
+            attachmentPart.setFileName(file.getName()); // 添付ファイル名
+
+            Multipart multipart = new MimeMultipart();
+            multipart.addBodyPart(textPart);
+            multipart.addBodyPart(attachmentPart);
+
+            message.setContent(multipart);
+
+            Transport.send(message);
+            System.out.println("Email (with attachment) sent successfully to " + recipientEmail);
+
+        } catch (Exception e) {
+            System.err.println("Error sending email with attachment: " + e.getMessage());
+            // e.printStackTrace();
+        }
+    }
+
 }
