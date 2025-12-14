@@ -86,7 +86,7 @@ public class LoginView extends JFrame {
         subTitleLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
 
         // Inputs Setup
-        JLabel emailLabel = new JLabel("Email");
+        JLabel emailLabel = new JLabel("Email/ID");
         emailLabel.setFont(new Font("Segoe UI", Font.BOLD, 14));
         emailLabel.setAlignmentX(Component.LEFT_ALIGNMENT);
 

@@ -148,7 +148,7 @@ public class MilestoneActionPlan extends JFrame {
         btnList = createRoundedButton("List All", ACCENT_COLOR, TEXT_COLOR);
         btnBack = createRoundedButton("Back", RED_COLOR, TEXT_COLOR);
 
-        if (loggedInUser != null && ("AcademicOfficer".equalsIgnoreCase(loggedInUser.getRole().getRoleName()) || "CourseAdministrator".equalsIgnoreCase(loggedInUser.getRole().getRoleName()))) {
+        if (!(loggedInUser instanceof Student)) {
             buttonPanel.add(btnAdd);
             buttonPanel.add(btnUpdate);
             buttonPanel.add(btnRemove);
