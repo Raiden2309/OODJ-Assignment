@@ -303,7 +303,7 @@ public class LoginView extends JFrame {
         }
     }
 
-    // NEW FUNCTION: Logs Login/Logout timestamps to a CSV file
+   // Logs Login/Logout timestamps to a CSV file
     private void trackUserActivity(User user, String action) {
         String timestamp = TIMESTAMP_FORMAT.format(new Date());
         // Simple CSV format: Timestamp, UserID, Action
