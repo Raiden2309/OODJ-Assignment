@@ -1,7 +1,3 @@
-Here is a comprehensive README document designed for your repository, based on the project structure and data files provided:
-
----
-
 # Course Registration & Management System (CRS)
 
 ## Overview
