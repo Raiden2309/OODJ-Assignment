@@ -17,6 +17,9 @@ import javax.activation.DataHandler;
 import javax.activation.DataSource;
 import javax.activation.FileDataSource;
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.util.Properties;
 
 public class NotificationService {
 
@@ -24,14 +27,14 @@ public class NotificationService {
     //Field
     //====================
 
-    //SMTP
+    //SMTP (credentials are read from config.properties, not hardcoded)
     final String smtpHost = "smtp.gmail.com";
     final int smtpPort = 587;
-    final String smtpUsername = "taichi.ihciat@gmail.com";
-    final String smtpPassword = "hlptamkihphoubmg";
+    final String smtpUsername;
+    final String smtpPassword;
     final boolean useTls = true;
     //Sender information
-    final String fromAddress = smtpUsername;
+    final String fromAddress;
     final String fromName = "Email-Notification";
 
     // JavaMail
@@ -43,6 +46,19 @@ public class NotificationService {
     private String currentLastName;
     private String currentEmail;
 
+    private static final String CONFIG_FILE = "config.properties";
+
+    private static String readConfigProperty(String key, String defaultValue) {
+        try (FileInputStream in = new FileInputStream(CONFIG_FILE)) {
+            Properties props = new Properties();
+            props.load(in);
+            String value = props.getProperty(key);
+            return (value != null && !value.trim().isEmpty()) ? value.trim() : defaultValue;
+        } catch (IOException e) {
+            return defaultValue;
+        }
+    }
+
     //====================
     //constructor
     //====================
@@ -51,6 +67,13 @@ public class NotificationService {
         this.currentFirstName = currentFirstName;
         this.currentLastName = currentLastName;
         this.currentEmail = currentEmail;
+
+        this.smtpUsername = readConfigProperty("smtp_username", "");
+        this.smtpPassword = readConfigProperty("smtp_password", "");
+        if (this.smtpUsername.isEmpty() || this.smtpPassword.isEmpty()) {
+            System.err.println("Warning: SMTP credentials not found in " + CONFIG_FILE + ". Email notifications will be skipped.");
+        }
+        this.fromAddress = this.smtpUsername;
 
         this.mailProperties = new Properties();
         mailProperties.put("mail.smtp.host", smtpHost);

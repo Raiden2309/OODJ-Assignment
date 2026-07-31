@@ -32,7 +32,7 @@ public class CourseRecoveryPlan {
         if (milestones.isEmpty()) {
             this.status = "No Milestones";
         } else if (completed == milestones.size()) {
-            this.status = "Ready for Evaluation";
+            this.status = "Completed";
         } else {
             this.status = "In Progress";
         }

@@ -47,8 +47,9 @@ public class Student extends User {
 
     public EligibilityCheck checkEligibility() {
         EligibilityCheck check = new EligibilityCheck();
-        // Ensure checkCGPA and checkFailedCourseLimit are public in EligibilityCheck
-        boolean eligible = !check.checkCGPA(academicProfile) || !check.checkFailedCourseLimit(academicProfile);
+        // Eligible only when the student is in good standing:
+        // CGPA meets the minimum AND failed-course count is within the allowed limit.
+        boolean eligible = check.checkCGPA(academicProfile) && check.checkFailedCourseLimit(academicProfile);
         check.setEligible(eligible);
 
         // Update local status string for display

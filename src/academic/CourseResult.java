@@ -81,7 +81,7 @@ public class CourseResult {
     }
 
     public boolean isProgressAllowed(){
-        return attempts.size() < 3 && !grade.equals("A") && !grade.equals("A+");
+        return attempts.size() < 3 && grade != null && !grade.equals("A") && !grade.equals("A+");
     }
 
     public String getGrade() {

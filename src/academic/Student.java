@@ -26,8 +26,13 @@ public class Student {
 
     // Convert letter grade to grade points
     private double gradeToPoints(String grade) {
-        if (grade.equals("A")) {
+        if (grade == null) {
+            return 0.0;
+        }
+        if (grade.equals("A+")) {
             return 4.0;
+        } else if (grade.equals("A")) {
+            return 3.7;
         } else if (grade.equals("A-")) {
             return 3.7;
         } else if (grade.equals("B+")) {

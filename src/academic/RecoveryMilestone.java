@@ -21,8 +21,8 @@ public class RecoveryMilestone{
         this.studyWeek = studyWeek;
         this.taskDescription = taskDescription;
         this.deadline = deadline;
-        this.completionStatus = false;
         this.status = status;
+        this.completionStatus = "Completed".equalsIgnoreCase(status);
     }
 
     public void setCompletionStatus(boolean isDone){
@@ -104,6 +104,7 @@ public class RecoveryMilestone{
     public void setStatusString(String status) {
 
         this.status = status;
+        this.completionStatus = "Completed".equalsIgnoreCase(status);
 
     }
 

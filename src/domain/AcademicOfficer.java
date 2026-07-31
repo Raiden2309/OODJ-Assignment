@@ -7,7 +7,7 @@ public class AcademicOfficer extends User{
     private String lastName;
     private String contactOffice;
 
-    public AcademicOfficer(String userID, String password, SystemRole role, String alice, String johnson, String contactOffice){
+    public AcademicOfficer(String userID, String password, SystemRole role, String firstName, String lastName, String contactOffice){
         super(userID, password, role);
         this.firstName = firstName;
         this.lastName = lastName;
